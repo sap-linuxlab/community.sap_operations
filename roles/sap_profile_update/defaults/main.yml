@@ -1,0 +1,20 @@
+# SAP system details
+sap_update_profile_sid:
+sap_update_profile_instance_nr:
+
+# List of profile parameters to be updated in the DEFAULT profile
+sap_update_profile_default_profile_params: []
+# Sample list
+# sap_update_profile_default_profile_params:
+#     - sapgui/user_scripting = TRUE
+#     - ssl/ciphersuites = 135:PFS:HIGH::EC_P256:EC_HIGH
+#     - ssl/client_ciphersuites = 150:PFS:HIGH::EC_P256:EC_HIGH
+
+# List of profile parameters to be updated in the instance profile
+sap_update_profile_instance_profile_params: []
+# Sample list
+# sap_update_profile_instance_profile_params:
+#     - PHYS_MEMSIZE = 32768
+#     - icm/server_port_0 = PROT=HTTP,PORT=80$$,PROCTIMEOUT=600,TIMEOUT=3600
+#     - icm/server_port_1 = PROT=HTTPS,PORT=443$$,PROCTIMEOUT=600,TIMEOUT=3600
+#     - icm/server_port_2 = PROT=SMTP,PORT=25$$,PROCTIMEOUT=120,TIMEOUT=120

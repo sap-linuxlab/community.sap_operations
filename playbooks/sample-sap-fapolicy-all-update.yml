@@ -1,0 +1,35 @@
+---
+- hosts: all
+  become: true
+  
+  vars:
+    sap_fapolicy_user_generic_list:
+      - "root"
+      - "sapadm"
+      - "uuidd"
+  
+  tasks:
+
+  # Update fapolicy for generic users
+  - name: Fapolicy Update - generic
+    vars:
+      sap_fapolicy_type: "generic"
+    include_role: 
+      name: community.sap_operations.sap_fapolicy
+    loop: "{{ sap_fapolicy_user_generic_list }}"
+    loop_control:
+      loop_var: sap_fapolicy_user
+
+  - name: Run sap_facts module to gather SAP facts
+    community.sap_operations.sap_facts:
+        param: "all"
+    register: sap_facts_register
+
+  # Update fapolicy for SAP users        
+  - name: Fapolicy Update - SAP Users
+    vars:
+      sap_fapolicy_sid: "{{ item.Type }}"
+      sap_fapolicy_type: "{{ item.Type }}"
+    include_role: 
+      name: community.sap_operations.sap_fapolicy
+    loop: "{{ sap_facts_register.sap_facts }}"

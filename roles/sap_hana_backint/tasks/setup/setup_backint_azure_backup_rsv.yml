@@ -1,0 +1,68 @@
+# Microsoft Azure
+
+- name: SAP HANA Backint - Execute - Set fact for SID
+  set_fact:
+    passed_sap_hana_sid: "{{ sap_hana_sid }}"
+  when: sap_hana_sid != "all"
+
+# Set initial facts
+- name: SAP HANA Backint - Setup - MS Azure Backup to MS Azure RSV - Set facts
+  set_fact:
+    sap_hana_backint_setup_backint_directory: "/usr/sap/{{ passed_sap_hana_sid }}/SYS/global/hdb/opt"
+    passed_sap_hana_instance_nr: "{{ sap_hana_instance_nr_one[0] }}"
+
+
+- name: SAP HANA Backint - Setup - MS Azure Backup to MS Azure RSV - Download backint pre-registration script from constant script source url
+  get_url:
+    url: https://aka.ms/scriptforpermsonhana
+    dest: "{{ sap_hana_backint_setup_temp_dir.path }}/msawb-plugin-config-com-sap-hana.sh"
+    mode: '0775'
+
+
+# Change directory owner and permission
+- name: SAP HANA Backint - Setup - MS Azure Backup to MS Azure RSV - Change directory owner and permission
+  ansible.builtin.file:
+    path: "{{ sap_hana_backint_setup_backint_directory }}"
+    state: directory
+    recurse: yes
+    mode: '0755'
+    owner: "{{ passed_sap_hana_sid | lower }}adm"
+    group: sapsys
+
+
+# Setup
+
+- name: SAP HANA Backint - Setup - MS Azure Backup to MS Azure RSV - Clone hanacleaner.py
+  ansible.builtin.git:
+    repo: https://github.com/chriselswede/hanacleaner.git
+    dest: "$HOME/.ansible/tmp/git_hanacleaner"
+    single_branch: yes
+    version: master
+
+# Copy hanacleaner.py
+- name: SAP HANA Backint - Setup - MS Azure Backup to MS Azure RSV - Copy hanacleaner.py to SAP HANA backint directory
+  ansible.builtin.copy:
+    src: "$HOME/.ansible/tmp/git_hanacleaner/hanacleaner.py"
+    dest: "{{ sap_hana_backint_setup_backint_directory }}/hanacleaner.py"
+    mode: '0755'
+    remote_src: yes
+  register: hdbbackint_hanacleaner
+
+# Change directory owner and permission
+- name: SAP HANA Backint - Setup - MS Azure Backup to MS Azure RSV - Change directory owner and permission
+  ansible.builtin.file:
+    path: "{{ sap_hana_backint_setup_backint_directory }}"
+    state: directory
+    recurse: yes
+    mode: '0755'
+    owner: "{{ passed_sap_hana_sid | lower }}adm"
+    group: sapsys
+
+- name: SAP HANA Backint - Setup - MS Azure Backup to MS Azure RSV - Execute msawb-plugin-config-com-sap-hana.sh
+  shell: |
+    bash "{{ sap_hana_backint_setup_temp_dir.path }}/msawb-plugin-config-com-sap-hana.sh" --sid {{ passed_sap_hana_sid }}
+
+- name: SAP HANA Backint - Setup - MS Azure Backup to MS Azure RSV - Output backint configuration information
+  debug:
+    msg:
+      - "backint directory  - {{ sap_hana_backint_setup_backint_directory }}"

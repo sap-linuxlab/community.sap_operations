@@ -1,0 +1,55 @@
+
+# 1. Prepare backint
+
+- name: SAP HANA Backint - Setup - Create temporary directory
+  tempfile:
+    state: directory
+    suffix: sap_hana_backint_setup_temp_dir
+  register: sap_hana_backint_setup_temp_dir
+
+
+# 2. Setup the selected backint agent
+
+# Setup backint for single SID
+- name: SAP HANA Backint - Setup - sap_hana_sid is provided
+  block:
+    - name: SAP HANA Backint - Setup - Setup Backint for {{ sap_hana_sid }}
+      include_tasks: "setup_backint_{{ target_platform }}.yml"
+  when: sap_hana_sid != "all"
+
+
+# Setup backint for each SID - loop through list {{ sap_hana_sid_all }}
+# Loop is equivalent to with_list, and must not be a string
+- name: SAP HANA Backint - Setup - All HDB SIDs in hostname {{ ansible_hostname }}
+  block:
+    - name: SAP HANA Backint - Setup - Setup Backint for each SID
+      include_tasks: "setup_backint_{{ target_platform }}.yml"
+      loop: "{{ sap_hana_sid_all }}"
+      loop_control:
+        loop_var: passed_sap_hana_sid
+      register: setup_backint_reg
+  when: sap_hana_sid == "all"
+
+
+# 3. Define backups to execute
+
+# Setup SYSTEMDB
+- name: SAP HANA Backint - Setup - Setup SYSTEMDB of {{ sap_hana_sid }}
+  include_tasks: setup_systemdb.yml
+  register: setup_hana_systemdb
+
+# Setup Tenant DBs - loop through {{ sap_hana_tenant }}
+- name: SAP HANA Backint - Setup - Setup Tenant DBs of {{ sap_hana_sid }}
+  include_tasks: setup_tenants.yml
+  register: setup_hana_tenant
+  loop: "{{ sap_hana_tenant }}"
+  loop_control:
+    loop_var: passed_sap_hana_tenant
+
+
+# 4. Cleanup
+
+- name: SAP HANA Backint - Setup - Clean up
+  file:
+    path: "{{ sap_hana_backint_setup_temp_dir.path }}"
+    state: absent

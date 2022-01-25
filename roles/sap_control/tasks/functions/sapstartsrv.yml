@@ -1,0 +1,23 @@
+---
+# This task requires the variables
+# passed_sap_sid
+# passed_sap_nr
+
+# Check sapstartsrv
+- name: SAPstartsrv - Check sapstartsrv
+  shell: |
+    source ~/.profile && cdexe; sapcontrol -nr {{ passed_sap_nr }} -function GetSystemInstanceList
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ passed_sap_sid | lower }}adm"
+  ignore_errors: yes
+  register: check_sapstartsrv
+  changed_when:
+    - ('FAIL' in check_sapstartsrv.stdout)
+
+# Check sapstartsrv
+- name: SAPstartsrv - Restart sapstartsrv
+  include_tasks: restart_sapstartsrv.yml
+  when:
+    - ('FAIL' in check_sapstartsrv.stdout)

@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# DEBUG - Echo existing Python environment variables
+#echo "Existing PYTHONHOME is set to: $PYTHONHOME"
+#echo "Existing PYTHONHOME version is: $python_home_version"
+#$PYTHONHOME/bin/python --version
+#echo "Existing PYTHONPATH is set to: $PYTHONPATH"
+
+
+# Create variable for isolated altinstall of Python
+PYTHON_ALTINSTALL_PATH="{{ python_37_binary_hana_softlink }}"
+
+# Find the directory where this script is located, use dirname to remove hdbbackint script name from path
+SCRIPT_DIR=$(dirname $($PYTHON_ALTINSTALL_PATH -E -c "import os; print(os.path.realpath('${BASH_SOURCE[0]}'))"))
+
+# Using identified directory, set variable for libs directory
+LIBS_DIR="$SCRIPT_DIR/libs"
+
+# Find the path of the Python Module using the isolated altinstall of Python
+MODULE_DIR_OS=$($PYTHON_ALTINSTALL_PATH -E -c "import os; print(os.path.dirname(os.path.realpath(__import__('os').__file__)))")
+MODULE_DIR_MATH=$($PYTHON_ALTINSTALL_PATH -E -c "import os; print(os.path.dirname(os.path.realpath(__import__('math').__file__)))")
+MODULE_DIR_SSL1=$($PYTHON_ALTINSTALL_PATH -E -c "import os; print(os.path.dirname(os.path.realpath(__import__('ssl').__file__)))")
+MODULE_DIR_SSL2=$($PYTHON_ALTINSTALL_PATH -E -c "import os; print(os.path.dirname(os.path.realpath(__import__('_ssl').__file__)))")
+
+# Deduplicate paths
+MODULES_UNIQUE=$(echo "$MODULE_DIR_OS $MODULE_DIR_MATH $MODULE_DIR_SSL1 $MODULE_DIR_SSL2" | tr ' ' '\n' | sort -u)
+MODULES_UNIQUE_CLEAN="$(echo $MODULES_UNIQUE | tr ' ' ':')"
+
+# Workaround to temporary unset Python 2.x default path
+# This is not unset or exported, so that it does not impact the Environment Variables; the change will only impact the session
+PYTHONHOME=''
+
+# Add additional directories for Python modules and packages
+# This is not exported, so that it does not impact the Environment Variables; the change will only impact the session
+PYTHONPATH="$MODULES_UNIQUE_CLEAN:$LIBS_DIR"
+
+# DEBUG - Echo temporary Python environment variables
+#echo "For session execution, PYTHONHOME is set to: $PYTHONHOME"
+#echo "For session execution, PYTHONPATH is set to: $PYTHONPATH"
+
+# Run
+$PYTHON_ALTINSTALL_PATH "$SCRIPT_DIR/src/hdbbackint/hdbbackint.py" "$@"

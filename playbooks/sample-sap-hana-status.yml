@@ -1,0 +1,22 @@
+---
+- hosts: all
+  become: true
+  
+  tasks:
+
+  - name: Run sap_facts module to gather SAP facts
+    community.sap_operations.sap_facts:
+        param: "hana"
+    register: sap_facts_register
+
+  - name: Run sap_monitor_hana_status module
+    community.sap_operations.sap_monitor_hana_status:
+        hana_sid: "{{ item.SID }}"
+        hana_instance_number: "{{ item.InstanceNumber }}"
+    register: sap_monitor_hana_status_register
+    loop: "{{ sap_facts_register.sap_facts }}"
+
+  - debug:
+      msg:
+        - "{{ sap_monitor_hana_status_register }}"
+

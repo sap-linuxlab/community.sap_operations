@@ -1,0 +1,13 @@
+
+- name: SAP HANA Backint - Clean - Execute hanacleaner.py for SYSTEMDB - {{ passed_sap_hana_sid }}
+  shell: |
+          source ~/.profile && python {{ backint_directory }}/hanacleaner.py -k {{ system_backup_user }} -be {{ backup_retention }} -bb true
+  args:
+      executable: /bin/bash
+  become: yes
+  become_user: "{{ passed_sap_hana_sid | lower }}adm"
+  register: sap_hana_backint_clean_execute_hanacleaner
+
+- name: SAP HANA Backint - Clean - Output hanacleaner execution
+  debug:
+    msg: "{{ sap_hana_backint_clean_execute_hanacleaner }}.stdout_lines"

@@ -1,0 +1,24 @@
+---
+- hosts: all
+  become: true
+
+# Prompt for Ansible Variables
+  vars_prompt:
+    - name: sap_facts_param
+      prompt: "Choose: all, hana, nw"
+      private: no
+
+  tasks:
+  - name: Execute sap_facts Ansible Module to gather SAP System facts for the host
+    community.sap_operations.sap_facts:
+        param: "{{ sap_facts_param }}"
+    register: sap_facts_register
+
+  - debug:
+      msg: "{{ sap_facts_register.sap_facts }}"
+
+  - debug:
+      msg: "{{ sap_facts_register.sap_hana_sid }}"
+
+  - debug:
+      msg: "{{ sap_facts_register.sap_nw_sid }}"

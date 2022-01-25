@@ -1,0 +1,9 @@
+---
+- hosts: all
+  become: true
+  vars:
+    backup_function: 'execute'
+    sap_hana_sid: 'H01'
+    target_platform: 'ibm_cos_s3'
+  roles:
+    - { role: ../roles/sap_hana_backint }

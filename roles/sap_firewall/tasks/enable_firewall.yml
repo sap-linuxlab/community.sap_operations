@@ -1,0 +1,5 @@
+- name: SAP Firewall - Service firewalld state - enable
+  command: "systemctl enable firewalld"
+
+- name: SAP Firewall - Service firewalld state - start
+  command: "systemctl start firewalld"

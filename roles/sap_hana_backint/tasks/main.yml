@@ -1,0 +1,33 @@
+# Set facts
+- name: SAP HANA Backint - Set fact for Ansible Role actions
+  set_fact:
+    sap_control_function: "{{ backup_function | lower }}"
+    python_version: "3.7.9"
+    python_build_path: "/usr/sap/python_env_build"
+    python_altinstall_path: "/usr/sap/python_env"
+
+- name: SAP HANA Backint - Set fact if sap_hana_sid is provided
+  set_fact:
+    backint_directory: "/usr/sap/{{ sap_hana_sid }}/SYS/global/hdb/opt"
+#    tenant_backup_user: "HDB_TENANT_{{ passed_sap_hana_tenant }}_BACKUP_USER"
+  when: sap_hana_sid != "all"
+
+# List is stored in sap_hana_sid_all
+- name: SAP HANA Backint - Get all SAP HANA System IDs (SIDs)
+  include_tasks: get_all_sap_hana_sid.yml
+
+# List is stored in sap_hana_tenant
+- name: SAP HANA Backint - Get all SAP HANA Tenants of {{ sap_hana_sid }}
+  include_tasks: get_all_sap_hana_tenant.yml
+
+# List is stored in sap_hana_instance_nr_one
+- name: SAP HANA Backint - Get SAP HANA instance number
+  include_tasks: get_sap_hana_instance_nr.yml
+
+# Install Python 3.7
+- name: SAP HANA Backint - Python 3.7
+  include_tasks: "python37.yml"
+  when: (backup_function == 'setup' and target_platform == 'aws_s3') or (backup_function == 'setup' and target_platform == 'ibm_cos_s3')
+
+- name: SAP HANA Backint - {{ backup_function }}
+  include_tasks: "{{ backup_function }}/{{ backup_function }}.yml"

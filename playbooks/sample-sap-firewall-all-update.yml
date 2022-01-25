@@ -1,0 +1,18 @@
+---
+- hosts: all
+  become: true
+  
+  tasks:
+
+  - name: Run sap_facts module to gather SAP facts
+    community.sap_operations.sap_facts:
+        param: "all"
+    register: sap_facts_register
+        
+  - name: Firewall Update
+    vars:
+      sap_firewall_type: "{{ item.Type }}"
+      sap_firewall_instance_nr: "{{ item.InstanceNumber }}"
+    include_role: 
+      name: community.sap_operations.sap_firewall
+    loop: "{{ sap_facts_register.sap_facts }}"

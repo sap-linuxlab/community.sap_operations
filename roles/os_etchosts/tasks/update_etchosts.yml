@@ -1,0 +1,16 @@
+- name: SAP OS Tools - /etc/hosts - Split passed entry
+  set_fact:
+    passed_ip: "{{ passed_entry.split()[0] }}"
+    passed_host: "{{ passed_entry.split()[1] }}"
+
+- name: SAP OS Tools - /etc/hosts - Deduplicate values from /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    create: false
+    regexp: (?i)^\s*{{ passed_ip }}\s+
+    state: absent
+
+- name: SAP OS Tools - /etc/hosts - Update
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ passed_ip }}{{ os_etchosts_delimiter }}{{ passed_host }}.{{ os_etchosts_fqdn }}{{ os_etchosts_delimiter }}{{ passed_host }}"

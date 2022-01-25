@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become: true
+  vars:
+    sap_os_tools_etchosts_entries:
+      - "10.0.20.4 hana01-lb"
+      - "10.0.20.5 hana02-lb"
+      - "10.0.40.8 s4hana01-ascs-pas"
+      - "10.0.40.9 s4hana01-aas"
+    sap_os_tools_etchosts_fqdn: "example.com"
+  roles:
+    - { role: community.sap_operations.os_etchosts }
+

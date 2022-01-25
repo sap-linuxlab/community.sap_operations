@@ -1,0 +1,85 @@
+---
+sap_sid: "initial"
+sap_control_function: "initial"
+sap_control_name_header: "initial"
+
+nowait: false
+sap_control_start: "StartWait 180 2"
+sap_control_stop: "StopWait 180 2"
+
+# get_all_sap_sid_dir_nw: "/sapmnt"
+# get_all_sap_sid_dir_hana: "/hana/shared"
+
+# Functions
+
+sap_control_functions_list:
+  - restart_all_sap
+  - stop_all_sap
+  - start_all_sap
+  - restart_all_nw
+  - restart_all_hana
+  - stop_all_nw
+  - start_all_nw
+  - stop_all_hana
+  - start_all_hana
+  - restart_sap_nw
+  - restart_sap_hana
+  - stop_sap_nw
+  - start_sap_nw
+  - stop_sap_hana
+  - start_sap_hana
+
+# Functions flow
+restart_all_sap_list:
+  - sap_control_function_current: "nw_stop"
+  - sap_control_function_current: "hana_stop"
+  - sap_control_function_current: "hana_start"
+  - sap_control_function_current: "nw_start"
+
+stop_all_sap_list:
+  - sap_control_function_current: "nw_stop"
+  - sap_control_function_current: "hana_stop"
+
+start_all_sap_list:
+  - sap_control_function_current: "hana_start"
+  - sap_control_function_current: "nw_start"
+
+restart_all_nw_list:
+  - sap_control_function_current: "nw_stop"
+  - sap_control_function_current: "nw_start"
+
+restart_all_hana_list:
+  - sap_control_function_current: "hana_stop"
+  - sap_control_function_current: "hana_start"
+
+stop_all_nw_list:
+  - sap_control_function_current: "nw_stop"
+
+start_all_nw_list:
+  - sap_control_function_current: "nw_start"
+
+stop_all_hana_list:
+  - sap_control_function_current: "hana_stop"
+
+start_all_hana_list:
+  - sap_control_function_current: "hana_start"
+
+restart_sap_nw_list:
+  - sap_control_function_current: "nw_stop"
+  - sap_control_function_current: "nw_start"
+
+restart_sap_hana_list:
+  - sap_control_function_current: "hana_stop"
+  - sap_control_function_current: "hana_start"
+
+stop_sap_nw_list:
+  - sap_control_function_current: "nw_stop"
+
+start_sap_nw_list:
+  - sap_control_function_current: "nw_start"
+
+stop_sap_hana_list:
+  - sap_control_function_current: "hana_stop"
+
+start_sap_hana_list:
+  - sap_control_function_current: "hana_start"

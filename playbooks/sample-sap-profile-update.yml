@@ -1,0 +1,37 @@
+---
+- hosts: all
+  become: true
+
+# Prompt for Ansible Variables
+  vars_prompt:
+    - name: sap_sid
+      prompt: Please enter target SAP System ID (SID)
+      private: no
+
+  vars:
+    sap_update_profile_default_profile_params:
+      - sapgui/user_scripting = TRUE
+      - ssl/ciphersuites = 135:PFS:HIGH::EC_P256:EC_HIGH
+      - ssl/client_ciphersuites = 150:PFS:HIGH::EC_P256:EC_HIGH
+    sap_update_profile_instance_profile_params:
+      - PHYS_MEMSIZE = 32768
+      - icm/server_port_0 = PROT=HTTP,PORT=80$$,PROCTIMEOUT=600,TIMEOUT=3600
+      - icm/server_port_1 = PROT=HTTPS,PORT=443$$,PROCTIMEOUT=600,TIMEOUT=3600
+      - icm/server_port_2 = PROT=SMTP,PORT=25$$,PROCTIMEOUT=120,TIMEOUT=120
+
+
+  tasks:
+
+  - name: Run sap_facts module to gather SAP facts
+    community.sap_operations.sap_facts:
+        param: "{{ sap_sid }}"
+    register: sap_facts_register
+
+  # SAP Profile Update      
+  - name: SAP Profile Update
+    vars:
+      sap_update_profile_sid: "{{ item.SID }}"
+      sap_update_profile_instance_nr: "{{ item.InstanceNumber }}"
+    include_role: 
+      name: community.sap_operations.sap_profile_update
+    loop: "{{ sap_facts_register.sap_facts }}"

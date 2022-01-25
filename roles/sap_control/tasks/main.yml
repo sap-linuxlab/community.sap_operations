@@ -1,0 +1,113 @@
+---
+# Lowercase input
+- name: Lowercase input
+  set_fact:
+    sap_control_function: "{{ sap_control_function | lower }}"
+
+# Check inputs
+- name: Check function validity
+  fail: msg="Function {{ sap_control_function }} is invalid"
+  when:
+    - "sap_control_function not in sap_control_functions_list"
+
+- name: Check function if defined
+  fail: msg="No sap_control_function defined"
+  when: 
+    - "sap_control_function == 'initial'"
+
+# - name: Check function - all and SID
+#   fail: msg="An 'all' function and a 'SID' cant be used at the same time"
+#   when:
+#     - (sap_sid != 'initial') and ('all' in sap_control_function)
+
+- name: Check function - all and SID
+  fail: msg="Parameter 'sap_sid' is required when not using an 'all' function"
+  when:
+    - (sap_sid == 'initial') and ('all' not in sap_control_function)
+
+# Set facts when nowait is true
+- name: Set facts when nowait is true
+  set_fact:
+    sap_control_start: "Start"
+    sap_control_stop: "Stop"
+  when: nowait | bool
+
+# sap_control_functions_list:
+#   - restart_all_sap
+#   - stop_all_sap
+#   - start_all_sap
+#   - restart_all_nw
+#   - restart_all_hana
+#   - stop_all_nw
+#   - start_all_nw
+#   - stop_all_hana
+#   - start_all_hana
+#   - restart_sap_nw
+#   - restart_sap_hana
+#   - stop_sap_nw
+#   - start_sap_nw
+#   - stop_sap_hana
+#   - start_sap_hana
+
+- name: Set function list facts
+  set_fact:
+    sap_control_act_type: "{{ sap_control_function.split('_')[0] | lower }}"
+    sap_control_get_type: "{{ sap_control_function.split('_')[1] | lower }}"
+    sap_control_sap_type: "{{ sap_control_function.split('_')[2] | lower }}"
+
+- name: Set sap_facts_param
+  set_fact:
+    sap_facts_param: "{{ sap_control_get_type }}"
+
+- name: Set sap_facts_param
+  set_fact: 
+    sap_facts_param: "{{ sap_control_sap_type }}"
+  when:
+    - "'all' in sap_control_function"
+    - "'sap' not in sap_control_sap_type"
+
+# When not all
+- name: Set sap_facts_param
+  set_fact: 
+    sap_facts_param: "{{ sap_sid }}"
+  when:
+    - "'all' not in sap_control_function"
+
+# # Get SAP Info
+# - name: Get SAP Info
+#   vars:
+#     sap_info_get_function: "get_{{ sap_control_get_type }}_{{ sap_control_sap_type }}"
+#   include_role: 
+#     name: roles/sap_info
+
+# Get SAP Facts
+- name: Run sap_facts module to gather SAP facts
+  sap_facts:
+      param: "{{ sap_facts_param }}"
+  register: sap_facts_register
+
+- debug:
+    msg: "{{ sap_facts_register.sap_facts }}"
+
+- pause:
+    seconds: 10
+
+# Debugging stuff
+- name: Display parameters for runtime
+  debug:
+    msg:
+      - "Starting sap_control with the following parameters: "
+      - "{{ sap_control_function }}"
+      - "{{ sap_control_start }}"
+      - "{{ sap_control_stop }}"
+      - "{{ nowait }}"
+
+# Start SAP Control
+- name: SAP Control
+  include_tasks: prepare.yml
+  loop: "{{ vars[sap_control_function + '_list'] }}"
+  loop_control:
+    loop_var: function_list
+    
+
+    

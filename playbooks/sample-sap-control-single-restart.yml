@@ -1,0 +1,14 @@
+---
+- hosts: all
+  become: true
+
+# Prompt for Ansible Variables
+  vars_prompt:
+    - name: sap_sid
+      prompt: Please enter target SAP System ID (SID)
+      private: no
+
+  vars:
+    sap_control_function: "restart_sap_nw"
+  roles:
+    - { role: community.sap_operations.sap_control }

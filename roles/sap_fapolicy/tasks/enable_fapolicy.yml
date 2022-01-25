@@ -1,0 +1,5 @@
+- name: SAP Faplocy - Service fapolicy state - enable
+  command: "systemctl enable fapolicyd"
+
+- name: SAP Faplocy - Service fapolicy state - start
+  command: "systemctl start fapolicyd"

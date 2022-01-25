@@ -1,0 +1,37 @@
+---
+
+# Get instance profile path using sapcontrol
+- name: SAP Profile Update - Get Instance Profile
+  shell: |
+    source ~/.profile && cdexe; sapcontrol -nr {{ sap_update_profile_instance_nr }} -function ParameterValue SAPPROFILE | grep profile
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ sap_update_profile_sid | lower }}adm"
+  register: get_instance_profile
+
+- set_fact:
+    sap_update_profile_default_profile_file_path : "/sapmnt/{{ sap_update_profile_sid }}/profile/DEFAULT.PFL"
+    sap_update_profile_instance_profile_file_path : "{{ get_instance_profile.stdout }}"
+
+# Update default profile
+- name: SAP Profile Update - Updating DEFAULT.PFL
+  include_tasks : update_parameter.yml
+  vars:
+    passed_parameter_path: "{{ sap_update_profile_default_profile_file_path }}"
+  loop: "{{ sap_update_profile_default_profile_params }}"
+  loop_control:
+    loop_var: passed_parameter
+  when:
+    - sap_update_profile_default_profile_params is defined
+
+# Update instance profile
+- name: SAP Profile Update - Updating instance profile
+  include_tasks : update_parameter.yml
+  vars:
+    passed_parameter_path: "{{ sap_update_profile_instance_profile_file_path }}"
+  loop: "{{ sap_update_profile_instance_profile_params }}"
+  loop_control:
+    loop_var: passed_parameter
+  when:
+    - sap_update_profile_default_profile_params is defined

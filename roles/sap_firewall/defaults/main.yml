@@ -1,0 +1,13 @@
+# Firewall type
+sap_firewall_type: "generic"
+# generic | hana | nw
+
+# sap_firewall_type - set to 'generic' will go thru all the ports defined in this list
+sap_firewall_ports: []
+
+# sap_firewall_type - set to 'nw' or 'hana' to make use of instance_nr
+sap_firewall_instance_nr:
+
+# Set this parameter to true to disable firewall at the end of execution
+sap_firewall_disable_end: 'false'
+

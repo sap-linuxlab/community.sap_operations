@@ -1,0 +1,11 @@
+---
+- hosts: all
+  become: true
+  vars:
+    sap_firewall_ports:
+      - "1128"
+      - "1129"
+    sap_firewall_type: "generic"
+  roles:
+    - { role: community.sap_operations.sap_firewall }
+

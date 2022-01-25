@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  vars:
+    sap_control_function: "restart_all_nw"
+  roles:
+    - { role: community.sap_operations.sap_control }
+

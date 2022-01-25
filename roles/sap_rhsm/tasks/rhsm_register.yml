@@ -1,0 +1,80 @@
+- name: SAP OS Tools - RedHat Subscription Manager - Register - {{ ansible_distribution }} - {{ ansible_distribution_version }}
+  block:
+
+  # - name: Subscription Manager - Initial Commands
+  #   command: 'subscription-manager {{ item }}'
+  #   loop:
+  #     - "clean"
+  #     - "remove --all"
+  #     - "register --force --username={{ sap_rhsm_username }} --password='{{ sap_rhsm_password }}'"
+  #     - "identity --regenerate --force --username={{ sap_rhsm_username }} --password='{{ sap_rhsm_password }}'"
+  #     - "auto-attach"
+  #     - "attach --pool='{{ sap_rhsm_pool_id }}'"
+  #     - "release --set={{ ansible_distribution_version }}"
+  #     - "repos --disable='*'"
+
+  - name: Subscription Manager - Clean
+    command: 'subscription-manager clean' 
+
+  - name: Subscription Manager - Remove
+    command: 'subscription-manager remove --all'
+
+  - name: Subscription Manager - Register
+    command: 'subscription-manager register --force --username={{ sap_rhsm_username }} --password="{{ sap_rhsm_password }}"'
+
+  - name: Subscription Manager - Identity Regenerate
+    command: 'subscription-manager identity --regenerate --force --username={{ sap_rhsm_username }} --password="{{ sap_rhsm_password }}"'
+
+  - name: Subscription Manager - Auto Attach
+    command: 'subscription-manager auto-attach'
+
+  - name: Subscription Manager - Attach Pool
+    command: 'subscription-manager attach --pool="{{ sap_rhsm_pool_id }}"'
+
+  - name: Subscription Manager - Lock Release
+    command: 'subscription-manager release --set={{ ansible_distribution_version }}'
+
+  - name: Subscription Manager - Disable Repos
+    command: 'subscription-manager repos --disable="*"'
+
+  - name: Subscription Manager - Enable Repos
+    command: 'subscription-manager repos --enable="{{ item }}"'
+    loop: "{{ sap_rhsm_repos }}"
+
+  - name: Yum clean all
+    command: 'yum clean all'
+    args:
+      warn: false
+      
+  - name: Yum search sap-
+    command: 'yum -y search sap-'
+
+  # - name: Yum install yum-utils
+  #   command: 'yum -y install yum-utils'
+
+  # - name: Yum install nfs-utils
+  #   command: 'yum -y install nfs-utils'
+
+  - name: Yum install
+    command: 'yum -y install {{ item }}'
+    loop: "{{ sap_rhsm_packages }}"
+
+  - name: Clear dnf cache
+    file:
+      path: /var/cache/dnf
+      state: absent
+  
+  - name: Clear rhsm packages
+    file:
+      path: /var/lib/rhsm/packages/packages.json
+      state: absent
+
+  - name: Restart service rhsmcertd
+    service:
+      name: rhsmcertd
+      state: restarted
+  
+  #- name: Register the system to Red Hat Insights
+  #  command: 'insights-client --register'
+  
+  when: ansible_facts['distribution'] == 'RedHat'    

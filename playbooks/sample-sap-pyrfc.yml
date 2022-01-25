@@ -1,0 +1,56 @@
+---
+- hosts: all
+  become: true
+
+  vars:
+    suser_id: 'S00000000'
+    suser_password: 'password'
+    sap_nwrfc_sdk: nwrfc750P_8-70002752.zip
+    reuse_connection:
+      ashost: s4hana.poc.cloud
+      sysid: TDT
+      sysnr: "01"
+      client: "400"
+      user: DDIC
+      passwd: Password1
+      lang: EN
+#      trace: 3
+#      saprouter: /H/111.22.33.44/S/3299/W/e5ngxs/H/555.66.777.888/H/
+#      gwhost: gateway.poc.cloud
+#      ghserv: gateway.poc.cloud
+
+  tasks:
+
+  - name: Run SAP RFC - STFC_CONNECTION
+    vars:
+      pyrfc_first_run: yes
+      target_function: STFC_CONNECTION
+      target_parameters:
+        REQUTEXT: 'Hello SAP!'
+      target_connection: "{{ reuse_connection }}"
+    include_role:
+      name: community.sap_operations.sap_pyrfc
+    register: sap_rfc_output1
+
+  - name: DEBUG - Output of STFC_CONNECTION
+    debug:
+      msg: "{{ sap_rfc_output1 }}"
+
+  - name: Run SAP RFC - STFC_STRUCTURE
+    vars:
+      pyrfc_first_run: no
+      target_function: STFC_STRUCTURE
+      target_parameters:
+        IMPORTSTRUCT:
+          RFCINT1: 128
+        RFCTABLE:
+          - COLUMN0: test
+      target_connection: "{{ reuse_connection }}"
+    include_role:
+      name: community.sap_operations.sap_pyrfc
+    register: sap_rfc_output2
+
+  - name: DEBUG - Output of STFC_STRUCTURE
+    debug:
+      msg: "{{ sap_rfc_output2 }}"
+

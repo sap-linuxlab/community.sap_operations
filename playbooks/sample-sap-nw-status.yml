@@ -1,0 +1,23 @@
+---
+- hosts: all
+  become: true
+  
+  tasks:
+
+  - name: Run sap_facts module to gather SAP facts
+    community.sap_operations.sap_facts:
+        param: "nw"
+    register: sap_facts_register
+
+  - name: Run sap_monitor_nw_status module
+    community.sap_operations.sap_monitor_nw_status:
+        nw_sid: "{{ item.SID }}"
+        nw_instance_number: "{{ item.InstanceNumber }}"
+        nw_instance_type: "{{ item.InstanceType }}"
+    register: sap_monitor_nw_status_register
+    loop: "{{ sap_facts_register.sap_facts }}"
+
+  - debug:
+      msg:
+        - "{{ sap_monitor_nw_status_register }}"
+

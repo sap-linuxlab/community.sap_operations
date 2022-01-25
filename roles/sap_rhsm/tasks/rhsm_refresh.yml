@@ -1,0 +1,31 @@
+- name: SAP OS Tools - RedHat Subscription Manager - Refresh - {{ ansible_distribution }} - {{ ansible_distribution_version }}
+  block:
+
+    - name: Subscription Manager - Refresh
+      command: 'subscription-manager refresh'
+
+    - name: Subscription Manager - Identity Regenerate
+      command: 'subscription-manager identity --regenerate'
+
+    - name: Subscription Manager - Lock Release
+      command: 'subscription-manager release --set={{ ansible_distribution_version }}'
+    
+    - name: Yum clean all
+      command: 'yum clean all'
+
+    - name: Clear dnf cache
+      file:
+        path: /var/cache/dnf
+        state: absent
+    
+    - name: Clear rhsm packages
+      file:
+        path: /var/lib/rhsm/packages/packages.json
+        state: absent
+
+    - name: Restart service rhsmcertd
+      service:
+        name: rhsmcertd
+        state: restarted
+  
+  when: ansible_facts['distribution'] == 'RedHat'

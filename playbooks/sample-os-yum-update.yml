@@ -1,0 +1,19 @@
+# Ansible playbook for yum update
+---
+
+- name: Yum Update All
+  hosts: all
+  become: true
+
+  tasks:
+
+    - name: Yum Update All
+      block:
+
+      - name: Subscription Manager - Lock Release
+        command: 'subscription-manager release --set={{ ansible_distribution_version }}'
+
+      - name: Yum update all
+        command: 'yum --assumeyes update'
+    
+      when: ansible_facts['distribution'] == 'RedHat'

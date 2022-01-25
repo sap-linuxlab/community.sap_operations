@@ -1,0 +1,12 @@
+# Ansible playbook to update known hosts file - $HOME/.ssh/known_hosts
+---
+
+- name: Store known hosts of 'all' the hosts in the inventory file
+  hosts: localhost
+  connection: local
+
+  vars:
+    ssh_known_hosts: "{{ groups['all'] }}"
+
+  roles:
+    - { role: community.sap_operations.os_knownhosts }

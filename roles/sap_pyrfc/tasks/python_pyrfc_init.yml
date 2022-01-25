@@ -1,0 +1,69 @@
+# Dependency on Ansible Role for SAP Launchpad
+#- collections:
+#  - community.sap_launchpad
+
+- name: Create directories if does not exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  with_items:
+    - "/software"
+    - "/usr/local/sap"
+
+- name: Install Python package manager pip3, and compiler/library for C and C++
+  yum:
+    name:
+      - python3-pip
+      - gcc
+      - glibc
+      - gcc-c++
+      - libstdc++
+    state: present
+
+- name: Install virtualenv to system Python
+  pip:
+    name:
+      - virtualenv
+
+- name: Create virtualenv for python3, install dependencies to virtualenv. Do not inherit system Python modules
+  pip:
+    name:
+      - cython
+      - wheel
+      - pytest
+      - sphinx
+    virtualenv: ~/env/pyrfc_env
+    virtualenv_command: virtualenv
+    virtualenv_python: python3
+
+# Use task block to call Ansible Module in the Ansible Collection for sap_operations
+- name: Execute Ansible Module to download SAP software
+  community.sap_launchpad.software_center_download:
+    suser_id: "{{ suser_id }}"
+    suser_password: "{{ suser_password }}"
+    softwarecenter_search_query: "{{ sap_nwrfc_sdk }}"
+    dest: "/software"
+
+- name: Discover zip of the SAP NWRFC SDK on target host
+  find:
+    paths: "/software"
+    recurse: yes
+    patterns: "nwrfc*.zip"
+  register: __sap_nwrfc_sdk
+
+- name: Extract zip of the SAP NWRFC SDK on target host
+  ansible.builtin.unarchive:
+    remote_src: yes
+    src: "{{ __sap_nwrfc_sdk.files[0].path }}"
+    dest: /usr/local/sap
+
+- name: Install pyrfc to virtualenv on target host. Do not inherit system Python modules
+  environment:
+    SAPNWRFC_HOME: /usr/local/sap/nwrfcsdk
+  pip:
+    name:
+      - pyrfc
+    virtualenv: ~/env/pyrfc_env
+    virtualenv_command: virtualenv
+    virtualenv_python: python3

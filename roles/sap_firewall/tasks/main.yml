@@ -1,0 +1,39 @@
+---
+
+- name: SAP Firewall
+  block:
+
+  - name: SAP Firewall - Gathering Package Facts
+    package_facts:
+      manager: auto
+  
+  - name: SAP Firewall - Setup
+    block:
+
+    - name: SAP Firewall - Enable Firewall
+      include_tasks: "enable_firewall.yml"
+
+    - name: SAP Firewall - Generate Ports
+      include_tasks: "generate_ports_{{ sap_firewall_type }}.yml"
+      
+    - name: SAP Firewall - Add ports
+      block:
+
+      - name: SAP Firewall - Add Ports
+        include_tasks: update_firewall.yml
+        loop: "{{ sap_firewall_ports }}"
+        loop_control:
+          loop_var: passed_port
+
+      when:
+        - sap_firewall_ports is defined
+    
+    - name: SAP Firewall - Reload Firewall
+      shell: |
+        firewall-cmd --reload
+
+    when:
+      - '"firewalld" in ansible_facts.packages'
+
+  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+

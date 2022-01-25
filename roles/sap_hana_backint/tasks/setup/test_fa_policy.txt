@@ -1,0 +1,25 @@
+# fapolicy
+
+# Update fapolicy rules
+- name: SAP HANA Backint - Setup - Update fapolicy rules for backint
+  block:
+    - name: check fapolicy service
+      stat:
+        path: /run/fapolicyd/fapolicyd.fifo
+      register: fa_fifo
+    - name: check fapolicy rules file
+      stat:
+        path: /etc/fapolicyd/fapolicyd.rules
+      register: fa_rules
+    - name: update fapolicy rules
+      blockinfile:
+        path: /etc/fapolicyd/fapolicyd.rules
+        marker: "# {mark} Allow backint"
+        block: |
+          allow perm=open exe=/usr/libexec/platform-python3.6 : dir={{ sap_hana_backint_setup_backint_directory }}/
+        insertbefore: '^# Only allow known ELF libs' #Hardcoded.
+      when: fa_rules.stat.exists
+      register: fapolicy_res
+    - name: update fapolicy db
+      shell: /usr/sbin/fapolicyd-cli --update
+      when: fa_fifo.stat.exists and fapolicy_res.changed

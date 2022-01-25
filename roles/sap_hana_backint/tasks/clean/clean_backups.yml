@@ -1,0 +1,28 @@
+- name: SAP HANA Backint - Execute - Set fact for SID
+  set_fact:
+    passed_sap_hana_sid: "{{ sap_hana_sid }}"
+  when: sap_hana_sid != "all"
+
+# Set hdbuserstore users
+- name: SAP HANA Backint - Execute - Set facts for hdbuserstore users
+  set_fact:
+    tenant_backup_user: "HDB_TENANT_{{ passed_sap_hana_sid }}_BACKUP_USER"
+
+- name: SAP HANA Backint - Clean - Output cleaning information
+  debug:
+    msg:
+      - "Cleaning backups for: "
+      - "SAP HANA SID   -     {{ passed_sap_hana_sid }} "
+      - "Hostname       -     {{ ansible_hostname }} "
+
+# Clean backup for SYSTEMDB
+- name: SAP HANA Backint - Clean - SYSTEMDB - {{ passed_sap_hana_sid }}
+  include_tasks: clean_backups_systemdb.yml
+
+# Clean backup for Tenant DBs - loop through {{ sap_hana_tenant }}
+- name: SAP HANA Backint - Clean - TENANTDB - {{ passed_sap_hana_sid }}
+  include_tasks: clean_backups_tenants.yml
+  register: clean_hana_tenant
+  loop: "{{ sap_hana_tenant }}"
+  loop_control:
+    loop_var: passed_sap_hana_tenant

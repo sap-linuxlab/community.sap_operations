@@ -1,0 +1,2 @@
+- name: SAP OS Tools - RedHat Subscription Manager
+  include_tasks: "rhsm_{{ sap_rhsm_function }}.yml"
