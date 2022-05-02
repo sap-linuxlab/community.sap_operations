@@ -1,4 +1,4 @@
-pyrfc_first_run: yes
+pyrfc_first_run: true
 
 sap_nwrfc_sdk: nwrfc750P_8-70002752.zip
 

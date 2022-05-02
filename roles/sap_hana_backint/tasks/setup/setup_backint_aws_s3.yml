@@ -15,7 +15,7 @@
 - name: SAP HANA Backint - Setup - AWS S3 - Discover tar.gz of SAP HANA Backint Agent for Amazon S3
   ansible.builtin.find:
     paths: "/"
-    recurse: yes
+    recurse: true
     patterns: "aws-s3-backint-*.tar.gz"
   register: __sap_hana_backint_agent_s3_targz
 
@@ -27,12 +27,12 @@
   ansible.builtin.unarchive:
     src: "{{ __sap_hana_backint_agent_s3_targz.files[0].path }}"
     dest: "{{ sap_hana_backint_setup_temp_dir.path }}"
-    remote_src: yes
+    remote_src: true
 
 - name: SAP HANA Backint - Setup - AWS S3 - Discover binary of SAP HANA Backint Agent for Amazon S3
   ansible.builtin.find:
     paths: "{{ sap_hana_backint_setup_temp_dir.path }}"
-    recurse: yes
+    recurse: true
     file_type: directory
     patterns: "aws-s3-backint"
   register: __sap_hana_backint_agent_s3
@@ -47,15 +47,15 @@
     src: "{{ __sap_hana_backint_agent_s3.files[0].path }}/"
     dest: "{{ sap_hana_backint_setup_backint_directory }}"
     mode: "0755"
-    directory_mode: yes
-    remote_src: yes
+    directory_mode: true
+    remote_src: true
 
 # Change directory owner and permission
 - name: SAP HANA Backint - Setup - AWS S3 - Change directory owner and permission
   ansible.builtin.file:
     path: "{{ sap_hana_backint_setup_backint_directory }}"
     state: directory
-    recurse: yes
+    recurse: true
     mode: "0755"
     owner: "{{ passed_sap_hana_sid | lower }}adm"
     group: sapsys
@@ -70,7 +70,7 @@
   ansible.builtin.git:
     repo: https://github.com/chriselswede/hanacleaner.git
     dest: "$HOME/.ansible/tmp/git_hanacleaner"
-    single_branch: yes
+    single_branch: true
     version: master
 
 # Copy hanacleaner.py
@@ -79,7 +79,7 @@
     src: "$HOME/.ansible/tmp/git_hanacleaner/hanacleaner.py"
     dest: "{{ sap_hana_backint_setup_backint_directory }}/hanacleaner.py"
     mode: "0755"
-    remote_src: yes
+    remote_src: true
   register: hdbbackint_hanacleaner
 
 # Softlink Python

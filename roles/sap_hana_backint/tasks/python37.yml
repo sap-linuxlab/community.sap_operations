@@ -35,7 +35,7 @@
   ansible.builtin.unarchive:
     src: "https://www.python.org/ftp/python/{{ python_version }}/Python-{{ python_version }}.tgz"
     dest: "{{ python_build_path }}"
-    remote_src: yes
+    remote_src: true
 
 - name: Python altinstall - Configure Python build
   #  become_user: "{{ sap_hana_sid | lower }}adm"
@@ -54,7 +54,9 @@
   become: true
   when: python_configured.changed
 
-- name: Python altinstall - Create virtualenv for Python build, install baseline dependencies to virtualenv, and set variable. Do not inherit system Python modules
+- name:
+    Python altinstall - Create virtualenv for Python build, install baseline dependencies to virtualenv, and set variable.
+    Do not inherit system Python modules
   ansible.builtin.pip:
     name:
       - wheel

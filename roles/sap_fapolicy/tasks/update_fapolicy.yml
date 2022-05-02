@@ -17,7 +17,7 @@
       ansible.builtin.lineinfile:
         path: /etc/fapolicyd/fapolicyd.rules
         line: "{{ rules_header }}"
-        insertafter: "# or anything else applications access that is not a computer langauge." #Hardcoded.
+        insertafter: "# or anything else applications access that is not a computer langauge." # Hardcoded.
       when: fa_rules.stat.exists
 
     # Allow permission-any for SAP directories

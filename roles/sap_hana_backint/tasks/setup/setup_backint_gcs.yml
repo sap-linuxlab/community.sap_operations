@@ -53,6 +53,6 @@
     SAPSYSTEMNAME: "{{ passed_sap_hana_sid }}"
 # Add task to process /usr/sap/SID/SYS/global/hdb/opt/backint/backint-gcs/parameters.txt
 # Use /templates/gcs_config.cfg
-#catalog_backup_parameter_file /usr/sap/SID/SYS/global/hdb/opt/backint/backint-gcs/parameters-catalog.txt
-#data_backup_parameter_file /usr/sap/SID/SYS/global/hdb/opt/backint/backint-gcs/parameters-data.txt
-#log_backup_parameter_file  /usr/sap/SID/SYS/global/hdb/opt/backint/backint-gcs/parameters-log.txt
+# catalog_backup_parameter_file /usr/sap/SID/SYS/global/hdb/opt/backint/backint-gcs/parameters-catalog.txt
+# data_backup_parameter_file /usr/sap/SID/SYS/global/hdb/opt/backint/backint-gcs/parameters-data.txt
+# log_backup_parameter_file  /usr/sap/SID/SYS/global/hdb/opt/backint/backint-gcs/parameters-log.txt

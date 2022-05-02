@@ -1,7 +1,7 @@
 ---
 # Dependency on Ansible Role for SAP Launchpad
-#- collections:
-#  - community.sap_launchpad
+# - collections:
+#   community.sap_launchpad
 
 - name: Create directories if does not exist
   ansible.builtin.file:
@@ -49,20 +49,20 @@
 - name: Discover zip of the SAP NWRFC SDK on target host
   ansible.builtin.find:
     paths: "/software"
-    recurse: yes
+    recurse: true
     patterns: "nwrfc*.zip"
   register: __sap_nwrfc_sdk
 
 - name: Extract zip of the SAP NWRFC SDK on target host
   ansible.builtin.unarchive:
-    remote_src: yes
+    remote_src: true
     src: "{{ __sap_nwrfc_sdk.files[0].path }}"
     dest: /usr/local/sap
 
 - name: Install pyrfc to virtualenv on target host. Do not inherit system Python modules
-  ansible.builtin.environment:
+  environment:
     SAPNWRFC_HOME: /usr/local/sap/nwrfcsdk
-  pip:
+  ansible.builtin.pip:
     name:
       - pyrfc
     virtualenv: ~/env/pyrfc_env

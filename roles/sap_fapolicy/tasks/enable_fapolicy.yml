@@ -4,4 +4,4 @@
   ansible.builtin.systemd:
     state: started
     name: fapolicyd
-    enabled: yes
+    enabled: true
