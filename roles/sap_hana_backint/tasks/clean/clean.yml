@@ -3,7 +3,7 @@
 - name: SAP HANA Backint - Clean - sap_hana_sid is provided
   block:
     - name: SAP HANA Backint - Clean - Clean backups for {{ sap_hana_sid }}
-      include_tasks: clean_backups.yml
+      ansible.builtin.include_tasks: clean_backups.yml
   when: sap_hana_sid != "all"
 
 
@@ -12,7 +12,7 @@
 - name: SAP HANA Backint - Clean - All HDB SIDs in hostname {{ ansible_hostname }}
   block:
   - name: SAP HANA Backint - Clean - Clean backups for each SID
-    include_tasks: clean_backups.yml
+    ansible.builtin.include_tasks: clean_backups.yml
     register: clean_backups_reg
     loop: "{{ sap_hana_sid_all }}"
     loop_control:

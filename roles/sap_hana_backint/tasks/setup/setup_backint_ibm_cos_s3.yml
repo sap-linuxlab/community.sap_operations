@@ -1,43 +1,43 @@
 # IBM Cloud Object Storage (COS), S3 compatible
 
 - name: SAP HANA Backint - Execute - Set fact for SID
-  set_fact:
+  ansible.builtin.set_fact:
     passed_sap_hana_sid: "{{ sap_hana_sid }}"
   when: sap_hana_sid != "all"
 
 # Set initial facts
 - name: SAP HANA Backint - Setup - IBM COS - Set facts
-  set_fact:
+  ansible.builtin.set_fact:
     sap_hana_backint_setup_backint_directory: "/usr/sap/{{ passed_sap_hana_sid }}/SYS/global/hdb/opt"
     passed_sap_hana_instance_nr: "{{ sap_hana_instance_nr_one[0] }}"
 
 - name: SAP HANA Backint - Setup - IBM COS - Discover tar.gz of SAP HANA Backint Agent for Amazon S3
-  find:
+  ansible.builtin.find:
     paths: "/"
-    recurse: yes
+    recurse: true
     patterns: "aws-s3-backint-*.tar.gz"
   register: __sap_hana_backint_agent_s3_targz
 
 - name: SAP HANA Backint - Setup - IBM COS - Output tar.gz path of SAP HANA Backint Agent for Amazon S3
-  debug:
+  ansible.builtin.debug:
     msg: "{{ __sap_hana_backint_agent_s3_targz.files[0].path }}"
 
 - name: SAP HANA Backint - Setup - IBM COS - Extract tar.gz of SAP HANA Backint Agent for Amazon S3
   ansible.builtin.unarchive:
     src: "{{ __sap_hana_backint_agent_s3_targz.files[0].path }}"
     dest: "{{ sap_hana_backint_setup_temp_dir.path }}"
-    remote_src: yes   
+    remote_src: true   
 
 - name: SAP HANA Backint - Setup - IBM COS - Discover binary of SAP HANA Backint Agent for Amazon S3
-  find:
+  ansible.builtin.find:
     paths: "{{ sap_hana_backint_setup_temp_dir.path }}"
-    recurse: yes
+    recurse: true
     file_type: directory
     patterns: "aws-s3-backint"
   register: __sap_hana_backint_agent_s3
 
 - name: SAP HANA Backint - Setup - IBM COS - Output binary path of SAP HANA Backint Agent for Amazon S3
-  debug:
+  ansible.builtin.debug:
     msg: "{{ __sap_hana_backint_agent_s3.files[0].path }}"
 
 # src must end in forward-slash / to copy directory contents - https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html#parameter-src
@@ -60,7 +60,7 @@
     group: sapsys
 
 - name: SAP HANA Backint - Setup - IBM COS - Set fact for backint file
-  set_fact:
+  ansible.builtin.set_fact:
     sap_hana_backint_setup_backint_file: "{{ sap_hana_backint_setup_backint_directory }}/hdbbackint"
 
 
@@ -93,11 +93,11 @@
   register: python_37_binary_hana_dir
 
 - name: SAP HANA Backint - Setup - IBM COS - Set fact for Python altinstall
-  set_fact:
+  ansible.builtin.set_fact:
     python_37_binary_hana_softlink: "{{ python_37_binary_hana_dir.dest }}"
 
 - name: SAP HANA Backint - Setup - IBM COS - Replace hdbbackint launch script
-  template:
+  ansible.builtin.template:
     src: "{{ role_path }}/templates/hdbbackint.j2"
     dest: "{{ sap_hana_backint_setup_backint_file }}"
     mode: '0755'
@@ -113,7 +113,7 @@
 
 # Process hdbbackint.cfg
 - name: SAP HANA Backint - Setup - IBM COS - Process hdbbackint.cfg
-  template:
+  ansible.builtin.template:
     src: "{{ role_path }}/templates/ibm_cos_s3_hdbbackint.cfg"
     dest: "{{ sap_hana_backint_setup_backint_directory }}/hdbbackint.cfg"
     mode: '0644'
@@ -130,7 +130,7 @@
     group: sapsys
 
 - name: SAP HANA Backint - Setup - IBM COS - Output backint configuration information
-  debug:
+  ansible.builtin.debug:
     msg:
       - "backint directory  - {{ sap_hana_backint_setup_backint_directory }}"
       - "backint file       - {{ sap_hana_backint_setup_backint_file }}"

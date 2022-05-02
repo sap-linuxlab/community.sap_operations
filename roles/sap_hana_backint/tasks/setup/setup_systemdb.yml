@@ -2,17 +2,17 @@
 
 # Return value
 - name: SAP HANA Backint - Setup - SYSTEMDB - Set facts
-  set_fact:
+  ansible.builtin.set_fact:
     sap_hana_backint_setup_hdbuserstore_system_backup_user: "HDB_SYSTEM_BACKUP_USER"
 
 # Create and Store Connection Info in hdbuserstore for SYSTEMDB
 - name: SAP HANA Backint - Setup - SYSTEMDB - Create and Store Connection Info in hdbuserstore
-  shell: |
+  ansible.builtin.shell: |
         /usr/sap/{{ sap_hana_sid}}/SYS/exe/hdb/hdbuserstore \
         SET {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} {{ ansible_hostname }}:3{{ passed_sap_hana_instance_nr }}13 SYSTEM '{{ sap_hana_backint_setup_system_passwd }}'
   args:
       executable: /bin/bash
-  become: yes
+  become: true
   become_user: "{{ sap_hana_sid | lower }}adm"
   register: sap_hana_backint_setup_hdbuserstore
 
@@ -21,7 +21,7 @@
 
 # Set log parameters if log_enable is true
 - name: SAP HANA Backint - Setup - SYSTEMDB - Set log_mode parameters if log_enable is set to true
-  block:
+  ansible.builtin.block:
   # Set parameter log_mode
   - name: SAP HANA Backint - Setup - SYSTEMDB - Set log_mode to normal
     shell: |
@@ -33,13 +33,13 @@
           EOF
     args:
       executable: /bin/bash
-    become: yes
+    become: true
     become_user: "{{ sap_hana_sid | lower }}adm"
     register: sap_hana_backint_setup_log_mode
 
   # Set parameter log_backup
   - name: SAP HANA Backint - Setup - SYSTEMDB - Set log_backup_parameter_file
-    shell: |
+    ansible.builtin.shell: |
           /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
           -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
           -m <<EOF
@@ -47,11 +47,11 @@
           EOF
     args:
       executable: /bin/bash
-    become: yes
+    become: true
     become_user: "{{ sap_hana_sid | lower }}adm"
 
   - name: SAP HANA Backint - Setup - SYSTEMDB - Set log_backup_using_backint
-    shell: |
+    ansible.builtin.shell: |
           /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
           -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
           -m <<EOF
@@ -59,13 +59,13 @@
           EOF
     args:
       executable: /bin/bash
-    become: yes
+    become: true
     become_user: "{{ sap_hana_sid | lower }}adm"
   when: log_enable | bool
 
 # Set parameter catalog_backup
 - name: SAP HANA Backint - Setup - SYSTEMDB - Set catalog_backup_parameter_file
-  shell: |
+  ansible.builtin.shell: |
         /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
         -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
         -m <<EOF
@@ -73,11 +73,11 @@
         EOF
   args:
       executable: /bin/bash
-  become: yes
+  become: true
   become_user: "{{ sap_hana_sid | lower }}adm"
 
 - name: SAP HANA Backint - Setup - SYSTEMDB - Set catalog_backup_using_backint
-  shell: |
+  ansible.builtin.shell: |
         /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
         -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
         -m <<EOF
@@ -85,12 +85,12 @@
         EOF
   args:
       executable: /bin/bash
-  become: yes
+  become: true
   become_user: "{{ sap_hana_sid | lower }}adm"
 
 # Set parameter data_backup
 - name: SAP HANA Backint - Setup - SYSTEMDB - Set data_backup_parameter_file
-  shell: |
+  ansible.builtin.shell: |
         /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
         -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
         -m <<EOF
@@ -98,5 +98,5 @@
         EOF
   args:
       executable: /bin/bash
-  become: yes
+  become: true
   become_user: "{{ sap_hana_sid | lower }}adm"

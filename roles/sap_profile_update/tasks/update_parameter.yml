@@ -4,7 +4,7 @@
 #     line: "# Updated by sap_profile_update - {{ lookup('pipe','date \"+%Y-%m-%d %H:%M\"') }}\n{{ passed_parameter }}"
 
 - name: Update "{{ passed_parameter }}"
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ passed_parameter_path }}"
     regexp: '^{{ passed_parameter.split()[0] }}'
     line: "{{ passed_parameter }}"

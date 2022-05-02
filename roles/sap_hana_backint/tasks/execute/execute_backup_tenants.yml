@@ -1,8 +1,8 @@
 
 - name: SAP HANA Backint - Execute - TENANTDB - {{ passed_sap_hana_tenant }} - Run backup in the background
-  shell: |
+  ansible.builtin.shell: |
         nohup /usr/sap/{{ passed_sap_hana_sid }}/SYS/exe/hdb/hdbsql -U {{ system_backup_user }} "BACKUP DATA FOR {{ passed_sap_hana_tenant }} USING BACKINT ('COMPLETE_DATA_BACKUP');" &
   args:
       executable: /bin/bash
-  become: yes
+  become: true
   become_user: "{{ passed_sap_hana_sid | lower }}adm"

@@ -2,29 +2,29 @@
   block:
 
     - name: Subscription Manager - Refresh
-      command: 'subscription-manager refresh'
+      ansible.builtin.command: 'subscription-manager refresh'
 
     - name: Subscription Manager - Identity Regenerate
-      command: 'subscription-manager identity --regenerate'
+      ansible.builtin.command: 'subscription-manager identity --regenerate'
 
     - name: Subscription Manager - Lock Release
-      command: 'subscription-manager release --set={{ ansible_distribution_version }}'
+      ansible.builtin.command: 'subscription-manager release --set={{ ansible_distribution_version }}'
     
     - name: Yum clean all
-      command: 'yum clean all'
+      ansible.builtin.command: 'yum clean all'
 
     - name: Clear dnf cache
-      file:
+      ansible.builtin.file:
         path: /var/cache/dnf
         state: absent
     
     - name: Clear rhsm packages
-      file:
+      ansible.builtin.file:
         path: /var/lib/rhsm/packages/packages.json
         state: absent
 
     - name: Restart service rhsmcertd
-      service:
+      ansible.builtin.service:
         name: rhsmcertd
         state: restarted
   

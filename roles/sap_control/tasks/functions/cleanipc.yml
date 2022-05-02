@@ -1,9 +1,9 @@
 - name: SAP {{ sap_control_name_header }} - Cleanipc {{ passed_sap_nr }}
-  shell: |
+  ansible.builtin.shell: |
     source ~/.profile && cleanipc {{ passed_sap_nr }} remove
   args:
     executable: /bin/bash
-  become: yes
+  become: true
   become_method: sudo
   become_user: "{{ passed_sap_sid | lower }}adm"
   register: cleanipc

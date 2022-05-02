@@ -14,40 +14,40 @@
   #     - "repos --disable='*'"
 
   - name: Subscription Manager - Clean
-    command: 'subscription-manager clean' 
+    ansible.builtin.command: 'subscription-manager clean' 
 
   - name: Subscription Manager - Remove
-    command: 'subscription-manager remove --all'
+    ansible.builtin.command: 'subscription-manager remove --all'
 
   - name: Subscription Manager - Register
-    command: 'subscription-manager register --force --username={{ sap_rhsm_username }} --password="{{ sap_rhsm_password }}"'
+    ansible.builtin.command: 'subscription-manager register --force --username={{ sap_rhsm_username }} --password="{{ sap_rhsm_password }}"'
 
   - name: Subscription Manager - Identity Regenerate
-    command: 'subscription-manager identity --regenerate --force --username={{ sap_rhsm_username }} --password="{{ sap_rhsm_password }}"'
+    ansible.builtin.command: 'subscription-manager identity --regenerate --force --username={{ sap_rhsm_username }} --password="{{ sap_rhsm_password }}"'
 
   - name: Subscription Manager - Auto Attach
-    command: 'subscription-manager auto-attach'
+    ansible.builtin.command: 'subscription-manager auto-attach'
 
   - name: Subscription Manager - Attach Pool
-    command: 'subscription-manager attach --pool="{{ sap_rhsm_pool_id }}"'
+    ansible.builtin.command: 'subscription-manager attach --pool="{{ sap_rhsm_pool_id }}"'
 
   - name: Subscription Manager - Lock Release
-    command: 'subscription-manager release --set={{ ansible_distribution_version }}'
+    ansible.builtin.command: 'subscription-manager release --set={{ ansible_distribution_version }}'
 
   - name: Subscription Manager - Disable Repos
-    command: 'subscription-manager repos --disable="*"'
+    ansible.builtin.command: 'subscription-manager repos --disable="*"'
 
   - name: Subscription Manager - Enable Repos
-    command: 'subscription-manager repos --enable="{{ item }}"'
+    ansible.builtin.command: 'subscription-manager repos --enable="{{ item }}"'
     loop: "{{ sap_rhsm_repos }}"
 
   - name: Yum clean all
-    command: 'yum clean all'
+    ansible.builtin.command: 'yum clean all'
     args:
       warn: false
       
   - name: Yum search sap-
-    command: 'yum -y search sap-'
+    ansible.builtin.command: 'yum -y search sap-'
 
   # - name: Yum install yum-utils
   #   command: 'yum -y install yum-utils'
@@ -56,21 +56,21 @@
   #   command: 'yum -y install nfs-utils'
 
   - name: Yum install
-    command: 'yum -y install {{ item }}'
+    ansible.builtin.command: 'yum -y install {{ item }}'
     loop: "{{ sap_rhsm_packages }}"
 
   - name: Clear dnf cache
-    file:
+    ansible.builtin.file:
       path: /var/cache/dnf
       state: absent
   
   - name: Clear rhsm packages
-    file:
+    ansible.builtin.file:
       path: /var/lib/rhsm/packages/packages.json
       state: absent
 
   - name: Restart service rhsmcertd
-    service:
+    ansible.builtin.service:
       name: rhsmcertd
       state: restarted
   

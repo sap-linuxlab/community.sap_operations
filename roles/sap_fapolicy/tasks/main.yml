@@ -1,12 +1,12 @@
 - name: SAP Fapolicy - Gathering Package Facts
-  package_facts:
+  ansible.builtin.package_facts:
     manager: auto
 
 - name: SAP Fapolicy - Setup
   block:    
 
     - name: Get sidadm user of SID
-      include_tasks: get_sidadm_user.yml
+      ansible.builtin.include_tasks: get_sidadm_user.yml
       when:
         - "'generic' not in sap_fapolicy_type"
         - sap_fapolicy_user is defined
@@ -21,7 +21,7 @@
     - name: Get UID of user
       vars:
         passed_user: "{{ sap_fapolicy_user | lower }}"
-      include_tasks: get_user_uid.yml
+      ansible.builtin.include_tasks: get_user_uid.yml
 
     # # At this point, we should have all uids
     # - debug:
@@ -29,10 +29,10 @@
     #       - "{{ sap_fapolicy_uid_list }}"
 
     - name: SAP Fapolicy - Enable Fapolicy
-      include_tasks: "enable_fapolicy.yml"
+      ansible.builtin.include_tasks: "enable_fapolicy.yml"
 
     - name: SAP Fapolicy - Update Fapolicy
-      include_tasks: "update_fapolicy.yml"
+      ansible.builtin.include_tasks: "update_fapolicy.yml"
 
   when: 
     - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"

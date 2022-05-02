@@ -3,7 +3,7 @@
 # This task requires the variable sap_hana_sid
 
 - name: SAP HANA Backint - Get info - Get Tenant DBs of SAP HANA Database Server {{ sap_hana_sid }}
-  shell: |
+  ansible.builtin.shell: |
         while read LINE
         do
           ### Check to see if /usr/sap/SID exists. If not then its probably not used anymore / its not a SID so ignore
@@ -23,5 +23,5 @@
 
 # Return value - sap_hana_sid_all
 - name: SAP HANA Backint - Get info - Set facts for all SAP HANA System IDs (SIDs)
-  set_fact:
+  ansible.builtin.set_fact:
     sap_hana_sid_all: "{{ get_all_sap_hana_sid.stdout.split() }}"

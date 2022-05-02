@@ -1,17 +1,17 @@
 ---
 # Lowercase input
 - name: Lowercase input
-  set_fact:
+  ansible.builtin.set_fact:
     sap_control_function: "{{ sap_control_function | lower }}"
 
 # Check inputs
 - name: Check function validity
-  fail: msg="Function {{ sap_control_function }} is invalid"
+  ansible.builtin.fail: msg="Function {{ sap_control_function }} is invalid"
   when:
     - "sap_control_function not in sap_control_functions_list"
 
 - name: Check function if defined
-  fail: msg="No sap_control_function defined"
+  ansible.builtin.fail: msg="No sap_control_function defined"
   when: 
     - "sap_control_function == 'initial'"
 
@@ -21,13 +21,13 @@
 #     - (sap_sid != 'initial') and ('all' in sap_control_function)
 
 - name: Check function - all and SID
-  fail: msg="Parameter 'sap_sid' is required when not using an 'all' function"
+  ansible.builtin.fail: msg="Parameter 'sap_sid' is required when not using an 'all' function"
   when:
     - (sap_sid == 'initial') and ('all' not in sap_control_function)
 
 # Set facts when nowait is true
 - name: Set facts when nowait is true
-  set_fact:
+  ansible.builtin.set_fact:
     sap_control_start: "Start"
     sap_control_stop: "Stop"
   when: nowait | bool
@@ -50,17 +50,17 @@
 #   - start_sap_hana
 
 - name: Set function list facts
-  set_fact:
+  ansible.builtin.set_fact:
     sap_control_act_type: "{{ sap_control_function.split('_')[0] | lower }}"
     sap_control_get_type: "{{ sap_control_function.split('_')[1] | lower }}"
     sap_control_sap_type: "{{ sap_control_function.split('_')[2] | lower }}"
 
 - name: Set sap_facts_param
-  set_fact:
+  ansible.builtin.set_fact:
     sap_facts_param: "{{ sap_control_get_type }}"
 
 - name: Set sap_facts_param
-  set_fact: 
+  ansible.builtin.set_fact: 
     sap_facts_param: "{{ sap_control_sap_type }}"
   when:
     - "'all' in sap_control_function"
@@ -68,7 +68,7 @@
 
 # When not all
 - name: Set sap_facts_param
-  set_fact: 
+  ansible.builtin.set_fact: 
     sap_facts_param: "{{ sap_sid }}"
   when:
     - "'all' not in sap_control_function"
@@ -104,7 +104,7 @@
 
 # Start SAP Control
 - name: SAP Control
-  include_tasks: prepare.yml
+  ansible.builtin.include_tasks: prepare.yml
   loop: "{{ vars[sap_control_function + '_list'] }}"
   loop_control:
     loop_var: function_list
