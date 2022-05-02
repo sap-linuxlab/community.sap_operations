@@ -13,17 +13,6 @@ jobs:
     - name: Lint Ansible Playbook
       uses: ansible/ansible-lint-action@main
       with:
-        targets: |
-          ./roles/os_ansible_user
-          ./roles/os_etchosts
-          ./roles/os_knownhosts
-          ./roles/sap_control
-          ./roles/sap_fapolicy
-          ./roles/sap_firewall
-          ./roles/sap_hana_backint
-          ./roles/sap_profile_update
-          ./roles/sap_pyrfc
-          ./roles/sap_rhsm
         override-deps: |
           ansible==4.8.0
           ansible-core==2.11.6
