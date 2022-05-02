@@ -1,5 +1,4 @@
 ---
-
 # Get instance profile path using sapcontrol
 - name: SAP Profile Update - Get Instance Profile
   ansible.builtin.shell: |
@@ -12,12 +11,12 @@
 
 - name: setup facts
   ansible.builtin.set_fact:
-    sap_update_profile_default_profile_file_path : "/sapmnt/{{ sap_update_profile_sid }}/profile/DEFAULT.PFL"
-    sap_update_profile_instance_profile_file_path : "{{ get_instance_profile.stdout }}"
+    sap_update_profile_default_profile_file_path: "/sapmnt/{{ sap_update_profile_sid }}/profile/DEFAULT.PFL"
+    sap_update_profile_instance_profile_file_path: "{{ get_instance_profile.stdout }}"
 
 # Update default profile
 - name: SAP Profile Update - Updating DEFAULT.PFL
-  ansible.builtin.include_tasks : update_parameter.yml
+  ansible.builtin.include_tasks: update_parameter.yml
   vars:
     passed_parameter_path: "{{ sap_update_profile_default_profile_file_path }}"
   loop: "{{ sap_update_profile_default_profile_params }}"
@@ -28,7 +27,7 @@
 
 # Update instance profile
 - name: SAP Profile Update - Updating instance profile
-  ansible.builtin.include_tasks : update_parameter.yml
+  ansible.builtin.include_tasks: update_parameter.yml
   vars:
     passed_parameter_path: "{{ sap_update_profile_instance_profile_file_path }}"
   loop: "{{ sap_update_profile_instance_profile_params }}"

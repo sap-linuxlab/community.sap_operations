@@ -12,7 +12,7 @@
 
 - name: Check function if defined
   ansible.builtin.fail: msg="No sap_control_function defined"
-  when: 
+  when:
     - "sap_control_function == 'initial'"
 
 # - name: Check function - all and SID
@@ -60,7 +60,7 @@
     sap_facts_param: "{{ sap_control_get_type }}"
 
 - name: Set sap_facts_param
-  ansible.builtin.set_fact: 
+  ansible.builtin.set_fact:
     sap_facts_param: "{{ sap_control_sap_type }}"
   when:
     - "'all' in sap_control_function"
@@ -68,7 +68,7 @@
 
 # When not all
 - name: Set sap_facts_param
-  ansible.builtin.set_fact: 
+  ansible.builtin.set_fact:
     sap_facts_param: "{{ sap_sid }}"
   when:
     - "'all' not in sap_control_function"
@@ -77,24 +77,26 @@
 # - name: Get SAP Info
 #   vars:
 #     sap_info_get_function: "get_{{ sap_control_get_type }}_{{ sap_control_sap_type }}"
-#   include_role: 
+#   include_role:
 #     name: roles/sap_info
 
 # Get SAP Facts
 - name: Run sap_facts module to gather SAP facts
   sap_facts:
-      param: "{{ sap_facts_param }}"
+    param: "{{ sap_facts_param }}"
   register: sap_facts_register
 
-- debug:
+- name: Debug facts
+  ansible.builtin.debug:
     msg: "{{ sap_facts_register.sap_facts }}"
 
-- pause:
+- name: pause for 10 Seconds
+  ansible.builtin.pause:
     seconds: 10
 
 # Debugging stuff
 - name: Display parameters for runtime
-  debug:
+  ansible.builtin.debug:
     msg:
       - "Starting sap_control with the following parameters: "
       - "{{ sap_control_function }}"
@@ -108,6 +110,3 @@
   loop: "{{ vars[sap_control_function + '_list'] }}"
   loop_control:
     loop_var: function_list
-    
-
-    

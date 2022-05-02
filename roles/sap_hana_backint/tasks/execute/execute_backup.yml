@@ -1,3 +1,4 @@
+---
 - name: SAP HANA Backint - Execute - Set fact for SID
   ansible.builtin.set_fact:
     passed_sap_hana_sid: "{{ sap_hana_sid }}"

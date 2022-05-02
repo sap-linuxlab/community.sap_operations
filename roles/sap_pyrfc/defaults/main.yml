@@ -1,4 +1,3 @@
-
 pyrfc_first_run: yes
 
 sap_nwrfc_sdk: nwrfc750P_8-70002752.zip
@@ -6,7 +5,7 @@ sap_nwrfc_sdk: nwrfc750P_8-70002752.zip
 target_function: STFC_CONNECTION
 
 target_parameters:
-  REQUTEXT: 'Hello SAP!'
+  REQUTEXT: "Hello SAP!"
 
 target_connection:
   ashost: s4hana.poc.cloud

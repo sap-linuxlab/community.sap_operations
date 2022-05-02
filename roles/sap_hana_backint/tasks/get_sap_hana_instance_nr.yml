@@ -1,5 +1,4 @@
 ---
-
 # This task requires the variable sap_hana_sid
 
 - name: SAP HANA Backint - Get info - Get instance number of SAP HANA Database Server {{ sap_hana_sid }}

@@ -1,3 +1,4 @@
+---
 # Amazon Simple Storage Service (S3)
 
 - name: SAP HANA Backint - Execute - Set fact for SID
@@ -26,7 +27,7 @@
   ansible.builtin.unarchive:
     src: "{{ __sap_hana_backint_agent_s3_targz.files[0].path }}"
     dest: "{{ sap_hana_backint_setup_temp_dir.path }}"
-    remote_src: yes   
+    remote_src: yes
 
 - name: SAP HANA Backint - Setup - AWS S3 - Discover binary of SAP HANA Backint Agent for Amazon S3
   ansible.builtin.find:
@@ -45,7 +46,7 @@
   ansible.builtin.copy:
     src: "{{ __sap_hana_backint_agent_s3.files[0].path }}/"
     dest: "{{ sap_hana_backint_setup_backint_directory }}"
-    mode: '0755'
+    mode: "0755"
     directory_mode: yes
     remote_src: yes
 
@@ -55,14 +56,13 @@
     path: "{{ sap_hana_backint_setup_backint_directory }}"
     state: directory
     recurse: yes
-    mode: '0755'
+    mode: "0755"
     owner: "{{ passed_sap_hana_sid | lower }}adm"
     group: sapsys
 
 - name: SAP HANA Backint - Setup - AWS S3 - Set fact for backint file
   ansible.builtin.set_fact:
     sap_hana_backint_setup_backint_file: "{{ sap_hana_backint_setup_backint_directory }}/hdbbackint"
-
 
 # Setup
 
@@ -78,7 +78,7 @@
   ansible.builtin.copy:
     src: "$HOME/.ansible/tmp/git_hanacleaner/hanacleaner.py"
     dest: "{{ sap_hana_backint_setup_backint_directory }}/hanacleaner.py"
-    mode: '0755'
+    mode: "0755"
     remote_src: yes
   register: hdbbackint_hanacleaner
 
@@ -100,7 +100,7 @@
   ansible.builtin.template:
     src: "{{ role_path }}/templates/hdbbackint.j2"
     dest: "{{ sap_hana_backint_setup_backint_file }}"
-    mode: '0755'
+    mode: "0755"
 
 # Softlink hdbbackint
 #- name: SAP HANA Backint - Setup - AWS S3 - {{ sap_hana_backint_setup_backint_file }} {{ sap_hana_backint_setup_backint_directory }}/hdbbackint
@@ -116,7 +116,7 @@
   ansible.builtin.template:
     src: "{{ role_path }}/templates/aws_s3_hdbbackint.cfg"
     dest: "{{ sap_hana_backint_setup_backint_directory }}/hdbbackint.cfg"
-    mode: '0644'
+    mode: "0644"
   register: hdbbackint_template
 
 # Change directory owner and permission
@@ -125,7 +125,7 @@
     path: "{{ sap_hana_backint_setup_backint_directory }}"
     state: directory
     recurse: yes
-    mode: '0755'
+    mode: "0755"
     owner: "{{ passed_sap_hana_sid | lower }}adm"
     group: sapsys
 

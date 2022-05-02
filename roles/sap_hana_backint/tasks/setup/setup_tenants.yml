@@ -1,3 +1,4 @@
+---
 # hdbuserstore
 
 - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Set facts
@@ -7,94 +8,93 @@
 # Create and Store Connection Info in hdbuserstore for TENANTDB
 - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Create and Store Connection Info in hdbuserstore
   ansible.builtin.shell: |
-        /usr/sap/{{ sap_hana_sid}}/SYS/exe/hdb/hdbuserstore \
-        SET {{ sap_hana_backint_setup_hdbuserstore_tenant_backup_user }} {{ ansible_hostname }}:3{{ passed_sap_hana_instance_nr }}15 SYSTEM '{{ sap_hana_backint_setup_system_tenant_passwd }}'
+    /usr/sap/{{ sap_hana_sid}}/SYS/exe/hdb/hdbuserstore \
+    SET {{ sap_hana_backint_setup_hdbuserstore_tenant_backup_user }} {{ ansible_hostname }}:3{{ passed_sap_hana_instance_nr }}15 SYSTEM '{{ sap_hana_backint_setup_system_tenant_passwd }}'
   args:
-      executable: /bin/bash
+    executable: /bin/bash
   become: true
   become_user: "{{ sap_hana_sid | lower }}adm"
   register: sap_hana_backint_setup_hdbuserstore
-
 
 # Set SAP HANA parameters
 
 # Set log parameters if log_enable is true
 - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Set log_mode parameters if log_enable is set to true
   block:
-  # Set parameter log_mode
-  - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Set log_mode to normal
-    ansible.builtin.shell: |
-          /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
-          -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
-          -m <<EOF
-          ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('persistence','log_mode') = 'normal' WITH RECONFIGURE;
-          EOF
-    args:
-      executable: /bin/bash
-    become: true
-    become_user: "{{ sap_hana_sid | lower }}adm"
-    register: sap_hana_backint_setup_log_mode
+    # Set parameter log_mode
+    - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Set log_mode to normal
+      ansible.builtin.shell: |
+        /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
+        -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
+        -m <<EOF
+        ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('persistence','log_mode') = 'normal' WITH RECONFIGURE;
+        EOF
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: "{{ sap_hana_sid | lower }}adm"
+      register: sap_hana_backint_setup_log_mode
 
-  # Set parameter log_backup
-  - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Set log_backup_parameter_file
-    ansible.builtin.shell: |
-          /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
-          -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
-          -m <<EOF
-          ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('backup','log_backup_parameter_file') = '{{ sap_hana_backint_setup_backint_directory }}/hdbbackint.cfg' WITH RECONFIGURE;
-          EOF
-    args:
-      executable: /bin/bash
-    become: true
-    become_user: "{{ sap_hana_sid | lower }}adm"
+    # Set parameter log_backup
+    - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Set log_backup_parameter_file
+      ansible.builtin.shell: |
+        /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
+        -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
+        -m <<EOF
+        ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('backup','log_backup_parameter_file') = '{{ sap_hana_backint_setup_backint_directory }}/hdbbackint.cfg' WITH RECONFIGURE;
+        EOF
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: "{{ sap_hana_sid | lower }}adm"
 
-  - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Set log_backup_using_backint
-    ansible.builtin.shell: |
-          /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
-          -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
-          -m <<EOF
-          ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('backup','log_backup_using_backint') = 'true' WITH RECONFIGURE;
-          EOF
-    args:
-      executable: /bin/bash
-    become: true
-    become_user: "{{ sap_hana_sid | lower }}adm"
+    - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Set log_backup_using_backint
+      ansible.builtin.shell: |
+        /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
+        -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
+        -m <<EOF
+        ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('backup','log_backup_using_backint') = 'true' WITH RECONFIGURE;
+        EOF
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: "{{ sap_hana_sid | lower }}adm"
   when: log_enable | bool
 
 # Set parameter catalog_backup
 - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Set catalog_backup_parameter_file
   ansible.builtin.shell: |
-        /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
-        -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
-        -m <<EOF
-        ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('backup','catalog_backup_parameter_file') = '{{ sap_hana_backint_setup_backint_directory }}/hdbbackint.cfg' WITH RECONFIGURE;
-        EOF
+    /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
+    -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
+    -m <<EOF
+    ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('backup','catalog_backup_parameter_file') = '{{ sap_hana_backint_setup_backint_directory }}/hdbbackint.cfg' WITH RECONFIGURE;
+    EOF
   args:
-      executable: /bin/bash
+    executable: /bin/bash
   become: true
   become_user: "{{ sap_hana_sid | lower }}adm"
 
 - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Set catalog_backup_using_backint
   ansible.builtin.shell: |
-        /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
-        -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
-        -m <<EOF
-        ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('backup','catalog_backup_using_backint') = 'true' WITH RECONFIGURE;
-        EOF
+    /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
+    -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
+    -m <<EOF
+    ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('backup','catalog_backup_using_backint') = 'true' WITH RECONFIGURE;
+    EOF
   args:
-      executable: /bin/bash
+    executable: /bin/bash
   become: true
   become_user: "{{ sap_hana_sid | lower }}adm"
 
 # Set parameter data_backup
 - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Set data_backup_parameter_file
   ansible.builtin.shell: |
-        /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
-        -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
-        -m <<EOF
-        ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('backup','data_backup_parameter_file') = '{{ sap_hana_backint_setup_backint_directory }}/hdbbackint.cfg' WITH RECONFIGURE;
-        EOF
+    /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
+    -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
+    -m <<EOF
+    ALTER SYSTEM ALTER CONFIGURATION('global.ini','DATABASE','{{ passed_sap_hana_tenant }}') SET ('backup','data_backup_parameter_file') = '{{ sap_hana_backint_setup_backint_directory }}/hdbbackint.cfg' WITH RECONFIGURE;
+    EOF
   args:
-      executable: /bin/bash
+    executable: /bin/bash
   become: true
   become_user: "{{ sap_hana_sid | lower }}adm"

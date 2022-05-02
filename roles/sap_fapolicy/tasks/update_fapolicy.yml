@@ -1,3 +1,4 @@
+---
 # Update fapolicy rules
 - name: Update fapolicy rules
   block:
@@ -16,7 +17,7 @@
       ansible.builtin.lineinfile:
         path: /etc/fapolicyd/fapolicyd.rules
         line: "{{ rules_header }}"
-        insertafter: '# or anything else applications access that is not a computer langauge.' #Hardcoded.
+        insertafter: "# or anything else applications access that is not a computer langauge." #Hardcoded.
       when: fa_rules.stat.exists
 
     # Allow permission-any for SAP directories
@@ -38,7 +39,6 @@
         insertafter: "{{ rules_header }}"
       when: fa_rules.stat.exists
       register: fapolicy_res
-
 
     - name: update fapolicy db
       ansible.builtin.shell: /usr/sbin/fapolicyd-cli --update

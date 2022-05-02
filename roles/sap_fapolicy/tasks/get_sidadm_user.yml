@@ -1,5 +1,4 @@
 ---
-
 # This task requires the variable sap_fapolicy_sid
 
 - name: Get sidadm user of "{{ sap_fapolicy_sid }}"
@@ -11,7 +10,6 @@
 - name: Return value from previous fact
   ansible.builtin.set_fact:
     sap_fapolicy_user: "{{ sidadm_user.split() }}"
-
 # - name: Merge the sap_fapolicy_user_list with result
 #   set_fact:
 #     sap_fapolicy_user_list: "{{ sap_fapolicy_user_list + get_sidadm_user_return }}"

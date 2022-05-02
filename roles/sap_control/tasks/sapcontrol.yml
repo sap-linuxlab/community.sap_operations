@@ -6,7 +6,7 @@
   ansible.builtin.set_fact:
     passed_sap_nr: "{{ sap_control_execute_instance_nr }}"
     passed_sap_sid: "{{ sap_control_execute_sid }}"
-    
+
 # Check sapstartsrv
 - name: SAP {{ sap_control_name_header }} - sapstartsrv
   ansible.builtin.include_tasks: functions/sapstartsrv.yml
@@ -29,7 +29,3 @@
   when:
     - "'nw' in sap_type"
     - "'stop' in funct_type"
-
-
-
-  

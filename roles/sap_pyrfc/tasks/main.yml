@@ -1,5 +1,4 @@
 ---
-
 - name: Initial install of Python altinstall for PyRFC
   ansible.builtin.include_tasks: python_pyrfc_init.yml
   when: pyrfc_first_run | bool

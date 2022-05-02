@@ -9,7 +9,7 @@
 - name: SAP HANA Backint - Set fact if sap_hana_sid is provided
   ansible.builtin.set_fact:
     backint_directory: "/usr/sap/{{ sap_hana_sid }}/SYS/global/hdb/opt"
-#    tenant_backup_user: "HDB_TENANT_{{ passed_sap_hana_tenant }}_BACKUP_USER"
+  # tenant_backup_user: "HDB_TENANT_{{ passed_sap_hana_tenant }}_BACKUP_USER"
   when: sap_hana_sid != "all"
 
 # List is stored in sap_hana_sid_all

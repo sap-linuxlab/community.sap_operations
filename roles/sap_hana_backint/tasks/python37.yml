@@ -1,3 +1,4 @@
+---
 - name: Python (System) - Install Python package manager pip3, git, make, compiler/library for C and C++, and compilers for zlib, openssl, libssl
   ansible.builtin.yum:
     name:
@@ -37,7 +38,7 @@
     remote_src: yes
 
 - name: Python altinstall - Configure Python build
-#  become_user: "{{ sap_hana_sid | lower }}adm"
+  #  become_user: "{{ sap_hana_sid | lower }}adm"
   ansible.builtin.command: ./configure --enable-share=no --prefix={{ python_altinstall_path }}/python_backint_local
   args:
     chdir: "{{ python_build_path }}/Python-{{ python_version }}"
@@ -45,8 +46,8 @@
 
 # This executes the build, and creates /usr/local/lib
 - name: Python altinstall - Make Python build
-#  become_user: "{{ sap_hana_sid | lower }}adm"
-#  shell: make && make altinstall
+  #  become_user: "{{ sap_hana_sid | lower }}adm"
+  #  shell: make && make altinstall
   ansible.builtin.shell: make altinstall
   args:
     chdir: "{{ python_build_path }}/Python-{{ python_version }}"
@@ -66,7 +67,7 @@
 - name: Python altinstall - Change owner and group permission for directories, subdirectories and files
   ansible.builtin.file:
     path: "{{ item }}"
-    recurse: true 
+    recurse: true
     mode: 0755
     owner: "{{ sap_hana_sid | lower }}adm"
     group: sapsys

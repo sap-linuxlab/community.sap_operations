@@ -1,5 +1,4 @@
 ---
-
 # This task requires the variable sap_hana_sid and hdbuserstore system_backup_user
 
 - name: SAP HANA Backint - Get info - Get Tenant DBs of SAP HANA Database Server {{ sap_hana_sid }}

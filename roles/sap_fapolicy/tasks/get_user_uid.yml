@@ -1,19 +1,17 @@
 ---
-
 # This task requires the variable passed_user
 
 - name: Get UID "{{ passed_user }}"
   ansible.builtin.shell: |
-        id -u {{ passed_user }}
+    id -u {{ passed_user }}
   args:
-     executable: /bin/bash
+    executable: /bin/bash
   register: get_user_uid_register
 
 # Return value
 - name: return value from previous fact
   ansible.builtin.set_fact:
     sap_fapolicy_uid: "{{ get_user_uid_register.stdout.split() }}"
-
 # - name: Merge the sap_fapolicy_uid_list with result
 #   set_fact:
 #     sap_fapolicy_uid_list: "{{ sap_fapolicy_uid_list + get_user_uid_return }}"

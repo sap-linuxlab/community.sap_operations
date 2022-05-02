@@ -1,4 +1,4 @@
-
+---
 # 1. Prepare backint
 
 - name: SAP HANA Backint - Setup - Create temporary directory
@@ -6,7 +6,6 @@
     state: directory
     suffix: sap_hana_backint_setup_temp_dir
   register: sap_hana_backint_setup_temp_dir
-
 
 # 2. Setup the selected backint agent
 
@@ -16,7 +15,6 @@
     - name: SAP HANA Backint - Setup - Setup Backint for {{ sap_hana_sid }}
       ansible.builtin.include_tasks: "setup_backint_{{ target_platform }}.yml"
   when: sap_hana_sid != "all"
-
 
 # Setup backint for each SID - loop through list {{ sap_hana_sid_all }}
 # Loop is equivalent to with_list, and must not be a string
@@ -29,7 +27,6 @@
         loop_var: passed_sap_hana_sid
       register: setup_backint_reg
   when: sap_hana_sid == "all"
-
 
 # 3. Define backups to execute
 
@@ -45,7 +42,6 @@
   loop: "{{ sap_hana_tenant }}"
   loop_control:
     loop_var: passed_sap_hana_tenant
-
 
 # 4. Cleanup
 

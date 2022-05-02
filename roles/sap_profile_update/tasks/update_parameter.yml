@@ -6,8 +6,8 @@
 - name: Update "{{ passed_parameter }}"
   ansible.builtin.lineinfile:
     path: "{{ passed_parameter_path }}"
-    regexp: '^{{ passed_parameter.split()[0] }}'
+    regexp: "^{{ passed_parameter.split()[0] }}"
     line: "{{ passed_parameter }}"
     owner: "{{ sap_update_profile_sid | lower }}adm"
     group: sapsys
-    mode: '0644'
+    mode: "0644"

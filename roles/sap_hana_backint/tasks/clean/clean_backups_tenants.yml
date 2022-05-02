@@ -1,9 +1,9 @@
-
+---
 - name: SAP HANA Backint - Clean - Execute hanacleaner.py for TENANTDB - {{ passed_sap_hana_tenant }}
   ansible.builtin.shell: |
-          source ~/.profile && python {{ backint_directory }}/hanacleaner.py -k {{ tenant_backup_user }} -be {{ backup_retention }} -bb true -fs
+    source ~/.profile && python {{ backint_directory }}/hanacleaner.py -k {{ tenant_backup_user }} -be {{ backup_retention }} -bb true -fs
   args:
-      executable: /bin/bash
+    executable: /bin/bash
   become: true
   become_user: "{{ passed_sap_hana_sid | lower }}adm"
   register: sap_hana_backint_clean_execute_hanacleaner

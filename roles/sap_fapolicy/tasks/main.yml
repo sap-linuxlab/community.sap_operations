@@ -1,10 +1,10 @@
+---
 - name: SAP Fapolicy - Gathering Package Facts
   ansible.builtin.package_facts:
     manager: auto
 
 - name: SAP Fapolicy - Setup
-  block:    
-
+  block:
     - name: Get sidadm user of SID
       ansible.builtin.include_tasks: get_sidadm_user.yml
       when:
@@ -15,7 +15,7 @@
     # - debug:
     #     msg:
     #       - "{{ sap_fapolicy_user_list }}"
-    
+
     # Get UIDs of users
     # List is stored in sap_fapolicy_uid_list
     - name: Get UID of user
@@ -34,7 +34,6 @@
     - name: SAP Fapolicy - Update Fapolicy
       ansible.builtin.include_tasks: "update_fapolicy.yml"
 
-  when: 
+  when:
     - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
     - '"fapolicyd" in ansible_facts.packages'
-
