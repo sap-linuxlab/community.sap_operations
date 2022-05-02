@@ -1,4 +1,3 @@
----
-warn_list:
+skip_list:
   - command-instead-of-module
   - command-instead-of-shell
