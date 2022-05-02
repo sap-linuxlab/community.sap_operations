@@ -13,6 +13,7 @@ jobs:
     - name: Lint Ansible Playbook
       uses: ansible/ansible-lint-action@main
       with:
+        path: "roles/"
         override-deps: |
           ansible==4.8.0
           ansible-core==2.11.6
