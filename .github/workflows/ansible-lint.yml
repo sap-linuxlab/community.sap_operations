@@ -14,9 +14,4 @@ jobs:
       uses: ansible/ansible-lint-action@main
       with:
         path: "roles/"
-        override-deps: |
-          ansible==4.8.0
-          ansible-core==2.11.6
-          ansible-lint==5.2.1
-
 # Static: use Ansible Community Edition 4.8.0, with lowest compatible Ansible Core 2.11.6 and use Ansible-lint 5.2.1
