@@ -8,7 +8,7 @@
 # Create and Store Connection Info in hdbuserstore for TENANTDB
 - name: SAP HANA Backint - Setup - TENANTDB - {{ passed_sap_hana_tenant }} - Create and Store Connection Info in hdbuserstore
   ansible.builtin.shell: |
-    /usr/sap/{{ sap_hana_sid}}/SYS/exe/hdb/hdbuserstore \
+    /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbuserstore \
     SET {{ sap_hana_backint_setup_hdbuserstore_tenant_backup_user }} {{ ansible_hostname }}:3{{ passed_sap_hana_instance_nr }}15 SYSTEM '{{ sap_hana_backint_setup_system_tenant_passwd }}'
   args:
     executable: /bin/bash
