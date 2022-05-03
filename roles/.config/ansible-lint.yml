@@ -1,4 +1,6 @@
-skip_list:
+---
+
+warn_list:
   - command-instead-of-module
   - command-instead-of-shell
   - line-length
