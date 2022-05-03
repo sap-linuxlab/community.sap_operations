@@ -21,7 +21,7 @@
 
 # Set log parameters if log_enable is true
 - name: SAP HANA Backint - Setup - SYSTEMDB - Set log_mode parameters if log_enable is set to true
-  ansible.builtin.block:
+  block:
     # Set parameter log_mode
     - name: SAP HANA Backint - Setup - SYSTEMDB - Set log_mode to normal
       shell: |

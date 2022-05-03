@@ -73,7 +73,7 @@
         name: rhsmcertd
         state: restarted
 
-  #- name: Register the system to Red Hat Insights
-  #  command: 'insights-client --register'
+  # - name: Register the system to Red Hat Insights
+  #   command: 'insights-client --register'
 
   when: ansible_facts['distribution'] == 'RedHat'

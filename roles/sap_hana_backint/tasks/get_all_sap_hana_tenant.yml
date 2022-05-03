@@ -11,10 +11,10 @@
   register: get_all_sap_hana_tenant
 
 #  Code below doesnt work when running in crontab
-#- name: Get Tenant DBs of SAP HANA Database Server {{ sap_hana_sid }}
-#  shell: |
-#    su - {{ sap_hana_sid | lower }}adm -c "hdbsql -x -a -U {{ system_backup_user }} \"select DATABASE_NAME from SYS.M_DATABASES WHERE DATABASE_NAME != 'SYSTEMDB'\" | sed 's/\"//g'"
-#  register: get_all_sap_hana_tenant
+# - name: Get Tenant DBs of SAP HANA Database Server {{ sap_hana_sid }}
+#   shell: |
+#     su - {{ sap_hana_sid | lower }}adm -c "hdbsql -x -a -U {{ system_backup_user }} \"select DATABASE_NAME from SYS.M_DATABASES WHERE DATABASE_NAME != 'SYSTEMDB'\" | sed 's/\"//g'"
+#   register: get_all_sap_hana_tenant
 
 # Return value - sap_hana_tenant
 - name: SAP HANA Backint - Get info - Set facts for all SAP HANA Tenants

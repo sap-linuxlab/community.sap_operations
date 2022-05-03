@@ -19,6 +19,6 @@
   when: sap_hana_sid == "all"
 
 - name: SAP HANA Backint - Output NOTICE
-  debug:
+  ansible.builtin.debug:
     msg:
       - "Please note that backups were triggered in the background"

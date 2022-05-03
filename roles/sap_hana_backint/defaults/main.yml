@@ -1,3 +1,4 @@
+---
 # setup, execute, clean
 backup_function:
 
@@ -11,7 +12,7 @@ sap_hana_backint_setup_system_tenant_passwd: NewPass$321
 
 # Variables for Setup function
 log_enable: false
-#sap_hana_backint_setup_backint_directory: "/usr/sap/hana/backint"
+# sap_hana_backint_setup_backint_directory: "/usr/sap/hana/backint"
 sap_hana_backint_setup_hostname: "{{ ansible_hostname }}"
 system_backup_user: "HDB_SYSTEM_BACKUP_USER"
 

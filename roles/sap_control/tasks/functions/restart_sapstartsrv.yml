@@ -1,6 +1,5 @@
 # Restart sapstartsrv
 
-
 # Get number of sapstartsrv processes running for {{ passed_sap_sid }}-{{ passed_sap_nr }}
 - name: SAPstartsrv - Get number of sapstartsrv processes running for {{ passed_sap_sid }}-{{ passed_sap_nr }}
   ansible.builtin.shell: |
@@ -32,7 +31,7 @@
   become: true
   become_user: "{{ passed_sap_sid | lower }}adm"
   register: sap_start_sapstartsrv
-  
+
 - name: SAPstartsrv - Wait for 10 seconds for sapstartsrv to initialize
   ansible.builtin.pause:
     seconds: 10

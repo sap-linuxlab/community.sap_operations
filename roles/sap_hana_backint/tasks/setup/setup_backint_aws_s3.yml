@@ -103,13 +103,13 @@
     mode: "0755"
 
 # Softlink hdbbackint
-#- name: SAP HANA Backint - Setup - AWS S3 - {{ sap_hana_backint_setup_backint_file }} {{ sap_hana_backint_setup_backint_directory }}/hdbbackint
-#  ansible.builtin.file:
-#    src: "{{ sap_hana_backint_setup_backint_file }}"
-#    dest: "{{ sap_hana_backint_setup_backint_directory }}/hdbbackint"
-#    owner: "{{ passed_sap_hana_sid | lower }}adm"
-#    group: sapsys
-#    state: link
+# - name: SAP HANA Backint - Setup - AWS S3 - {{ sap_hana_backint_setup_backint_file }} {{ sap_hana_backint_setup_backint_directory }}/hdbbackint
+#   ansible.builtin.file:
+#     src: "{{ sap_hana_backint_setup_backint_file }}"
+#     dest: "{{ sap_hana_backint_setup_backint_directory }}/hdbbackint"
+#     owner: "{{ passed_sap_hana_sid | lower }}adm"
+#     group: sapsys
+#     state: link
 
 # Process hdbbackint.cfg
 - name: SAP HANA Backint - Setup - AWS S3 - Process hdbbackint.cfg
@@ -124,7 +124,7 @@
   ansible.builtin.file:
     path: "{{ sap_hana_backint_setup_backint_directory }}"
     state: directory
-    recurse: yes
+    recurse: true
     mode: "0755"
     owner: "{{ passed_sap_hana_sid | lower }}adm"
     group: sapsys
