@@ -12,5 +12,6 @@ jobs:
 
     - name: Lint Ansible Playbook
       uses: ansible/ansible-lint-action@main
-
+      with:
+        path: "roles/"
 # Static: use Ansible Community Edition 4.8.0, with lowest compatible Ansible Core 2.11.6 and use Ansible-lint 5.2.1
