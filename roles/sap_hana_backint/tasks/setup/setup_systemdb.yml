@@ -24,7 +24,7 @@
   block:
     # Set parameter log_mode
     - name: SAP HANA Backint - Setup - SYSTEMDB - Set log_mode to normal
-      shell: |
+      ansible.builtin.shell: |
         /usr/sap/{{ sap_hana_sid }}/SYS/exe/hdb/hdbsql \
         -U {{ sap_hana_backint_setup_hdbuserstore_system_backup_user }} \
         -m <<EOF
