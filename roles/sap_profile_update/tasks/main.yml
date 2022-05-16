@@ -1,22 +1,22 @@
 ---
-
 # Get instance profile path using sapcontrol
 - name: SAP Profile Update - Get Instance Profile
-  shell: |
+  ansible.builtin.shell: |
     source ~/.profile && cdexe; sapcontrol -nr {{ sap_update_profile_instance_nr }} -function ParameterValue SAPPROFILE | grep profile
   args:
     executable: /bin/bash
-  become: yes
+  become: true
   become_user: "{{ sap_update_profile_sid | lower }}adm"
   register: get_instance_profile
 
-- set_fact:
-    sap_update_profile_default_profile_file_path : "/sapmnt/{{ sap_update_profile_sid }}/profile/DEFAULT.PFL"
-    sap_update_profile_instance_profile_file_path : "{{ get_instance_profile.stdout }}"
+- name: setup facts
+  ansible.builtin.set_fact:
+    sap_update_profile_default_profile_file_path: "/sapmnt/{{ sap_update_profile_sid }}/profile/DEFAULT.PFL"
+    sap_update_profile_instance_profile_file_path: "{{ get_instance_profile.stdout }}"
 
 # Update default profile
 - name: SAP Profile Update - Updating DEFAULT.PFL
-  include_tasks : update_parameter.yml
+  ansible.builtin.include_tasks: update_parameter.yml
   vars:
     passed_parameter_path: "{{ sap_update_profile_default_profile_file_path }}"
   loop: "{{ sap_update_profile_default_profile_params }}"
@@ -27,7 +27,7 @@
 
 # Update instance profile
 - name: SAP Profile Update - Updating instance profile
-  include_tasks : update_parameter.yml
+  ansible.builtin.include_tasks: update_parameter.yml
   vars:
     passed_parameter_path: "{{ sap_update_profile_instance_profile_file_path }}"
   loop: "{{ sap_update_profile_instance_profile_params }}"

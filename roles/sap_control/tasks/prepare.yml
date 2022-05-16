@@ -1,12 +1,12 @@
 ---
 
 - name: Prepare - Set function control facts
-  set_fact:
+  ansible.builtin.set_fact:
     sap_type: "{{ function_list.sap_control_function_current.split('_')[0] | lower }}"
     funct_type: "{{ function_list.sap_control_function_current.split('_')[1] | lower }}"
 
 - name: Prepare - Set header
-  set_fact:
+  ansible.builtin.set_fact:
     sap_control_name_header: "{{ sap_type | upper }} {{ funct_type | capitalize }}"
 
 - name: SAP Control
@@ -15,7 +15,7 @@
     sap_control_execute_type: "{{ item.Type }}"
     sap_control_execute_instance_nr: "{{ item.InstanceNumber }}"
     sap_control_execute_instance_type: "{{ item.InstanceType }}"
-  include_tasks: "sapcontrol.yml"
+  ansible.builtin.include_tasks: "sapcontrol.yml"
   loop: "{{ sap_facts_register.sap_facts }}"
   when:
     - "item.Type == sap_type"

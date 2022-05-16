@@ -4,4 +4,4 @@ os_ansible_user_uid: ""
 os_ansible_user_gid: ""
 os_ansible_user_keyfile: id_ecdsa.pub
 
-os_ansible_user_force_recreate: yes
+os_ansible_user_force_recreate: true

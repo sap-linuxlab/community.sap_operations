@@ -1,31 +1,31 @@
 - name: Remove existing {{ os_ansible_user_userid }}
   block:
     - name: Kill all processes under {{ os_ansible_user_userid }}
-      ignore_errors: yes
-      shell: |
+      ignore_errors: true
+      ansible.builtin.shell: |
         killall -u {{ os_ansible_user_userid }}
 
     - name: Remove {{ os_ansible_user_userid }}
-      user:
+      ansible.builtin.user:
         name: '{{ os_ansible_user_userid }}'
         state: absent
-        remove: yes 
-        force: yes
+        remove: true
+        force: true
 
     - name: Remove {{ os_ansible_user_userid }} group
-      group:
+      ansible.builtin.group:
         name: '{{ os_ansible_user_userid }}'
         state: absent
   when: os_ansible_user_force_recreate
 
 - name: Create {{ os_ansible_user_userid }} group
-  group:
+  ansible.builtin.group:
     name: '{{ os_ansible_user_userid }}'
     gid: '{{ os_ansible_user_gid }}'
     state: present
 
 - name: Create {{ os_ansible_user_userid }}
-  user:
+  ansible.builtin.user:
     name: '{{ os_ansible_user_userid }}'
     comment: "Ansible User"
     uid: '{{ os_ansible_user_uid }}'
@@ -33,15 +33,15 @@
     groups: "{{ os_ansible_user_userid }},wheel"
 
 - name: Add to sudoers NOPASSWD
-  shell: |
+  ansible.builtin.shell: |
     echo '{{ os_ansible_user_password }}' | passwd --stdin {{ os_ansible_user_userid }}
     echo -e '{{ os_ansible_user_userid }}\tALL=(ALL)\tNOPASSWD: ALL' > /etc/sudoers.d/{{ os_ansible_user_userid }}
 
 - name: Add key
-  authorized_key:
+  ansible.posix.authorized_key:
     user: '{{ os_ansible_user_userid }}'
     state: present
-    manage_dir: yes
+    manage_dir: true
     key: "{{ lookup('file', item) }}"
   with_fileglob:
     - /home/{{ os_ansible_user_userid }}/.ssh/{{ os_ansible_user_keyfile }}

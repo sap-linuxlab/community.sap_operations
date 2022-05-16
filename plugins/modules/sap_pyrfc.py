@@ -9,6 +9,27 @@ from ..module_utils.pyrfc_handler import get_connection
 
 __metaclass__ = type
 
+DOCUMENTATION = r'''
+---
+module: sap_pyrfc
+short_description: Execute RFC calls
+version_added: "0.1.0"
+description: This module executes RFC calls.
+options:
+    function:
+        description: The system ID.
+        type: str
+        required: true
+    parameters:
+        description: The parameters for the function.
+        type: dict
+        required: true
+    connection:
+        description: The connection parameters.
+        type: dict
+        required: true
+'''
+
 EXAMPLES = '''
 sap_pyrfc:
   function: STFC_CONNECTION

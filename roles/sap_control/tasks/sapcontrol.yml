@@ -2,34 +2,30 @@
 # sap_control_execute_type: "{{ item.Type }}"
 # sap_control_execute_instance_nr: "{{ item.InstanceNumber }}"
 # sap_control_execute_instance_type: "{{ item.InstanceType }}"
-- set_fact:
+- name: set up facts
+  ansible.builtin.set_fact:
     passed_sap_nr: "{{ sap_control_execute_instance_nr }}"
     passed_sap_sid: "{{ sap_control_execute_sid }}"
-    
+
 # Check sapstartsrv
 - name: SAP {{ sap_control_name_header }} - sapstartsrv
-  include_tasks: functions/sapstartsrv.yml
+  ansible.builtin.include_tasks: functions/sapstartsrv.yml
 
 # Execute sapcontrol
 - name: SAP {{ sap_control_name_header }} - Executing sapcontrol -nr {{ passed_sap_nr }} -function {{ vars['sap_control_' + funct_type] }}
-  shell: |
+  ansible.builtin.shell: |
     source ~/.profile && sapcontrol -nr {{ passed_sap_nr }} -function {{ vars['sap_control_' + funct_type] }}
   args:
     executable: /bin/bash
     warn: false
-  become: yes
+  become: true
   become_user: "{{ passed_sap_sid | lower }}adm"
   register: sapcontrol_status
-  failed_when:
-    - "'FAIL' in sapcontrol_status.stdout"
+  failed_when: "'FAIL' in sapcontrol_status.stdout"
 
 # Cleanipc
 - name: SAP {{ sap_control_name_header }} - Cleanipc
-  include_tasks: functions/cleanipc.yml
+  ansible.builtin.include_tasks: functions/cleanipc.yml
   when:
     - "'nw' in sap_type"
     - "'stop' in funct_type"
-
-
-
-  

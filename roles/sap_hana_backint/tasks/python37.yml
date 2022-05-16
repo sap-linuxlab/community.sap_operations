@@ -1,5 +1,6 @@
+---
 - name: Python (System) - Install Python package manager pip3, git, make, compiler/library for C and C++, and compilers for zlib, openssl, libssl
-  yum:
+  ansible.builtin.yum:
     name:
       - python3-pip
       - gcc
@@ -13,7 +14,7 @@
     state: present
 
 - name: Python (System) - Install virtualenv to System Python 3.x
-  pip:
+  ansible.builtin.pip:
     name:
       - virtualenv
 
@@ -34,27 +35,29 @@
   ansible.builtin.unarchive:
     src: "https://www.python.org/ftp/python/{{ python_version }}/Python-{{ python_version }}.tgz"
     dest: "{{ python_build_path }}"
-    remote_src: yes
+    remote_src: true
 
 - name: Python altinstall - Configure Python build
-#  become_user: "{{ sap_hana_sid | lower }}adm"
-  command: ./configure --enable-share=no --prefix={{ python_altinstall_path }}/python_backint_local
+  #  become_user: "{{ sap_hana_sid | lower }}adm"
+  ansible.builtin.command: ./configure --enable-share=no --prefix={{ python_altinstall_path }}/python_backint_local
   args:
     chdir: "{{ python_build_path }}/Python-{{ python_version }}"
   register: python_configured
 
 # This executes the build, and creates /usr/local/lib
 - name: Python altinstall - Make Python build
-#  become_user: "{{ sap_hana_sid | lower }}adm"
-#  shell: make && make altinstall
-  shell: make altinstall
+  #  become_user: "{{ sap_hana_sid | lower }}adm"
+  #  shell: make && make altinstall
+  ansible.builtin.shell: make altinstall
   args:
     chdir: "{{ python_build_path }}/Python-{{ python_version }}"
-  become: yes
+  become: true
   when: python_configured.changed
 
-- name: Python altinstall - Create virtualenv for Python build, install baseline dependencies to virtualenv, and set variable. Do not inherit system Python modules
-  pip:
+- name:
+    Python altinstall - Create virtualenv for Python build, install baseline dependencies to virtualenv, and set variable.
+    Do not inherit system Python modules
+  ansible.builtin.pip:
     name:
       - wheel
       - requests
@@ -66,7 +69,7 @@
 - name: Python altinstall - Change owner and group permission for directories, subdirectories and files
   ansible.builtin.file:
     path: "{{ item }}"
-    recurse: true 
+    recurse: true
     mode: 0755
     owner: "{{ sap_hana_sid | lower }}adm"
     group: sapsys
@@ -75,5 +78,5 @@
     - "{{ python_altinstall_path }}/python_backint"
 
 - name: Python altinstall - Set fact for backint file
-  set_fact:
+  ansible.builtin.set_fact:
     python_37_binary: "{{ python_altinstall_path }}/python_backint/bin/python3"

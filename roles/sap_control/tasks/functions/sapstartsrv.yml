@@ -5,19 +5,19 @@
 
 # Check sapstartsrv
 - name: SAPstartsrv - Check sapstartsrv
-  shell: |
+  ansible.builtin.shell: |
     source ~/.profile && cdexe; sapcontrol -nr {{ passed_sap_nr }} -function GetSystemInstanceList
   args:
     executable: /bin/bash
-  become: yes
+  become: true
   become_user: "{{ passed_sap_sid | lower }}adm"
-  ignore_errors: yes
+  ignore_errors: true
   register: check_sapstartsrv
   changed_when:
     - ('FAIL' in check_sapstartsrv.stdout)
 
 # Check sapstartsrv
 - name: SAPstartsrv - Restart sapstartsrv
-  include_tasks: restart_sapstartsrv.yml
+  ansible.builtin.include_tasks: restart_sapstartsrv.yml
   when:
     - ('FAIL' in check_sapstartsrv.stdout)

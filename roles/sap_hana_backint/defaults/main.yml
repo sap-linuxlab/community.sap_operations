@@ -1,3 +1,4 @@
+---
 # setup, execute, clean
 backup_function:
 
@@ -9,33 +10,28 @@ sap_hana_sid: all
 sap_hana_backint_setup_system_passwd: NewPass$321
 sap_hana_backint_setup_system_tenant_passwd: NewPass$321
 
-
 # Variables for Setup function
 log_enable: false
-#sap_hana_backint_setup_backint_directory: "/usr/sap/hana/backint"
+# sap_hana_backint_setup_backint_directory: "/usr/sap/hana/backint"
 sap_hana_backint_setup_hostname: "{{ ansible_hostname }}"
 system_backup_user: "HDB_SYSTEM_BACKUP_USER"
-
 
 # Variables for Clean function
 backup_retention: "4"
 backint_directory:
-
-
 # IBM Cloud Object Storage (COS) S3 details, reference to ibm_cos_s3_hdbbackint.cfg
-#sap_hana_backint_setup_provider: "ibm"
-#sap_hana_backint_setup_auth: "key"
-#sap_hana_backint_setup_bucket: "bucket-name"
-#sap_hana_backint_setup_region: "us-east"
-#sap_hana_backint_setup_api_key: "xxxxxx"
-#sap_hana_backint_setup_resource_instance_id: "crn:v1:bluemix:public:cloud-object-storage:global:a/xxxxxxxx:xxxx-xxxx-xxxx-xxxx-xxxxxxxx:bucket:xxxx"
-#sap_hana_backint_setup_endpoint_url: "https://s3.direct.us-east.cloud-object-storage.appdomain.cloud"
-
+# sap_hana_backint_setup_provider: "ibm"
+# sap_hana_backint_setup_auth: "key"
+# sap_hana_backint_setup_bucket: "bucket-name"
+# sap_hana_backint_setup_region: "us-east"
+# sap_hana_backint_setup_api_key: "xxxxxx"
+# sap_hana_backint_setup_resource_instance_id: "crn:v1:bluemix:public:cloud-object-storage:global:a/xxxxxxxx:xxxx-xxxx-xxxx-xxxx-xxxxxxxx:bucket:xxxx"
+# sap_hana_backint_setup_endpoint_url: "https://s3.direct.us-east.cloud-object-storage.appdomain.cloud"
 
 # AWS S3 object storage details, reference to aws_s3_hdbbackint.cfg
-#sap_hana_backint_setup_provider: "aws"
-#sap_hana_backint_setup_auth: "key"
-#sap_hana_backint_setup_bucket: "bucket-name"
-#sap_hana_backint_setup_region: "us-east-1"
-#sap_hana_backint_setup_access_key: "xxxxxx"
-#sap_hana_backint_setup_secret_access_key: "xxxxxx"
+# sap_hana_backint_setup_provider: "aws"
+# sap_hana_backint_setup_auth: "key"
+# sap_hana_backint_setup_bucket: "bucket-name"
+# sap_hana_backint_setup_region: "us-east-1"
+# sap_hana_backint_setup_access_key: "xxxxxx"
+# sap_hana_backint_setup_secret_access_key: "xxxxxx"

@@ -10,4 +10,3 @@ sap_firewall_instance_nr:
 
 # Set this parameter to true to disable firewall at the end of execution
 sap_firewall_disable_end: 'false'
-

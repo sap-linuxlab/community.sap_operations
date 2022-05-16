@@ -1,0 +1,10 @@
+---
+
+skip_list:
+  - command-instead-of-module
+  - command-instead-of-shell
+  - line-length
+  - risky-shell-pipe
+  - no-changed-when
+  - no-handler
+  - ignore-errors

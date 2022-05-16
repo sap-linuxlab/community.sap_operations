@@ -1,7 +1,7 @@
 sap_rhsm_function: "register"
 
-sap_rhsm_username: 
-sap_rhsm_password: 
-sap_rhsm_pool_id: 
+sap_rhsm_username:
+sap_rhsm_password:
+sap_rhsm_pool_id:
 sap_rhsm_repos: []
 sap_rhsm_packages: []

@@ -1,5 +1,5 @@
 - name: SAP Firewall - Generate Ports - Generic
-  set_fact:
+  ansible.builtin.set_fact:
     sap_firewall_ports: "{{ sap_firewall_ports }}"
   when:
     - sap_firewall_ports is defined

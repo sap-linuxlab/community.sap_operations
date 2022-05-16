@@ -1,28 +1,29 @@
+---
 # Update fapolicy rules
 - name: Update fapolicy rules
   block:
     - name: check fapolicy service
-      stat:
+      ansible.builtin.stat:
         path: /run/fapolicyd/fapolicyd.fifo
       register: fa_fifo
 
     - name: check fapolicy rules file
-      stat:
+      ansible.builtin.stat:
         path: /etc/fapolicyd/fapolicyd.rules
       register: fa_rules
 
     # Add header line
     - name: Add header line
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/fapolicyd/fapolicyd.rules
         line: "{{ rules_header }}"
-        insertafter: '# or anything else applications access that is not a computer langauge.' #Hardcoded.
+        insertafter: "# or anything else applications access that is not a computer langauge." # Hardcoded.
       when: fa_rules.stat.exists
 
     # Allow permission-any for SAP directories
 
     - name: Add lines of fapolicy rules for User {{ sap_fapolicy_user }} - UID {{ sap_fapolicy_user }}
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/fapolicyd/fapolicyd.rules
         line: "allow perm=any uid={{ sap_fapolicy_user }} : dir='{{ item }}'"
         insertafter: "{{ rules_header }}"
@@ -32,16 +33,15 @@
 
     # Allow trust
     - name: Add trust=1 for User {{ sap_fapolicy_user }} - UID {{ sap_fapolicy_user }}
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/fapolicyd/fapolicyd.rules
         line: "allow perm=any uid={{ sap_fapolicy_user }} trust=1 : all"
         insertafter: "{{ rules_header }}"
       when: fa_rules.stat.exists
       register: fapolicy_res
 
-
     - name: update fapolicy db
-      shell: /usr/sbin/fapolicyd-cli --update
+      ansible.builtin.shell: /usr/sbin/fapolicyd-cli --update
       when: fa_fifo.stat.exists
 
 # - debug:

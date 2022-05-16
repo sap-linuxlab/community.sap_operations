@@ -1,5 +1,5 @@
 - name: SAP Firewall - Generate Ports - SAP HANA - {{ sap_firewall_instance_nr }}
-  set_fact:
+  ansible.builtin.set_fact:
     sap_firewall_ports:
       - "1128"
       - "1129"

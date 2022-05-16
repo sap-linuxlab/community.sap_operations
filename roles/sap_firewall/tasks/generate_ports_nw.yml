@@ -1,5 +1,5 @@
 - name: SAP Firewall - Generate Ports - SAP NW - {{ sap_firewall_instance_nr }}
-  set_fact:
+  ansible.builtin.set_fact:
     sap_firewall_ports:
       - "3200-3399"
       - "36{{ sap_firewall_instance_nr }}"
