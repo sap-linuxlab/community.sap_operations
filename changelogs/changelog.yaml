@@ -1,0 +1,9 @@
+ancestor: null
+releases:
+  0.9.0:
+    changes:
+      release_summary: 'This is the first release of the ``community.sap_operations``
+        collection. It is the initial relase for the collection'
+    fragments:
+    - 0.9.0.yml
+    release_date: '2022-05-16'
