@@ -1,4 +1,4 @@
-# community.sap_operations Ansible Collection ![Ansible Lint](https://github.com/infrasap/community.sap_operations/workflows/Ansible%20Lint/badge.svg?branch=main)
+# community.sap_operations Ansible Collection ![Ansible Lint](https://github.com/sap-linuxlab/community.sap_operations/actions/workflows/ansible-lint.yml/badge.svg?branch=main)
 
 This Ansible Collection executes various SAP Systems operational tasks, which can be used day-to-day individually or combined for more complex regular maintainance automation
 
