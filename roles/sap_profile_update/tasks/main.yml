@@ -34,4 +34,4 @@
   loop_control:
     loop_var: passed_parameter
   when:
-    - sap_update_profile_default_profile_params is defined
+    - sap_update_profile_instance_profile_params is defined
