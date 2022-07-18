@@ -1,4 +1,4 @@
-# Supplementary information for sap_pyrfc Ansible Role
+# Supplementary information for sap_rfc Ansible Role
 
 ## Brief explanation of SAP RFCs
 
@@ -44,7 +44,7 @@ Other connectors/bindings to have previously existed but are infrequently used w
 
 This additional context is to avoid confusion. By default the SAP NetWeaver RFC SDK includes two sample ALE programs (rfcexec or startrfc) as reference implementations which support the SAP IDoc scenario.
 
-Neither of these sample programs are used by sap_pyrfc Ansible Role or the underlying PyRFC bindings.
+Neither of these sample programs are used by sap_rfc Ansible Role or the underlying sap_pyrfc Ansible Module and the PyRFC bindings.
 
 These sample ALE programs appear in documentation available on help.sap.com under the IDoc Interface/ALE section:
 - Using startrfc, [SAP NetWeaver AS - IDoc Interface/ALE - Inbound: Triggering the SAP System](https://help.sap.com/viewer/8f3819b0c24149b5959ab31070b64058/7.52.3/en-US/4b4c43dd3b71265ce10000000a421937.html)

@@ -38,7 +38,7 @@
     virtualenv_command: virtualenv
     virtualenv_python: python3
 
-# Use task block to call Ansible Module in the Ansible Collection for sap_operations
+# Use task block to call Ansible Module in the Ansible Collection for sap_launchpad
 - name: Execute Ansible Module to download SAP software
   community.sap_launchpad.software_center_download:
     suser_id: "{{ suser_id }}"
