@@ -1,0 +1,8 @@
+---
+collections:
+  - name: https://github.com/sap-linuxlab/community.sap_libs
+    type: git
+    version: main
+  - name: https://github.com/sap-linuxlab/community.sap_launchpad
+    type: git
+    version: main

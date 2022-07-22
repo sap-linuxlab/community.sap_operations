@@ -1,6 +1,6 @@
 # sap_rfc Ansible Role
 
-The sap_rfc Ansible Role executes SAP RFCs, and performs setup as necessary ([`PyRFC`](https://github.com/SAP/PyRFC) open source by SAP, and [`SAP NWRFC SDK`](https://support.sap.com/en/product/connectors/nwrfcsdk.html))
+The sap_rfc Ansible Role executes an SAP Remote Function Call (RFC), and performs setup as necessary ([`PyRFC`](https://github.com/SAP/PyRFC) open source by SAP, and [`SAP NWRFC SDK`](https://support.sap.com/en/product/connectors/nwrfcsdk.html)).
 
 ## Ansible Role Overview
 
