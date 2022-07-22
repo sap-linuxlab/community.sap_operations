@@ -16,6 +16,7 @@ This Ansible Collection executes various SAP Systems operational tasks, includin
 - **SAP administration tasks**
   - Start/Stop of SAP HANA and SAP NetWeaver (in any configuration)
   - Update SAP profile files
+  - Execute SAP RFCs
 
 ## Contents
 
@@ -38,6 +39,7 @@ Within this Ansible Collection, there are various Ansible Roles and Ansible Modu
 | [sap_fapolicy](/roles/sap_fapolicy) | update service `fapolicyd` for generic / sap nw / sap hana related uids |
 | [sap_firewall](/roles/sap_firewall) | update service `firewalld` for generic / sap nw / sap hana related ports |
 | [sap_profile_update](/roles/sap_profile_update) | update default and instance profiles |
+| [sap_rfc](/roles/sap_rfc) | executes SAP RFCs |
 | [sap_rhsm](/roles/sap_rhsm) | Red Hat subscription manager registration |
 
 #### Ansible Modules
