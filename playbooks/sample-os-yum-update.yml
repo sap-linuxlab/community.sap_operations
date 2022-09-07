@@ -15,5 +15,5 @@
 
       - name: Yum update all
         command: 'yum --assumeyes update'
-    
+
       when: ansible_facts['distribution'] == 'RedHat'

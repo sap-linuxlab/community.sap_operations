@@ -32,7 +32,7 @@ Dependencies
 Example Playbook
 ----------------
 
-If you have `hana1` and `hana2` configured for SAP HSR with SID RHE and instance 00 the following playbook 
+If you have `hana1` and `hana2` configured for SAP HSR with SID RHE and instance 00 the following playbook
 ensures that `hana1` is the primary and `hana2` is the secondary
 
 The role will fail if `hana1` is not configured for system replication (mode: none in `hdbnsutil -sr_state`).

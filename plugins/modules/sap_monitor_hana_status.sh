@@ -1,13 +1,13 @@
 #!/bin/bash
 #   =====================================================================
-# 
+#
 #	sap_monitor_hana_status.sh
 #	Authored by			-	Jason Masipiquena
 #						-	IBM - Lab for SAP Solutions
 #
 #	Bash script designed to be used as an Ansible module
 #	Check status of SAP HANA system
-#	Input: 	
+#	Input:
 #		- hana_sid
 # 		- hana_instance_number
 #	Output:

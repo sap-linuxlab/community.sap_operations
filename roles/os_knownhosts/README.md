@@ -7,7 +7,7 @@ Ansible role for updating known hosts file `/.ssh/known_hosts`. This is usually 
 
 ### Input and Execution
 
-Just execute the role, no need to set vafriable inputs. Put the target host(s) in the inventory `-i` argument 
+Just execute the role, no need to set vafriable inputs. Put the target host(s) in the inventory `-i` argument
 
 - Sample execution:
 

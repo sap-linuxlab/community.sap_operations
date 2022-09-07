@@ -1,13 +1,13 @@
 #!/bin/bash
 #   =====================================================================
-# 
+#
 #	sap_monitor_nw_response.sh
 #	Authored by			-	Jason Masipiquena
 #						-	IBM - Lab for SAP Solutions
 #
 #	Bash script designed to be used as an Ansible module
 #	Checks SAP NW (PAS) response times
-#	Input: 	
+#	Input:
 #		- nw_sid
 # 		- nw_instance_number
 #		- nw_instance_type
@@ -61,7 +61,7 @@ function get_num_users(){
 function result_to_dictionary() {
 
 	echo -n '{'
-	
+
 	echo -n \"DialogResponseTime\": \"${DIARESP//\"/\\\"}\"
 	echo -n ', '
 	echo -n \"DatabaseResponseTime\": \"${DBRESP//\"/\\\"}\"
@@ -69,7 +69,7 @@ function result_to_dictionary() {
 	echo -n \"FrontEndResponseTime\": \"${FRONTRESP//\"/\\\"}\"
 	echo -n ', '
 	echo -n \"NumberUsers\": \"${NUMUSERS//\"/\\\"}\"
-	
+
 	echo -n '}'
 
 }
@@ -81,10 +81,10 @@ function return_ansible(){
 
 	if [ $result = "success" ]; then
 		printf '{"changed": %s, "failed": %s, "msg": "%s", "dialog_response_time": "%s", "database_response_time": "%s", "frontend_response_time": "%s", "number_users": "%s"}' \
-			false false "SAP Check $RETURN_MESSAGE" "$DIARESP" "$DBRESP" "$FRONTRESP" "$NUMUSERS" 
+			false false "SAP Check $RETURN_MESSAGE" "$DIARESP" "$DBRESP" "$FRONTRESP" "$NUMUSERS"
 	else
 		printf '{"changed": %s, "failed": %s, "msg": "%s", "dialog_response_time": "%s", "database_response_time": "%s", "frontend_response_time": "%s", "number_users": "%s"}' \
-			false true "SAP Check Failed" "$DIARESP" "$DBRESP" "$FRONTRESP" "$NUMUSERS" 
+			false true "SAP Check Failed" "$DIARESP" "$DBRESP" "$FRONTRESP" "$NUMUSERS"
 	fi
 
 	exit

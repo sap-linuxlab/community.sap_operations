@@ -53,4 +53,3 @@
   - name: DEBUG - Output of STFC_STRUCTURE
     debug:
       msg: "{{ sap_rfc_output2 }}"
-

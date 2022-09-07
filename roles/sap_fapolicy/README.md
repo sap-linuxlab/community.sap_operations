@@ -8,7 +8,7 @@ Ansible role for updating fapolicy entries based on SAP instance numbers
 
 ## Overview
 
-Fapolicy entries will be updated to allow access to the following directories 
+Fapolicy entries will be updated to allow access to the following directories
   - "/hana/"
   - "/sapmnt/"
   - "/usr/sap/"
@@ -40,20 +40,20 @@ Fapolicy entries will be updated to allow access to the following directories
     ---
     - hosts: all
       become: true
-      
+
       vars:
         sap_fapolicy_user_generic_list:
           - "root"
           - "sapadm"
           - "uuidd"
-      
+
       tasks:
 
       # Update fapolicy for generic users
       - name: Fapolicy Update - generic
         vars:
           sap_fapolicy_type: "generic"
-        include_role: 
+        include_role:
           name: community.sap_operations.sap_fapolicy
         loop: "{{ sap_fapolicy_user_generic_list }}"
         loop_control:
@@ -66,7 +66,7 @@ Fapolicy entries will be updated to allow access to the following directories
     ---
     - hosts: all
       become: true
-      
+
       tasks:
 
       - name: Run sap_facts module to gather SAP facts
@@ -74,12 +74,12 @@ Fapolicy entries will be updated to allow access to the following directories
             param: "all"
         register: sap_facts_register
 
-      # Update fapolicy for SAP users        
+      # Update fapolicy for SAP users
       - name: Fapolicy Update - SAP Users
         vars:
           sap_fapolicy_sid: "{{ item.Type }}"
           sap_fapolicy_type: "{{ item.Type }}"
-        include_role: 
+        include_role:
           name: community.sap_operations.sap_fapolicy
         loop: "{{ sap_facts_register.sap_facts }}"
     ```

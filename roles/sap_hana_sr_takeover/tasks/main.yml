@@ -110,4 +110,3 @@
   become_user: "{{ sap_hana_sid | lower }}adm"
   when:
     - register_sap_hana_sr_takeover_online.stdout == 'false'
-

@@ -16,4 +16,3 @@ sap_hana_sr_takeover_hsr_oper_mode: logreplay
 # Common HANA Database parameter
 sap_hana_sid:
 sap_hana_instance_number:
-

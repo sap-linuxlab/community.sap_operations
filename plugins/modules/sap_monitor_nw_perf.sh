@@ -1,13 +1,13 @@
 #!/bin/bash
 #   =====================================================================
-# 
+#
 #	sap_monitor_nw_perf.sh
 #	Authored by			-	Jason Masipiquena
 #						-	IBM - Lab for SAP Solutions
 #
 #	Bash script designed to be used as an Ansible module
-#	Checks SAP NW (PAS) performance metrics 
-#	Input: 	
+#	Checks SAP NW (PAS) performance metrics
+#	Input:
 #		- nw_sid
 # 		- nw_instance_number
 #		- nw_instance_type
@@ -61,7 +61,7 @@ function get_program_buffer_swap(){
 function result_to_dictionary() {
 
 	echo -n '{'
-	
+
 	echo -n \"HeapMemory\": \"${HEAPMEM//\"/\\\"}\"
 	echo -n ', '
 	echo -n \"ExtendedMemory\": \"${EXTMEM//\"/\\\"}\"
@@ -69,7 +69,7 @@ function result_to_dictionary() {
 	echo -n \"CpuUtil\": \"${CPUUTIL//\"/\\\"}\"
 	echo -n ', '
 	echo -n \"ProgramSwap\": \"${PROGRAMSWAP//\"/\\\"}\"
-	
+
 	echo -n '}'
 
 }
@@ -81,10 +81,10 @@ function return_ansible(){
 
 	if [ $result = "success" ]; then
 		printf '{"changed": %s, "failed": %s, "msg": "%s", "heap_memory": "%s", "extended_memory": "%s", "cpu_util": "%s", "program_swap": "%s"}' \
-			false false "SAP Check $RETURN_MESSAGE" "$HEAPMEM" "$EXTMEM" "$CPUUTIL" "$PROGRAMSWAP" 
+			false false "SAP Check $RETURN_MESSAGE" "$HEAPMEM" "$EXTMEM" "$CPUUTIL" "$PROGRAMSWAP"
 	else
 		printf '{"changed": %s, "failed": %s, "msg": "%s", "heap_memory": "%s", "extended_memory": "%s", "cpu_util": "%s", "program_swap": "%s"}' \
-			false true "SAP Check Failed" "$HEAPMEM" "$EXTMEM" "$CPUUTIL" "$PROGRAMSWAP" 
+			false true "SAP Check Failed" "$HEAPMEM" "$EXTMEM" "$CPUUTIL" "$PROGRAMSWAP"
 	fi
 
 	exit
