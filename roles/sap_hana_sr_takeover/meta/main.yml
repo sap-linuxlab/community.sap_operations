@@ -1,0 +1,21 @@
+galaxy_info:
+  author: Markus Koch
+  description: Ensure/Change HANA System Replication Primary and Secondary server
+  company: redhat
+
+  # If the issue tracker for your role is not on github, uncomment the
+  # next line and provide a value
+  # issue_tracker_url: http://example.com/issue/tracker
+
+  license: Apache-2.0
+  min_ansible_version: 2.9
+  platforms:
+    - name: EL
+      versions: [ 7, 8, 9 ]
+    - name: SLES
+      versions: [ 15SP3 ]
+  galaxy_tags: [ 'sap', 'rfc', 'pyrfc', 'rhel', 'redhat', 'sles', 'suse' ]
+
+dependencies: []
+  # List your role dependencies here, one per line. Be sure to remove the '[]' above,
+  # if you add dependencies to this list.

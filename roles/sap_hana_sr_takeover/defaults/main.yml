@@ -1,0 +1,19 @@
+---
+# defaults file for hana_sr_takeover
+#
+# Define the new primary
+sap_hana_sr_takeover_primary:
+
+# Machine to be the primary (can be run twice if more than one secondary)
+sap_hana_sr_takeover_secondary:
+# Name of the site being registered
+sap_hana_sr_takeover_sitename:
+
+# Default replication method
+sap_hana_sr_takeover_rep_mode: sync
+sap_hana_sr_takeover_hsr_oper_mode: logreplay
+
+# Common HANA Database parameter
+sap_hana_sid:
+sap_hana_instance_number:
+
