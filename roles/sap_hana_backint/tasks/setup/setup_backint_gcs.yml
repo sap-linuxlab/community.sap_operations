@@ -16,7 +16,7 @@
   ansible.builtin.git:
     repo: https://github.com/chriselswede/hanacleaner.git
     dest: "$HOME/.ansible/tmp/git_hanacleaner"
-    single_branch: true
+#    single_branch: true # Not compatible with Ansible 2.9
     version: master
 
 # Copy hanacleaner.py

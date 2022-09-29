@@ -7,8 +7,8 @@ target_platform:
 
 sap_hana_sid: all
 
-sap_hana_backint_setup_system_passwd: NewPass$321
-sap_hana_backint_setup_system_tenant_passwd: NewPass$321
+sap_hana_backint_setup_system_passwd:
+sap_hana_backint_setup_system_tenant_passwd:
 
 # Variables for Setup function
 log_enable: false
