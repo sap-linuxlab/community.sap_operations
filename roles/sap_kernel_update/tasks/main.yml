@@ -1,0 +1,23 @@
+---
+- name: Set sap_kernel_update_kernel_path
+  ansible.builtin.include_tasks: init.yml
+  when: sap_kernel_update_kernel_path is not defined
+
+- name: Fetch the ABAP instances
+  sap.sap_operations.system_info:
+    instance_number: "{{ sap_kernel_update_instance }}"
+    feature: "ABAP"
+  register: __sap_kernel_update_apab_systems
+
+- name: Run rolling kernel upgrade in case there is multiple ABAP instances
+  ansible.builtin.include_tasks: rolling_kernel_upgrade.yml
+  when: __sap_kernel_update_apab_systems.system_info | length > 1
+
+- name: Run rolling kernel update
+  ansible.builtin.include_tasks: normal_kernel_upgrade.yml
+  when: __sap_kernel_update_apab_systems.system_info | length == 1 and sap_force_update
+
+- name: Nothing to do
+  ansible.builtin.fail:
+    msg: "To update SAP system with single dialog instance, you need to set sap_force_update=true"
+  when: __sap_kernel_update_apab_systems.system_info | length == 1 and not sap_force_update
