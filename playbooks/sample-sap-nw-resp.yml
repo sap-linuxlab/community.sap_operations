@@ -1,7 +1,7 @@
 ---
 - hosts: all
   become: true
-  
+
   tasks:
 
   - name: Run sap_facts module to gather SAP facts
@@ -22,4 +22,3 @@
   - debug:
       msg:
         - "{{ sap_monitor_nw_status_register }}"
-

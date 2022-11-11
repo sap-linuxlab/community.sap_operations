@@ -1,13 +1,13 @@
 #!/bin/bash
 #   =====================================================================
-# 
+#
 #	sap_monitor_nw_status.sh
 #	Authored by			-	Jason Masipiquena
 #						-	IBM - Lab for SAP Solutions
 #
 #	Bash script designed to be used as an Ansible module
 #	Check status of SAP NW system
-#	Input: 	
+#	Input:
 #		- nw_sid
 # 		- nw_instance_number
 #		- nw_instance_type
@@ -42,7 +42,7 @@ function check_is_nw_up(){
 	elif [[ $INS_TYPE = "SCS" ]]; then
 		INS_GREP="MESSAGE"
 	elif [[ $INS_TYPE = "ERS" ]]; then
-		INS_GREP="ENQUE"		
+		INS_GREP="ENQUE"
 	else
 		INS_GREP="XXX"
 	fi

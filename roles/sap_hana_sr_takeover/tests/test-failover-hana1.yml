@@ -1,0 +1,13 @@
+- name: Ensure hana1 is primary
+  hosts: hanas
+  become: true
+  tasks:
+    - name: Switch to hana1
+      include_role:
+        name: community.sap_install.sap_hana_sr_takeover
+      vars:
+        sap_hana_sr_takeover_primary: hana1
+        sap_hana_sr_takeover_secondary: hana2
+        sap_hana_sr_takeover_sitename: DC02
+        sap_hana_sid: "RHE"
+        sap_hana_instance_number: "00"

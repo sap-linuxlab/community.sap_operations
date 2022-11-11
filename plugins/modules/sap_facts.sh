@@ -1,6 +1,6 @@
 #!/bin/bash
 #   =====================================================================
-# 
+#
 #	sap_facts.sh
 #	Authored by			-	Jason Masipiquena
 #						-	IBM - Lab for SAP Solutions
@@ -45,10 +45,10 @@
 
 # Loops through /hana/shared for all SIDs and exports results to global array HANA_SID_ARRAY
 function get_all_hana_sid(){
-	
+
 	unset HANA_SID_ARRAY
 	export HANA_SID_ARRAY
-	
+
 	if [ -d /hana/shared ]; then
 		# /hana/shared directory exists
 		while read LINE
@@ -81,10 +81,10 @@ function get_all_hana_sid(){
 
 # Loops through /sapmnt for all SIDs and exports results to global array NW_SID_ARRAY
 function get_all_nw_sid(){
-	
+
 	unset NW_SID_ARRAY
 	export NW_SID_ARRAY
-	
+
 	if [ -d /sapmnt ]; then
 		# /sapmnt directory exists
 		while read LINE
@@ -123,7 +123,7 @@ function get_all_nw_sid(){
 # Check SID if it's NW or HANA
 function get_sid_type() {
 	local PARAM=$1
-	
+
 	### Check to see if /usr/sap/SID exists. If not then its probably not used anymore / its not a SID so ignore
 	if [ -d /hana/shared/$PARAM ]; then
 		# $SID is an HDB system
@@ -143,22 +143,22 @@ function get_sid_type() {
 
 # Loops through NW_SID_ARRAY populated by function get_all_nw_sid and get NW instance numbers
 function get_all_nw_nr(){
-	
+
 	unset NW_NR_ARRAY
 	export NW_NR_ARRAY
-	
+
 	for i in "${NW_SID_ARRAY[@]}"
-	do 
+	do
 		SID=$(echo $i)
 		SIDADM=${SID,,}adm
-	
+
 		while read LINE
 		do
-				
+
 			## Get the first character and the last two characters
 			LASTTWO=$(echo ${LINE: -2})
 			FIRST=$(echo ${LINE:0:1})
-			
+
 			if [[ $LASTTWO =~ ^[0-9]+$ ]];then
 				NR=$LASTTWO
 				check_sapstartsrv $SIDADM $SID $NR
@@ -195,13 +195,13 @@ function get_all_hana_nr(){
 
 	unset HANA_NR_ARRAY
 	export HANA_NR_ARRAY
-	
+
 	for i in "${HANA_SID_ARRAY[@]}"
 	do
 		local SID=$(echo $i)
 		local SIDADM=${SID,,}adm
 		local NR=$(ls -1 /usr/sap/$SID | grep HDB | sed 's/...//' | head -1)
-			
+
 		check_sapstartsrv $SIDADM $SID $NR
 		sapcontrol_test=`check_sapcontrol $SIDADM $SID $NR`
 		if [[ $sapcontrol_test == "fail" ]]; then
@@ -243,7 +243,7 @@ function get_all_hana_nr(){
 
 # Returns instance type of passed instance number
 get_instance_type() {
-	
+
 	local INS=$1
 	local FIRST=$(echo ${INS:0:1})
 	local NR=""
@@ -266,15 +266,15 @@ get_instance_type() {
 		INS_TYPE="SCS"
 	elif [[ $FIRST = "E" ]]; then
 		# It's an ERS
-		INS_TYPE="ERS"		
+		INS_TYPE="ERS"
 	elif [[ $FIRST = "H" ]]; then
 		# It's a HANA system
-		INS_TYPE="HANA"	
+		INS_TYPE="HANA"
 	else
 		# Unknown instance type
 		INS_TYPE="XXX"
 	fi
-	
+
 	echo $INS_TYPE
 
 }
@@ -284,10 +284,10 @@ function check_sapstartsrv(){
 	# $1 - SIDADM
 	# $2 - SID
 	# $3 - NR
-	
+
 	## Count the number of sapstartsrv processes
 	SAPSTARTSRV=$(ps -ef | grep $2 | grep $3 | grep sapstartsrv | wc -l)
-	
+
 	if [[ $SAPSTARTSRV = 0 ]]; then
 		## No sapstartsrv process running - attempt to start
 		start_sapstartsrv $1 $2 $3
@@ -327,7 +327,7 @@ function check_sapcontrol(){
 		# sapcontrol is working
 		echo "ok"
 	fi
-	
+
 }
 
 # Convert array to json format
@@ -346,11 +346,11 @@ function array_to_json() {
 function arrays_to_dictionary() {
 	i=0
 	echo -n '['
-	
+
 	while [ $# -gt 0 ]; do
-		
+
 		echo -n '{'
-		
+
 		x=${1//\\/\\\\}
 		echo -n \"InstanceNumber\": \"${x//\"/\\\"}\"
 		echo -n ', '
@@ -362,19 +362,19 @@ function arrays_to_dictionary() {
 		echo -n '}'
 
 		[ $# -gt 1 ] && echo -n ', '
-		
+
 		shift
-				
+
 		i=$((i+1))
 	done
-	
+
 	echo ']'
 
 }
 
 # Process results for Ansible
 function process_final_results(){
-	
+
 	# Declare dictionary variables
 	unset DICT_ALL_NR_ARRAY
 	unset DICT_ALL_TYPE_ARRAY
@@ -410,11 +410,11 @@ function process_final_results(){
 
 	# Append all NW NR to final NR dictionary array
 	for index in "${!NW_NR_ARRAY[@]}"
-		do 
+		do
 		DICT_ALL_NR_ARRAY+=( "${NW_NR_ARRAY[index]}" )
 		DICT_ALL_TYPE_ARRAY+=( "nw" )
 		done
-	
+
 	# Append all HANA NR to final NR dictionary array
 	for index in "${!HANA_NR_ARRAY[@]}"
 		do
@@ -425,14 +425,14 @@ function process_final_results(){
 	# Get instance information of all instance numbers
 	for index in "${!DICT_ALL_NR_ARRAY[@]}"
 		do
-		
+
 		local NR=$(echo ${DICT_ALL_NR_ARRAY[index]})
 		local SID=$(/usr/sap/hostctrl/exe/sapcontrol -nr $NR -function GetInstanceProperties | grep SAPSYSTEMNAME | awk '{ print $3 }')
 		local INS=$(/usr/sap/hostctrl/exe/sapcontrol -nr $NR -function GetInstanceProperties | grep INSTANCE_NAME | awk '{ print $3 }')
-		
+
 		# Get instance type
 		local INS_TYPE=`get_instance_type $INS`
-		
+
 		DICT_ALL_INS_TYPE_ARRAY+=( "${INS_TYPE}" )
 
 		if [[ ${INS_TYPE} == "HANA" ]]; then
@@ -442,7 +442,7 @@ function process_final_results(){
 			# Append all NW SID
 			DICT_ALL_NW_SID_ARRAY+=( "${SID}" )
 		fi
-		
+
 		# Append all SID
 		DICT_ALL_SID_ARRAY+=( "${SID}" )
 
@@ -455,7 +455,7 @@ function process_final_results(){
 	# Process lists for all SIDs
 	DICT_ALL_NW_SID_JSON=`array_to_json "${DICT_ALL_NW_SID_ARRAY[@]}"`
 	DICT_ALL_HANA_SID_JSON=`array_to_json "${DICT_ALL_HANA_SID_ARRAY[@]}"`
-	
+
 	# Process lists for all NRs
 	DICT_ALL_NW_NR_JSON=`array_to_json "${NW_NR_ARRAY[@]}"`
 	DICT_ALL_HANA_NR_JSON=`array_to_json "${HANA_NR_ARRAY[@]}"`
@@ -471,7 +471,7 @@ function process_final_results(){
 
 	# Return values for Ansible
 	return_ansible success
-		
+
 }
 
 # Return values for Ansible

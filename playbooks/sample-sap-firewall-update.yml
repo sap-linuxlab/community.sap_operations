@@ -8,4 +8,3 @@
     sap_firewall_type: "generic"
   roles:
     - { role: community.sap_operations.sap_firewall }
-
