@@ -28,7 +28,7 @@
       target_parameters:
         REQUTEXT: 'Hello SAP!'
       target_connection: "{{ reuse_connection }}"
-    include_role:
+    ansible.builtin.include_role:
       name: community.sap_operations.sap_rfc
     register: sap_rfc_output1
 
@@ -46,11 +46,10 @@
         RFCTABLE:
           - COLUMN0: test
       target_connection: "{{ reuse_connection }}"
-    include_role:
+    ansible.builtin.include_role:
       name: community.sap_operations.sap_rfc
     register: sap_rfc_output2
 
   - name: DEBUG - Output of STFC_STRUCTURE
     debug:
       msg: "{{ sap_rfc_output2 }}"
-

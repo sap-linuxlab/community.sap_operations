@@ -10,4 +10,3 @@
     sap_os_tools_etchosts_fqdn: "example.com"
   roles:
     - { role: community.sap_operations.os_etchosts }
-

@@ -60,19 +60,19 @@ Ansible role for updating SAP profiles
             - icm/server_port_2 = PROT=SMTP,PORT=25$$,PROCTIMEOUT=120,TIMEOUT=120
 
       tasks:
-        
+
         # Gather SAP facts of the host
         - name: Run sap_facts module to gather SAP facts
           community.sap_operations.sap_facts:
             param: "all"
           register: sap_facts_register
 
-        # Update all the profiles of the SAP systems in the host      
+        # Update all the profiles of the SAP systems in the host
         - name: Update all the profiles of the SAP systems in the host
           vars:
             sap_update_profile_sid: "{{ item.SID }}"
             sap_update_profile_instance_nr: "{{ item.InstanceNumber }}"
-          include_role: 
+          ansible.builtin.include_role:
             name: community.sap_operations.sap_profile_update
           loop: "{{ sap_facts_register.sap_facts }}"
           when:

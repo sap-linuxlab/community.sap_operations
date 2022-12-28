@@ -14,7 +14,7 @@
     | **sap_facts**         | Dictionary list of all the details        | `<register_variable>.sap_facts`     |
 
 - Sample `sap_facts` dictionary list generated:
-            
+
     ```yaml
     [
             {
@@ -43,4 +43,3 @@
             }
     ]
     ```
-

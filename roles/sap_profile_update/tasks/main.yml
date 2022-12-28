@@ -2,6 +2,7 @@
 # Get instance profile path using sapcontrol
 - name: SAP Profile Update - Get Instance Profile
   ansible.builtin.shell: |
+    set -o pipefail
     source ~/.profile && cdexe; sapcontrol -nr {{ sap_update_profile_instance_nr }} -function ParameterValue SAPPROFILE | grep profile
   args:
     executable: /bin/bash

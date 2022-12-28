@@ -8,7 +8,7 @@ Ansible role for creating an ansible user for your managed systems
 - Generate a key via `ssh-keygen`
 - > **_Note:_**  Highly recommended that you do this manually and not be part of the automation for security reasons
 - A userid that has sudo privileges (or direct root) to create the Ansible user
-  -   Provide the user in your `vars`  
+  -   Provide the user in your `vars`
         ```yaml
         ansible_user: admin_user
         ansible_password: your_password
@@ -50,7 +50,7 @@ Ansible role for creating an ansible user for your managed systems
         os_ansible_user_password: 'my_password'
         os_ansible_user_uid: 1010
         os_ansible_user_gid: 1010
-        os_ansible_user_keyfile: id_ecdsa.pub 
+        os_ansible_user_keyfile: id_ecdsa.pub
       roles:
         - { role: community.sap_operations.os_ansible_user }
     ```

@@ -7,7 +7,7 @@ Ansible modules for SAP healthcheck / monitoring
 - For technical details, please check the individual `.sh` files here [SAP Check](/plugins/modules)
 
 
-- **sap_monitor_hana_status**            
+- **sap_monitor_hana_status**
     - Checks the status of SAP HANA system
     - Returns 'GREEN' 'YELLOW' 'RED' 'GRAY' as returned by `sapcontrol`
     - Full list of outputs:
@@ -28,14 +28,14 @@ Ansible modules for SAP healthcheck / monitoring
         "msg": "SAP Check Successful"
         ```
 
-- **sap_monitor_nw_status**            
+- **sap_monitor_nw_status**
     - Checks the status of SAP Netweaver system
     - Returns 'GREEN' 'YELLOW' 'RED' 'GRAY' as returned by `sapcontrol`
     - Full list of outputs:
         | **Output**            | **Info**                                                  | **Return Variable**                 |
         | :---                  | :---                                                      | :---                                |
         | sap_status            | 'GREEN' 'YELLOW' 'RED' 'GRAY' as returned by `sapcontrol` | `<register_variable>.sap_status`    |
-    - Sample output:   
+    - Sample output:
         ```yaml
         {
             "ansible_loop_var": "item",
@@ -66,7 +66,7 @@ Ansible modules for SAP healthcheck / monitoring
         ```
 
 
-- **sap_monitor_nw_perf**            
+- **sap_monitor_nw_perf**
     - Checks performance metrics of an SAP Netweaver ABAP system
     - > **_Note:_**  The current checklist only contains 4 items at this early stage of development but can be easily improved later
     - Current scope:
@@ -99,7 +99,7 @@ Ansible modules for SAP healthcheck / monitoring
         "program_swap": "0.0
         ```
 
-- **sap_monitor_nw_response**            
+- **sap_monitor_nw_response**
     - Checks response times of an SAP Netweaver ABAP system
     - > **_Note:_**  The current checklist only contains 4 items at this early stage of development but can be easily improved later
     - Current scope:
@@ -115,7 +115,7 @@ Ansible modules for SAP healthcheck / monitoring
         | database_response_time    | Database respone time                 | `<register_variable>.database_response_time`  |
         | frontend_response_time    | Front end response time               | `<register_variable>.frontend_response_time`  |
         | number_users              | Current number of logged in users     | `<register_variable>.number_users`            |
-    - Sample output:     
+    - Sample output:
         ```yaml
         "changed": false,
         "database_response_time": "177",

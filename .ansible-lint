@@ -1,0 +1,11 @@
+skip_list:
+  - empty-string-compare
+  - indentation
+  - line-length
+  - command-instead-of-module  # Using command rather than module
+  - command-instead-of-shell  # Use shell only when shell functionality is required
+  - experimental  # all rules tagged as experimental
+  - no-changed-when  # Commands should not change things if nothing needs doing
+  - no-handler  # Tasks that run when changed should likely be handlers
+  - risky-shell-pipe  # Shells that use pipes should set the pipefail option
+  - unnamed-task  # All tasks should be named

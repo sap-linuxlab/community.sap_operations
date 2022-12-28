@@ -6,22 +6,26 @@
 
 # Check inputs
 - name: Check function validity
-  ansible.builtin.fail: msg="Function {{ sap_control_function }} is invalid"
+  ansible.builtin.fail:
+    msg: "Function {{ sap_control_function }} is invalid"
   when:
     - "sap_control_function not in sap_control_functions_list"
 
 - name: Check function if defined
-  ansible.builtin.fail: msg="No sap_control_function defined"
+  ansible.builtin.fail:
+    msg: "No sap_control_function defined"
   when:
     - "sap_control_function == 'initial'"
 
 # - name: Check function - all and SID
-#   fail: msg="An 'all' function and a 'SID' cant be used at the same time"
+#   ansible.builtin.fail:
+#     msg: "An 'all' function and a 'SID' cant be used at the same time"
 #   when:
 #     - (sap_sid != 'initial') and ('all' in sap_control_function)
 
 - name: Check function - all and SID
-  ansible.builtin.fail: msg="Parameter 'sap_sid' is required when not using an 'all' function"
+  ansible.builtin.fail:
+    msg: "Parameter 'sap_sid' is required when not using an 'all' function"
   when:
     - (sap_sid == 'initial') and ('all' not in sap_control_function)
 
@@ -77,7 +81,7 @@
 # - name: Get SAP Info
 #   vars:
 #     sap_info_get_function: "get_{{ sap_control_get_type }}_{{ sap_control_sap_type }}"
-#   include_role:
+#   ansible.builtin.include_role:
 #     name: roles/sap_info
 
 # Get SAP Facts

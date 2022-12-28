@@ -1,20 +1,20 @@
 ---
 - hosts: all
   become: true
-  
+
   vars:
     sap_fapolicy_user_generic_list:
       - "root"
       - "sapadm"
       - "uuidd"
-  
+
   tasks:
 
   # Update fapolicy for generic users
   - name: Fapolicy Update - generic
     vars:
       sap_fapolicy_type: "generic"
-    include_role: 
+    ansible.builtin.include_role:
       name: community.sap_operations.sap_fapolicy
     loop: "{{ sap_fapolicy_user_generic_list }}"
     loop_control:
@@ -25,11 +25,11 @@
         param: "all"
     register: sap_facts_register
 
-  # Update fapolicy for SAP users        
+  # Update fapolicy for SAP users
   - name: Fapolicy Update - SAP Users
     vars:
       sap_fapolicy_sid: "{{ item.Type }}"
       sap_fapolicy_type: "{{ item.Type }}"
-    include_role: 
+    ansible.builtin.include_role:
       name: community.sap_operations.sap_fapolicy
     loop: "{{ sap_facts_register.sap_facts }}"
