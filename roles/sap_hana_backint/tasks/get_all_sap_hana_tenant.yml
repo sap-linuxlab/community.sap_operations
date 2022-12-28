@@ -12,7 +12,7 @@
 
 #  Code below doesnt work when running in crontab
 # - name: Get Tenant DBs of SAP HANA Database Server {{ sap_hana_sid }}
-#   shell: |
+#   ansible.builtin.shell: |
 #     su - {{ sap_hana_sid | lower }}adm -c "hdbsql -x -a -U {{ system_backup_user }} \"select DATABASE_NAME from SYS.M_DATABASES WHERE DATABASE_NAME != 'SYSTEMDB'\" | sed 's/\"//g'"
 #   register: get_all_sap_hana_tenant
 

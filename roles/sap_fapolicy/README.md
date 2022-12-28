@@ -53,7 +53,7 @@ Fapolicy entries will be updated to allow access to the following directories
       - name: Fapolicy Update - generic
         vars:
           sap_fapolicy_type: "generic"
-        include_role:
+        ansible.builtin.include_role:
           name: community.sap_operations.sap_fapolicy
         loop: "{{ sap_fapolicy_user_generic_list }}"
         loop_control:
@@ -79,7 +79,7 @@ Fapolicy entries will be updated to allow access to the following directories
         vars:
           sap_fapolicy_sid: "{{ item.Type }}"
           sap_fapolicy_type: "{{ item.Type }}"
-        include_role:
+        ansible.builtin.include_role:
           name: community.sap_operations.sap_fapolicy
         loop: "{{ sap_facts_register.sap_facts }}"
     ```

@@ -3,7 +3,7 @@
   become: true
   tasks:
     - name: Switch to hana1
-      include_role:
+      ansible.builtin.include_role:
         name: community.sap_install.sap_hana_sr_takeover
       vars:
         sap_hana_sr_takeover_primary: hana1

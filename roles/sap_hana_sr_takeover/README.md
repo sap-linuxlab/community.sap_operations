@@ -48,7 +48,7 @@ It also ensures that the secondary HANA DB is started
   become: true
   tasks:
     - name: Switch to hana1
-      include_role:
+      ansible.builtin.include_role:
         name: community.sap_operations.sap_hana_sr_takeover
       vars:
         sap_hana_sr_takeover_primary: hana2

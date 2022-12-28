@@ -1,8 +1,8 @@
-# pyrfc_first_run: true
+#pyrfc_first_run: true
 
-# sap_nwrfc_sdk: nwrfc750P_10-70002752.zip
+#sap_nwrfc_sdk: nwrfc750P_10-70002752.zip
 
-# target_connection:
+#target_connection:
 #  ashost: s4hana.poc.cloud
 #  sysid: TDT
 #  sysnr: "01"

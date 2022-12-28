@@ -60,7 +60,7 @@ Ansible role for updating firewall port entries based on SAP instance numbers
         vars:
           sap_firewall_type: "{{ item.Type }}"
           sap_firewall_instance_nr: "{{ item.InstanceNumber }}"
-        include_role:
+        ansible.builtin.include_role:
           name: community.sap_operations.sap_firewall
         loop: "{{ sap_facts_register.sap_facts }}"
     ```

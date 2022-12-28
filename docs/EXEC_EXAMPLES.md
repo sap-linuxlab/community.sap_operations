@@ -79,7 +79,7 @@ ansible-playbook --timeout 60 ./community.sap_operations/playbooks/sample-sap-fa
 # Option 2: Use sequential parse/execution, by using include_role inside Task block
   tasks:
   - name: Execute Ansible Role to start/stop SAP Systems
-    include_role:
+    ansible.builtin.include_role:
       name: { role: community.sap_operations.sap_control }
 
 # Option 3: Use task block with import_roles

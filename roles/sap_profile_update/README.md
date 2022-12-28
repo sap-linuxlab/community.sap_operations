@@ -72,7 +72,7 @@ Ansible role for updating SAP profiles
           vars:
             sap_update_profile_sid: "{{ item.SID }}"
             sap_update_profile_instance_nr: "{{ item.InstanceNumber }}"
-          include_role:
+          ansible.builtin.include_role:
             name: community.sap_operations.sap_profile_update
           loop: "{{ sap_facts_register.sap_facts }}"
           when:
