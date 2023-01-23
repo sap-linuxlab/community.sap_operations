@@ -86,7 +86,7 @@
 
 # Get SAP Facts
 - name: Run sap_facts module to gather SAP facts
-  sap_facts:
+  community.sap_libs.sap_system_facts:
     param: "{{ sap_facts_param }}"
   register: sap_facts_register
 
