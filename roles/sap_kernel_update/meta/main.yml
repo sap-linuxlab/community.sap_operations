@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  role_name: sap_kernel_update
+  namespace: redhat
+  description: Update SAP kernel.
+  author: Red Hat, Inc.
+  company: Red Hat, Inc.
+
+  license: Apache-2.0
+
+  min_ansible_version: "2.11"
+
+  platforms:
+    - name: EL
+      versions:
+        - all
+
+  galaxy_tags:
+    - hana
+    - rhel
+    - sap

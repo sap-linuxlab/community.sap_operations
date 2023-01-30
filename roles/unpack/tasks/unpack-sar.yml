@@ -1,0 +1,40 @@
+---
+#
+# Copyright 2022 Red Hat, Project Atmosphere
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# TODO To list the contents of SAR files.
+# SAPCAR -tvf <your-SAR-file>
+# process with TTP resulting list
+
+- name: "Unpack *.sar file {{ item.path }}"
+  ansible.builtin.command:
+    cmd: "{{ unpack_sapcar_exe_path }} -xvf {{ item.path }} {% if unpack_manifest %} -manifest SIGNATURE.SMF {% endif %}"
+    chdir: "{{ unpack_destination }}"
+  register: unpack_sapcar_file
+  changed_when: unpack_sapcar_file.changed | default(true)
+
+
+- name: Register output variable
+  ansible.builtin.set_fact:
+    unpack_register: |
+      'results': "{{ unpack_register.results | default([]) +
+        [{
+        'file': item.path,
+        'changed': unpack_sapcar_file.changed,
+        'failed': unpack_sapcar_file.rc > 0
+        }] }}"
+      'changed': "{{ ( unpack_sapcar_file.changed ) or ( unpack_register.changed | default(false) ) }}"
+      'failed': "{{ (unpack_sapcar_file.rc > 0) or ( unpack_register.failed | default(false) ) }}"

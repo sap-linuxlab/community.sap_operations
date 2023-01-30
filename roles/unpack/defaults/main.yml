@@ -1,0 +1,7 @@
+---
+# defaults file for unpack
+sap_operations_sapcar_exe_path: /usr/sap/sapcar/sapcar
+unpack_sapcar_exe_path: "{{ sap_operations_sapcar_exe_path }}"
+unpack_sapcar_extension: "sar"
+unpack_zip_extension: "zip"
+unpack_manifest: true

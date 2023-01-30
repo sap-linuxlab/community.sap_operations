@@ -1,0 +1,60 @@
+---
+#
+# Copyright 2022 Red Hat, Project Atmosphere
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+argument_specs:
+  main:
+    short_description: |
+      Role to unpack *.sar and *.zip files.
+      This role is NOT idempotent for *.sar files.
+      Meaning it will unpack all the *.sar files every time role is executed.
+      For unpacking *.zip files Ansible module ansible.builtin.unarchive is used and this module is idempotent.
+      Role prerequisites:
+        * 'unzip' is installed (will not be installed by this role), if 'unzip' command is missing, role will fail.
+        * SAPCAR should be installed in 'sap_operations_sapcar_exe_path' (default value /usr/sap/sapcar/sapcar).
+        If SAPCAR is not installed at 'sap_operations_sapcar_exe_path' role will fail.
+        Ansible user has to have persmissions to execute SAPCAR.
+    options:
+      unpack_source:
+        description: |
+          List or str value - files and/or folders that should be unpacked.
+          Folder and/or files that are missing or cannot be accessed will be ignored.
+          Only files on first level in directory will be processed, role does not look recursively in the directory.
+        type: list
+        required: true
+      unpack_destination:
+        description: |
+          Folder where files will be unpacked.
+          If folder does not exist, it will be created.
+          Ansible user has to have permissions to create the folder and write to the folder if it already exists.
+        type: str
+        required: true
+      unpack_manifest:
+        description: |
+          Flag to unpack SAPCAR archives using option "-manifest SIGNATURE.SMF".
+          If set to true option "-manifest SIGNATURE.SMF" will be used
+        type: bool
+        required: false
+        default: true
+      unpack_sapcar_exe_path:
+        description: |
+          Path to SAPCAR executable file. SAPCAR should be installed as a prerequisite for this role.
+
+          This variable is equivalent to sap_operations collection variable 'sap_operations_sapcar_exe_path'.
+        type: str
+        default: /usr/sap/sapcar/sapcar
+        required: false
+        # collection_variable: sap_operations_sapcar_exe_path

@@ -1,0 +1,37 @@
+argument_specs:
+  main:
+    short_description: |
+      Role replaces existing SAP kernel with kernel provided in SAP CAR files.
+    options:
+      sap_kernel_update_instance:
+        description: |
+          The instance number to be managed.
+        type: str
+        required: true
+      sap_force_update:
+        description: |
+          Update the system if rolling updgrade can't be used. Stop and start the system, so there is downtime.
+        type: str
+        default: false
+        required: false
+      sap_kernel_update_sid:
+        description: |
+          SAP System ID.
+        type: str
+        required: true
+      sap_kernel_update_kernel_path:
+        description: |
+          Path to directory with installed SAP kernel.
+        type: str
+        required: true
+      sap_kernel_update_new_kernel_path:
+        description: |
+          Path to new kernel.
+        type: str
+        required: true
+      sap_kernel_update_backup:
+        description: |
+            Backup previous kernel.
+        type: str
+        default: true
+        required: false
