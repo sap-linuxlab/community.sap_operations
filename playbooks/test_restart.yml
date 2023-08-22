@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  gather_facts: no
+  vars:
+    sap_control_function: "restart_all_sap"
+  roles:
+    - { role: sap_control }
