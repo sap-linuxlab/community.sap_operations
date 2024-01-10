@@ -6,7 +6,7 @@
 # Check sapstartsrv
 - name: SAPstartsrv - Check sapstartsrv
   ansible.builtin.shell: |
-    source ~/.profile && cdexe; sapcontrol -nr {{ passed_sap_nr }} -function GetSystemInstanceList
+    source ~/.profile ; sapcontrol -nr {{ passed_sap_nr }} -function GetSystemInstanceList
   args:
     executable: /bin/bash
   become: true
