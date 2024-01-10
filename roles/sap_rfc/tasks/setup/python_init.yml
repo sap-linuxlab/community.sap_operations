@@ -1,0 +1,41 @@
+---
+
+# PyRFC v2.7.0 dropped support for CPython 3.6 (OS System Python version), use CPython 3.9 instead
+- name: Install Python package manager pip3, and compiler/library for C and C++
+  ansible.builtin.package:
+    name:
+      - python39
+      - python39-pip
+      - python39-wheel
+      - python39-devel # Required for PyRFC compile with GCC
+      - gcc
+      - glibc
+      - gcc-c++
+      - libstdc++
+    state: present
+
+- name: Install virtualenv to system Python
+  ansible.builtin.pip:
+    name:
+      - virtualenv
+
+- name: Create virtualenv for python3, install dependencies to virtualenv. Do not inherit system Python modules
+  ansible.builtin.pip:
+    name:
+      - cython
+      - wheel
+      - pytest
+      - sphinx
+    virtualenv: ~/env/pyrfc_env
+    virtualenv_command: virtualenv
+    virtualenv_python: python3.9
+
+- name: Install pyrfc to virtualenv on target host. Do not inherit system Python modules
+  environment:
+    SAPNWRFC_HOME: "{{ __sap_rfc_nwrfc_home.files[0].path | dirname }}"
+  ansible.builtin.pip:
+    name:
+      - pyrfc
+    virtualenv: ~/env/pyrfc_env
+    virtualenv_command: virtualenv
+    virtualenv_python: python3.9

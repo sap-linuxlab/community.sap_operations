@@ -1,0 +1,116 @@
+---
+
+- name: Set fact x86_64 sap_rfc_first_run_download_nwrfc_sdk
+  ansible.builtin.set_fact:
+    sap_rfc_first_run_download_nwrfc_sdk: "nwrfc750P_12-70002752.zip"
+  when: ansible_architecture == "x86_64"
+
+- name: Set fact x86_64 sap_rfc_first_run_download_nwrfc_sdk
+  ansible.builtin.set_fact:
+    sap_rfc_first_run_download_nwrfc_sdk: "nwrfc750P_12-70002761.zip"
+  when: ansible_architecture == "ppc64le"
+
+- name: Create directories if does not exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ sap_rfc_first_run_download_path }}"
+    - "/usr/local/sap"
+    - "/usr/local/sap/nwrfcsdk"
+    # - "/tmp/nwrfcsdk_patch_extract"
+
+# Use task block to call Ansible Module in the Ansible Collection for sap_launchpad
+- name: Execute Ansible Module to download SAP software
+  community.sap_launchpad.software_center_download:
+    suser_id: "{{ sap_rfc_first_run_download_sap_user_id }}"
+    suser_password: "{{ sap_rfc_first_run_download_sap_user_password }}"
+    softwarecenter_search_query: "{{ item }}"
+    dest: "{{ sap_rfc_first_run_download_path }}"
+  loop:
+    - "{{ sap_rfc_first_run_download_nwrfc_sdk }}"
+    # - "{{ sap_rfc_first_run_download_sapcar }}"
+    # - "{{ sap_rfc_first_run_download_nwrfc_sdk_patch }}"
+
+- name: Discover zip of the SAP NWRFC SDK (7.5x Original) on target host
+  ansible.builtin.find:
+    paths: "{{ sap_rfc_first_run_download_path }}"
+    recurse: true
+    patterns: "nwrfc*.zip"
+  register: __sap_rfc_nwrfc_sdk_zip
+
+- name: Extract zip of the SAP NWRFC SDK (7.5x) on target host
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "{{ __sap_rfc_nwrfc_sdk_zip.files[0].path }}"
+    dest: /usr/local/sap # ZIP contains nwrfcsdk subdirectory
+  when: __sap_rfc_nwrfc_sdk_zip.files | length > 0
+
+# - name: Discover SAR of the SAP NWRFC SDK Patch on target host
+#   ansible.builtin.find:
+#     paths: "{{ sap_rfc_first_run_download_path }}"
+#     recurse: true
+#     patterns: "sapnwrfc_*.sar"
+#   register: __sap_rfc_nwrfc_sdk_sar
+
+# - name: Discover SAPCAR on target host
+#   ansible.builtin.find:
+#     paths: "{{ sap_rfc_first_run_download_path }}"
+#     recurse: true
+#     patterns: "SAPCAR*"
+#   register: __sap_rfc_sapcar_exe
+
+# - name: Extract SAR of the SAP NWRFC SDK Patch on target host
+#   ansible.builtin.shell: |
+#     {{ __sap_rfc_sapcar_exe.files[0].path }} \
+#     -R /tmp/nwrfcsdk_patch_extract \
+#     -xvf "{{ __sap_rfc_nwrfc_sdk_sar.files[0].path }}"
+#   when: __sap_rfc_nwrfc_sdk_sar.files | length > 0
+
+# - name: Find patched compiled shared library (libsapnwrfc.so)
+#   ansible.builtin.find:
+#     paths: /tmp/nwrfcsdk_patch_extract
+#     recurse: true
+#     patterns: libsapnwrfc.so
+#   register: __sap_rfc_nwrfc_lib_patch
+
+- name: Find compiled shared library (libsapnwrfc.so)
+  ansible.builtin.find:
+    paths: /usr/local/sap/nwrfcsdk
+    recurse: true
+    patterns: libsapnwrfc.so
+  register: __sap_rfc_nwrfc_lib
+
+# - name: Copy patched compiled shared library (libsapnwrfc.so) to replace original
+#   ansible.builtin.copy:
+#     backup: false # Otherwise ldconfig will identify multiple copies of libsapnwrfc.so
+#     remote_src: true
+#     mode: 755
+#     src: "{{ __sap_rfc_nwrfc_lib_patch.files[0].path }}"
+#     dest: "{{ __sap_rfc_nwrfc_lib.files[0].path }}"
+
+# - name: Create ld.so.conf configuration file with path to compiled shared library (libsapnwrfc.so)
+#   ansible.builtin.copy:
+#     dest: /etc/ld.so.conf.d/nwrfcsdk.conf
+#     mode: '0444'
+#     content: |
+#       # include nwrfcsdk
+#       {{ __sap_rfc_nwrfc_lib.files[0].path | dirname }}
+#       # include /usr/sap (e.g. libstdc++.so.6)
+#       /usr/sap/lib
+
+- name: Reload system-wide library paths (ldconfig)
+  ansible.builtin.shell: ldconfig
+
+- name: Ensure compiled shared library (libsapnwrfc.so) is registered as system-wide library
+  ansible.builtin.shell: ldconfig -p | grep sapnwrfc
+  register: __sap_rfc_nwrfc_lib_discover_path
+
+- name: Identify SAP NW RFC Library home directory
+  ansible.builtin.find:
+    paths: /usr/local/sap
+    recurse: true
+    file_type: directory
+    patterns: include
+  register: __sap_rfc_nwrfc_home

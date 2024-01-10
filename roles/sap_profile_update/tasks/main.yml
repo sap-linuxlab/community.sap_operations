@@ -3,14 +3,14 @@
 - name: SAP Profile Update - Get Instance Profile
   ansible.builtin.shell: |
     set -o pipefail
-    source ~/.profile && cdexe; sapcontrol -nr {{ sap_update_profile_instance_nr }} -function ParameterValue SAPPROFILE | grep profile
+    source ~/.profile ; sapcontrol -nr {{ sap_update_profile_instance_nr }} -function ParameterValue SAPPROFILE | grep profile
   args:
     executable: /bin/bash
   become: true
   become_user: "{{ sap_update_profile_sid | lower }}adm"
   register: get_instance_profile
 
-- name: setup facts
+- name: SAP Profile Update - Setup facts
   ansible.builtin.set_fact:
     sap_update_profile_default_profile_file_path: "/sapmnt/{{ sap_update_profile_sid }}/profile/DEFAULT.PFL"
     sap_update_profile_instance_profile_file_path: "{{ get_instance_profile.stdout }}"
