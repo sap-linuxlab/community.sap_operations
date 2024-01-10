@@ -8,6 +8,7 @@
       - python39-pip
       - python39-wheel
       - python39-devel # Required for PyRFC compile with GCC
+      - python3-virtualenv # Use OS Package to allow non-root users to create Python virtual environment
       - gcc
       - glibc
       - gcc-c++

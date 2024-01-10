@@ -90,15 +90,15 @@
 #     src: "{{ __sap_rfc_nwrfc_lib_patch.files[0].path }}"
 #     dest: "{{ __sap_rfc_nwrfc_lib.files[0].path }}"
 
-# - name: Create ld.so.conf configuration file with path to compiled shared library (libsapnwrfc.so)
-#   ansible.builtin.copy:
-#     dest: /etc/ld.so.conf.d/nwrfcsdk.conf
-#     mode: '0444'
-#     content: |
-#       # include nwrfcsdk
-#       {{ __sap_rfc_nwrfc_lib.files[0].path | dirname }}
-#       # include /usr/sap (e.g. libstdc++.so.6)
-#       /usr/sap/lib
+- name: Create ld.so.conf configuration file with path to compiled shared library (libsapnwrfc.so)
+  ansible.builtin.copy:
+    dest: /etc/ld.so.conf.d/nwrfcsdk.conf
+    mode: '0444'
+    content: |
+      # include nwrfcsdk
+      {{ __sap_rfc_nwrfc_lib.files[0].path | dirname }}
+      # include /usr/sap (e.g. libstdc++.so.6)
+      /usr/sap/lib
 
 - name: Reload system-wide library paths (ldconfig)
   ansible.builtin.shell: ldconfig
