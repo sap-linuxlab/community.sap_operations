@@ -13,7 +13,7 @@
 # Stop sapstartsrv
 - name: SAPstartsrv - Stop sapstartsrv {{ passed_sap_sid }}-{{ passed_sap_nr }}
   ansible.builtin.shell: |
-    source ~/.profile && cdexe; sapcontrol -nr {{ passed_sap_nr }} -function StopService {{ passed_sap_sid }}
+    source ~/.profile ; sapcontrol -nr {{ passed_sap_nr }} -function StopService {{ passed_sap_sid }}
   args:
     executable: /bin/bash
   become: true
@@ -25,7 +25,7 @@
 # Start sapstartsrv
 - name: SAPstartsrv - Start sapstartsrv {{ passed_sap_sid }}-{{ passed_sap_nr }}
   ansible.builtin.shell: |
-    source ~/.profile && cdexe; sapcontrol -nr {{ passed_sap_nr }} -function StartService {{ passed_sap_sid }}
+    source ~/.profile ; sapcontrol -nr {{ passed_sap_nr }} -function StartService {{ passed_sap_sid }}
   args:
     executable: /bin/bash
   become: true

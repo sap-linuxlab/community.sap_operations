@@ -1,18 +1,47 @@
 ---
-- name: Initial install of Python altinstall for PyRFC
-  ansible.builtin.include_tasks: python_pyrfc_init.yml
-  when: pyrfc_first_run | bool
 
-- name: Discover Python altinstall for PyRFC
-  ansible.builtin.include_tasks: python_pyrfc_discover.yml
-  when: not pyrfc_first_run | bool
+- name: Identify SAP NW RFC Library home directory
+  ansible.builtin.find:
+    paths: /usr/local/sap
+    recurse: true
+    file_type: directory
+    patterns: include
+  register: __sap_rfc_nwrfc_home
+
+- name: Identify SAP NW RFC Library compiled shared library (libsapnwrfc.so)
+  ansible.builtin.find:
+    paths: /usr/local/sap/nwrfcsdk
+    recurse: true
+    file_type: file
+    patterns: libsapnwrfc.so
+  register: __sap_rfc_nwrfc_lib
+
+- name: Identify Python virtual environment for sap_rfc Ansible Role
+  ansible.builtin.stat:
+    path: ~/env/pyrfc_env
+  register: __sap_rfc_python_virtual_env
+
+- name: Set fact based on identified SAP NW RFC Library
+  ansible.builtin.set_fact:
+    __sap_rfc_first_run: "{{ true if ((__sap_rfc_nwrfc_home.files | length) == 0 or (__sap_rfc_nwrfc_lib.files | length) == 0) else false }}"
+
+- name: Initial install of SAP NW RFC SDK Library
+  ansible.builtin.include_tasks: setup/nwrfcsdk_init.yml
+  when: __sap_rfc_first_run | bool
+
+- name: Initial install of Python virtual environment for PyRFC
+  ansible.builtin.include_tasks: setup/python_init.yml
+  when: (__sap_rfc_first_run | bool) or (not __sap_rfc_python_virtual_env.stat.exists)
 
 # Use Ansible Task block to call sap_pyrfc Ansible Module in the Ansible Collection for sap_libs
 # RFC call using variables set by the Ansible Playbook when calling this Ansible Role
 - name: Execute Ansible Module to call PyRFC using the virtualenv Python3
-  community.sap_libs.sap_pyrfc:
-    function: "{{ target_function }}"
-    parameters: "{{ target_parameters }}"
-    connection: "{{ target_connection }}"
+  environment:
+    SAPNWRFC_HOME: "{{ __sap_rfc_nwrfc_home.files[0].path | dirname }}"
+    LD_LIBRARY_PATH: "$LD_LIBRARY_PATH:$SAPNWRFC_HOME/lib"
   vars:
     ansible_python_interpreter: ~/env/pyrfc_env/bin/python3
+  community.sap_libs.sap_pyrfc:
+    function: "{{ sap_rfc_target_function }}"
+    parameters: "{{ sap_rfc_target_parameters }}"
+    connection: "{{ sap_rfc_target_connection }}"

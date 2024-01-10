@@ -1,6 +1,6 @@
 # sap_rfc Ansible Role
 
-The sap_rfc Ansible Role executes an SAP Remote Function Call (RFC), and performs setup as necessary ([`PyRFC`](https://github.com/SAP/PyRFC) open source by SAP, and [`SAP NWRFC SDK`](https://support.sap.com/en/product/connectors/nwrfcsdk.html)).
+The sap_rfc Ansible Role executes an SAP Remote Function Call (RFC) from a server-side host with connectivity to the SAP System host/s, and performs setup as necessary ([`PyRFC`](https://github.com/SAP/PyRFC) open source by SAP, and [`SAP NWRFC SDK`](https://support.sap.com/en/product/connectors/nwrfcsdk.html)).
 
 ## Ansible Role Overview
 
@@ -8,7 +8,7 @@ The sap_rfc Ansible Role uses:
 - the Ansible Module `sap_pyrfc` from the Ansible Collection `sap_libs`, which leverages the open-source [`PyRFC`](https://github.com/SAP/PyRFC) bindings for the proprietary [`SAP NWRFC SDK`](https://support.sap.com/en/product/connectors/nwrfcsdk.html).
 - the Ansible Module `software_center_download` from the Ansible Collection `sap_launchpad`, which on first-run is used to download the [`SAP NWRFC SDK`](https://support.sap.com/en/product/connectors/nwrfcsdk.html).
 
-Appropriate target SAP System user authorizations are required for the execute of the RFCs, and on first-run to obtain the [`SAP NWRFC SDK`](https://support.sap.com/en/product/connectors/nwrfcsdk.html) an SAP User ID with download privileges is required.
+Appropriate target SAP System user authorizations are required for the execution of the RFCs, and on first-run to obtain the [`SAP NWRFC SDK`](https://support.sap.com/en/product/connectors/nwrfcsdk.html) an SAP User ID with download privileges is required.
 
 The Ansible Role does not contain any system-altering RFCs by default when executed.
 
@@ -60,7 +60,7 @@ These RFC parameter data elements are mapped to the equivilant Python data type 
 
 `Ansible Task code example for data element:`
 ```yaml
-target_parameters:
+sap_rfc_target_parameters:
   VAR: 'ECHO'
 ```
 
@@ -71,7 +71,7 @@ target_parameters:
 
 `Ansible Task code example for ABAP Struture:`
 ```yaml
-target_parameters:
+sap_rfc_target_parameters:
   IMPORTSTRUCT:
     RFCFLOAT: 1.1
     RFCCHAR1: 'A'
@@ -84,7 +84,7 @@ target_parameters:
 
 `Ansible Task code example for ABAP Table:`
 ```yaml
-target_parameters:
+sap_rfc_target_parameters:
   RFCTABLE:
     - COLUMN0: SAP
     - COLUMN1: 1.23

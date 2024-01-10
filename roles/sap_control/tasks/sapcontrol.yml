@@ -17,7 +17,6 @@
     source ~/.profile && sapcontrol -nr {{ passed_sap_nr }} -function {{ vars['sap_control_' + funct_type] }}
   args:
     executable: /bin/bash
-    warn: false
   become: true
   become_user: "{{ passed_sap_sid | lower }}adm"
   register: sapcontrol_status

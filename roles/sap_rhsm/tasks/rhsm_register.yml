@@ -42,8 +42,6 @@
 
     - name: Yum clean all
       ansible.builtin.command: "yum clean all"
-      args:
-        warn: false
 
     - name: Yum search sap-
       ansible.builtin.command: "yum -y search sap-"

@@ -66,17 +66,22 @@
 
 # Setup
 
-- name: SAP HANA Backint - Setup - AWS S3 - Clone hanacleaner.py
-  ansible.builtin.git:
-    repo: https://github.com/chriselswede/hanacleaner.git
-    dest: "$HOME/.ansible/tmp/git_hanacleaner"
-#    single_branch: true # Not compatible with Ansible 2.9
-    version: master
+- name: SAP HANA Backint - Setup - AWS S3 - Download hanacleaner.py
+  ansible.builtin.get_url:
+    url: https://github.com/chriselswede/hanacleaner/archive/refs/heads/master.zip
+    dest: "/tmp/hanacleaner-master.zip"
+    mode: '0440'
+
+- name: SAP HANA Backint - Setup - AWS S3 - Unpack hanacleaner.py
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "/tmp/hanacleaner-master.zip"
+    dest: "/tmp"
 
 # Copy hanacleaner.py
 - name: SAP HANA Backint - Setup - AWS S3 - Copy hanacleaner.py to SAP HANA backint directory
   ansible.builtin.copy:
-    src: "$HOME/.ansible/tmp/git_hanacleaner/hanacleaner.py"
+    src: "/tmp/hanacleaner-master/hanacleaner.py"
     dest: "{{ sap_hana_backint_setup_backint_directory }}/hanacleaner.py"
     mode: "0755"
     remote_src: true
