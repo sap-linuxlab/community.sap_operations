@@ -1,0 +1,10 @@
+---
+- name: Fetch kernel path
+  sap.sap_operations.parameter_info:
+    name: "DIR_CT_RUN"
+    instance_number: "{{ sap_kernel_update_instance }}"
+  register: __sap_kernel_update_sapexedb_sar_file
+
+- name: Set kernel path
+  ansible.builtin.set_fact:
+    sap_kernel_update_kernel_path: "{{ __sap_kernel_update_sapexedb_sar_file.parameter_value[0] }}"

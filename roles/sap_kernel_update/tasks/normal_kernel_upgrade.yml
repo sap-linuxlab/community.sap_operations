@@ -1,0 +1,33 @@
+- name: Stop SAP system
+  sap.sap_operations.system:
+    state: stopped
+    instance_number: "{{ sap_kernel_update_instance }}"
+
+# Seems ansible.builtin.copy backup works with files, but not with directories.
+# Create backup manually.
+- name: Backup previous SAP kernel
+  ansible.builtin.copy:
+    src: "{{ sap_kernel_update_kernel_path }}/"
+    dest: "{{ sap_kernel_update_kernel_path }}-{{ sap_kernel_update_kernel_backup_suffix }}"
+    remote_src: true
+    mode: preserve
+  when: sap_kernel_update_backup
+
+- name: Install new SAP kernel
+  ansible.builtin.copy:
+    src: "{{ sap_kernel_update_new_kernel_path }}/"
+    dest: "{{ sap_kernel_update_kernel_path }}"
+    remote_src: true
+    mode: preserve
+  register: sap_kernel_updated_result
+
+- name: Run saproot.sh fixup script
+  ansible.builtin.command:
+    cmd: ./saproot.sh {{ sap_kernel_update_sid }}
+    chdir: "{{ sap_kernel_update_kernel_path }}"
+  when: sap_kernel_updated_result is changed
+
+- name: Start SAP system
+  sap.sap_operations.system:
+    state: started
+    instance_number: "{{ sap_kernel_update_instance }}"
