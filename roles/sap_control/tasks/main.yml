@@ -95,8 +95,8 @@
     msg: "{{ sap_facts_register.sap_facts }}"
 
 - name: pause for 10 Seconds
-  ansible.builtin.pause:
-    seconds: 10
+  ansible.builtin.wait_for:
+    timeout: 10
 
 # Debugging stuff
 - name: Display parameters for runtime
