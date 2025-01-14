@@ -87,12 +87,13 @@
 # Get SAP Facts
 - name: Run sap_facts module to gather SAP facts
   community.sap_libs.sap_system_facts:
-    param: "{{ sap_facts_param }}"
+    # param: "{{ sap_facts_param }}"
   register: sap_facts_register
 
-- name: Debug facts
+- name: Debug result from sap_libs.sap_system_facts
   ansible.builtin.debug:
-    msg: "{{ sap_facts_register.sap_facts }}"
+    msg: "{{ sap_facts_register.ansible_facts.sap }}"
+    verbosity: 1
 
 - name: pause for 10 Seconds
   ansible.builtin.pause:
