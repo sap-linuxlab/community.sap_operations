@@ -286,7 +286,7 @@ function check_sapstartsrv(){
 	# $3 - NR
 
 	## Count the number of sapstartsrv processes
-	SAPSTARTSRV=$(ps -ef | grep $2 | grep $3 | grep sapstartsrv | wc -l)
+	SAPSTARTSRV=$(ps -eo exe | grep $2 | grep $3 | grep sapstartsrv | wc -l)
 
 	if [[ $SAPSTARTSRV = 0 ]]; then
 		## No sapstartsrv process running - attempt to start
