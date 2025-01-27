@@ -33,5 +33,5 @@
   register: sap_start_sapstartsrv
 
 - name: SAPstartsrv - Wait for 10 seconds for sapstartsrv to initialize
-  ansible.builtin.pause:
-    seconds: 10
+  ansible.builtin.wait_for:
+    timeout: 10
