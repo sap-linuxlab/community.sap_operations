@@ -21,7 +21,6 @@ sap_control_instance_type_sortorder:
   - "WebDisp"
 
 # Functions
-
 sap_control_functions_list:
   - restart_all_sap
   - stop_all_sap

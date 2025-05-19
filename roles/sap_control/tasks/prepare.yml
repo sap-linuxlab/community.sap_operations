@@ -11,11 +11,13 @@
 
 - name: Prepare - Sort sap_facts_register by sap_control_instance_type_sortorder
   ansible.builtin.set_fact:
-    sorted_sap_facts: "{{ (sorted_sap_facts | default([]) | unique) + (sap_facts_register.ansible_facts.sap | selectattr('TYPE', 'equalto', item) | list | difference(sorted_sap_facts | default([]))) }}"
+    sorted_sap_facts: "{{ (sorted_sap_facts | default([]) | unique) + ( __type_list | difference(sorted_sap_facts | default([]))) }}"
   loop: "{{ sap_control_instance_type_sortorder | reverse if funct_type == 'stop' else sap_control_instance_type_sortorder }}"
+  vars:
+    __type_list: "{{ sap_facts_register.ansible_facts.sap | selectattr('TYPE', 'equalto', item) | list }}"
   when: 
-    - sap_facts_register.ansible_facts.sap | selectattr('TYPE', 'equalto', item) | list | length > 0
-
+    - __type_list | length > 0
+  
 - name: Prepare - SAP Control
   vars:
     sap_control_execute_sid: "{{ item.SID }}"
