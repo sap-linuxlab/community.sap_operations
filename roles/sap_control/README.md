@@ -7,6 +7,7 @@ This Ansible Role executes basic SAP administration tasks on Linux operating sys
 This Ansible Role executes basic SAP administration tasks on Linux operating systems, including:
 - Start/Stop/Restart of SAP HANA Database Server
 - Start/Stop/Restart of SAP NetWeaver Application Server
+- Start/Stop/Restart/Update of SAP Netweaver System
 - Multiple Automatic discovery and Start/Stop/Restart of SAP HANA Database Server or SAP NetWeaver Application Server
 
 ## Example execution
@@ -62,7 +63,7 @@ Assumptions for executing this role include:
 | :--- |:--- | :--- |
 | `SID` | SAP system SID | no, only if you are targetting a single SAP system|
 | `nowait` | Default: `false` | no, use only when absolutely sure! This will bypass all waiting and ignore all necessary steps for a graceful stop / start|
-| `sap_control_function` | Function to execute:<br/><ul><li>`restart_all_sap`</li><li>`restart_all_nw`</li><li>`restart_all_hana`</li><li>`restart_sap_nw`</li><li>`restart_sap_hana`</li><li>`stop_all_sap`</li><li>`start_all_sap`</li><li>`stop_all_nw`</li><li>`start_all_nw`</li><li>`stop_all_hana`</li><li>`start_all_hana`</li><li>`stop_sap_nw`</li><li>`start_sap_nw`</li><li>`stop_sap_hana`</li><li>`start_sap_hana`</li></ul> | yes, only this is required to detect the Instance Number which is used with SAP Host Agent `sapcontrol` CLI<br/><br/><br/>_Note: Executions using `all` will automatically detect any System IDs and corresponding Instance Numbers_ |
+| `sap_control_function` | Function to execute:<br/><ul><li>`restart_all_sap`</li><li>`restart_all_nw`</li><li>`restart_all_hana`</li><li>`restart_sap_nw`</li><li>`restart_sap_hana`</li><li>`stop_all_sap`</li><li>`start_all_sap`</li><li>`stop_all_nw`</li><li>`start_all_nw`</li><li>`stop_all_hana`</li><li>`start_all_hana`</li><li>`stop_sap_nw`</li><li>`start_sap_nw`</li><li>`stop_sap_hana`</li><li>`start_sap_hana`</li><li>`restartsystem_all_nw`</li><li>`updatesystem_all_nw`</li><li>`startsystem_all_nw`</li><li>`stopsystem_all_nw`</li></ul> | yes, only this is required to detect the Instance Number which is used with SAP Host Agent `sapcontrol` CLI<br/><br/><br/>_Note: Executions using `all` will automatically detect any System IDs and corresponding Instance Numbers_ |
 
 ## Ansible Role workflow and structure
 
