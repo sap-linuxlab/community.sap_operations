@@ -1,0 +1,3 @@
+bugfixes:
+  - roles/sap_control - fixing sap_sid parameter ignored in sap_control role
+    (https://github.com/sap-linuxlab/community.sap_operations/issues/38).
