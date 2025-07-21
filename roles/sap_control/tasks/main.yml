@@ -53,29 +53,37 @@
 #   - stop_sap_hana
 #   - start_sap_hana
 
-- name: Set function list facts
-  ansible.builtin.set_fact:
-    sap_control_act_type: "{{ sap_control_function.split('_')[0] | lower }}"
-    sap_control_get_type: "{{ sap_control_function.split('_')[1] | lower }}"
-    sap_control_sap_type: "{{ sap_control_function.split('_')[2] | lower }}"
+# These facts were only used for the sap_system_facts module, but it doesn't accept sap_facts_param anymore.
+# - name: Set function list facts
+#   ansible.builtin.set_fact:
+#     sap_control_act_type: "{{ sap_control_function.split('_')[0] | lower }}"
+#     sap_control_get_type: "{{ sap_control_function.split('_')[1] | lower }}"
+#     sap_control_sap_type: "{{ sap_control_function.split('_')[2] | lower }}"
 
-- name: Set sap_facts_param
-  ansible.builtin.set_fact:
-    sap_facts_param: "{{ sap_control_get_type }}"
+# - name: Set sap_facts_param
+#   ansible.builtin.set_fact:
+#     sap_facts_param: "{{ sap_control_get_type }}"
 
-- name: Set sap_facts_param
-  ansible.builtin.set_fact:
-    sap_facts_param: "{{ sap_control_sap_type }}"
-  when:
-    - "'all' in sap_control_function"
-    - "'sap' not in sap_control_sap_type"
+# - name: Set sap_facts_param
+#   ansible.builtin.set_fact:
+#     sap_facts_param: "{{ sap_control_sap_type }}"
+#   when:
+#     - "'all' in sap_control_function"
+#     - "'sap' not in sap_control_sap_type"
 
-# When not all
-- name: Set sap_facts_param
-  ansible.builtin.set_fact:
-    sap_facts_param: "{{ sap_sid }}"
-  when:
-    - "'all' not in sap_control_function"
+# # When not all
+# - name: Set sap_facts_param
+#   ansible.builtin.set_fact:
+#     sap_facts_param: "{{ sap_sid }}"
+#   when:
+#     - "'all' not in sap_control_function"
+
+# # Get SAP Info
+# - name: Get SAP Info
+#   vars:
+#     sap_info_get_function: "get_{{ sap_control_get_type }}_{{ sap_control_sap_type }}"
+#   ansible.builtin.include_role:
+#     name: roles/sap_info
 
 # # Get SAP Info
 # - name: Get SAP Info
