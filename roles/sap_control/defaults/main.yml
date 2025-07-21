@@ -61,6 +61,10 @@ sap_control_functions_list:
   - updatesystem_all_nw
   - startsystem_all_nw
   - stopsystem_all_nw
+  - restartsystem_sap_nw
+  - updatesystem_sap_nw
+  - startsystem_sap_nw
+  - stopsystem_sap_nw
   - restart_all_sap
   - stop_all_sap
   - start_all_sap
