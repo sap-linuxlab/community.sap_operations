@@ -10,8 +10,17 @@ sap_control_stop: "StopWait 180 2"
 # get_all_sap_sid_dir_nw: "/sapmnt"
 # get_all_sap_sid_dir_hana: "/hana/shared"
 
-# Functions
+# Sort Order to start SAP instances defined by SAP and recommended by SAP Basis Administrators
+sap_control_instance_type_sortorder:
+  - "HDB"
+  - "ERS"
+  - "ASCS"
+  - "SCS"
+  - "PAS"
+  - "Java"
+  - "WebDisp"
 
+# Functions
 sap_control_functions_list:
   - restart_all_sap
   - stop_all_sap
