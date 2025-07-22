@@ -1,7 +1,7 @@
 ---
 - name: Pause for 5 Seconds
   ansible.builtin.wait_for:
-    timeout: 5
+    timeout: 15
 
 - name: SAP {{ sap_control_name_header }} - Checking if Async action is over by executing sapcontrol -nr {{ passed_sap_nr }} -function {{ async_function_dict.test_function }}
   ansible.builtin.shell: |
@@ -11,7 +11,6 @@
   become: true
   become_user: "{{ passed_sap_sid | lower }}adm"
   register: test_function_result
-#  failed_when: "'FAIL' in test_function_result.stdout"
   retries: "{{ async_function_dict.retries | default(0) | int }}"
   delay: "{{ async_function_dict.delay | default(0) | int }}"
   until: >
@@ -19,7 +18,6 @@
     or async_function_dict.until_false is defined and not test_function_result.stdout | regex_search(async_function_dict.until_false, multiline=True)) and
     (async_function_dict.until_true is not defined or
     async_function_dict.until_true is defined and test_function_result.stdout | regex_search(async_function_dict.until_true, multiline=True))
-  failed_when: false
 
 - name: Debug stdout
   ansible.builtin.debug:
