@@ -11,13 +11,21 @@
 
 - name: Prepare - Sort sap_facts_register by sap_control_instance_type_sortorder
   ansible.builtin.set_fact:
-    sorted_sap_facts: "{{ (sorted_sap_facts | default([]) | unique) + ( __type_list | difference(sorted_sap_facts | default([]))) }}"
+    sorted_sap_facts: "{{ (sorted_sap_facts | default([]) | unique) + (__type_list | difference(sorted_sap_facts | default([]))) }}"
   loop: "{{ sap_control_instance_type_sortorder | reverse if funct_type == 'stop' else sap_control_instance_type_sortorder }}"
   vars:
     __type_list: "{{ sap_facts_register.ansible_facts.sap | selectattr('TYPE', 'equalto', item) | list }}"
-  when: 
+  when:
     - __type_list | length > 0
-  
+
+- name: Prepare - Filter sorted_sap_facts by sap_sid
+  ansible.builtin.set_fact:
+    sorted_sap_facts: "{{ sorted_sap_facts | default([])
+      | selectattr('SID', 'eq', sap_sid | upper)
+      | list }}"
+  when:
+    - not 'all' in sap_control_function
+
 - name: Prepare - SAP Control
   vars:
     sap_control_execute_sid: "{{ item.SID }}"
@@ -28,4 +36,3 @@
   loop: "{{ sorted_sap_facts }}"
   when:
     - item.InstanceType | lower == sap_type | lower
-...
