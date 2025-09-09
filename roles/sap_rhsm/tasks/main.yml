@@ -1,2 +1,25 @@
-- name: SAP OS Tools - RedHat Subscription Manager
-  ansible.builtin.include_tasks: "rhsm_{{ sap_rhsm_function }}.yml"
+# SPDX-License-Identifier: Apache-2.0
+---
+- name: Assert that the Operating System of Managed node is Red Hat
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == "RedHat"
+    fail_msg: |
+      Ensure that the role is executed on supported managed node operating system Red Hat.
+      Detected: {{ ansible_os_family }}
+      Expected: RedHat
+
+- name: Assert that the variable 'sap_rhsm_function' is valid
+  ansible.builtin.assert:
+    that:
+      - sap_rhsm_function is defined
+      - sap_rhsm_function is string
+      - sap_rhsm_function | trim | length > 0
+      - sap_rhsm_function in ['register', 'refresh']
+    fail_msg: |
+      The variable 'sap_rhsm_function' is undefined or invalid!
+      Available options: register, refresh
+
+- name: Execute Red Hat Subscription Manager function {{ sap_rhsm_function }}
+  ansible.builtin.include_tasks:
+    file: "rhsm_{{ sap_rhsm_function }}.yml"

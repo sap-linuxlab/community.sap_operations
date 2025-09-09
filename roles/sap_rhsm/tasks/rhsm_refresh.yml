@@ -1,30 +1,32 @@
-- name: SAP OS Tools - RedHat Subscription Manager - Refresh - {{ ansible_distribution }} - {{ ansible_distribution_version }}
-  block:
-    - name: Subscription Manager - Refresh
-      ansible.builtin.command: "subscription-manager refresh"
+# SPDX-License-Identifier: Apache-2.0
+---
+- name: Refresh - Refresh Subscription Manager
+  ansible.builtin.command:
+    cmd: "subscription-manager refresh"
 
-    - name: Subscription Manager - Identity Regenerate
-      ansible.builtin.command: "subscription-manager identity --regenerate"
+- name: Refresh - Regenerate Identity
+  ansible.builtin.command:
+    cmd: "subscription-manager identity --regenerate"
 
-    - name: Subscription Manager - Lock Release
-      ansible.builtin.command: "subscription-manager release --set={{ ansible_distribution_version }}"
+- name: Refresh - Lock Release
+  ansible.builtin.command:
+    cmd: "subscription-manager release --set={{ ansible_distribution_version }}"
 
-    - name: Yum clean all
-      ansible.builtin.command: "yum clean all"
+- name: Refresh - Yum clean all
+  ansible.builtin.command:
+    cmd: "yum clean all"
 
-    - name: Clear dnf cache
-      ansible.builtin.file:
-        path: /var/cache/dnf
-        state: absent
+- name: Refresh - Clear dnf cache
+  ansible.builtin.file:
+    path: /var/cache/dnf
+    state: absent
 
-    - name: Clear rhsm packages
-      ansible.builtin.file:
-        path: /var/lib/rhsm/packages/packages.json
-        state: absent
+- name: Refresh - Clear rhsm packages
+  ansible.builtin.file:
+    path: /var/lib/rhsm/packages/packages.json
+    state: absent
 
-    - name: Restart service rhsmcertd
-      ansible.builtin.service:
-        name: rhsmcertd
-        state: restarted
-
-  when: ansible_facts['distribution'] == 'RedHat'
+- name: Refresh - estart service rhsmcertd
+  ansible.builtin.service:
+    name: rhsmcertd
+    state: restarted

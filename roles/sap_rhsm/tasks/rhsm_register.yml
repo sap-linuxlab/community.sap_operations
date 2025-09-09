@@ -1,77 +1,104 @@
-- name: SAP OS Tools - RedHat Subscription Manager - Register - {{ ansible_distribution }} - {{ ansible_distribution_version }}
-  block:
-    # - name: Subscription Manager - Initial Commands
-    #   command: 'subscription-manager {{ item }}'
-    #   loop:
-    #     - "clean"
-    #     - "remove --all"
-    #     - "register --force --username={{ sap_rhsm_username }} --password='{{ sap_rhsm_password }}'"
-    #     - "identity --regenerate --force --username={{ sap_rhsm_username }} --password='{{ sap_rhsm_password }}'"
-    #     - "auto-attach"
-    #     - "attach --pool='{{ sap_rhsm_pool_id }}'"
-    #     - "release --set={{ ansible_distribution_version }}"
-    #     - "repos --disable='*'"
+# SPDX-License-Identifier: Apache-2.0
+---
+- name: Assert that the variable 'sap_rhsm_username' is valid
+  ansible.builtin.assert:
+    that:
+      - sap_rhsm_username is defined
+      - sap_rhsm_username is string
+      - sap_rhsm_username | trim | length > 0
+    fail_msg: |
+      The variable 'sap_rhsm_username' is undefined or invalid!
 
-    - name: Subscription Manager - Clean
-      ansible.builtin.command: "subscription-manager clean"
+- name: Assert that the variable 'sap_rhsm_password' is valid
+  ansible.builtin.assert:
+    that:
+      - sap_rhsm_password is defined
+      - sap_rhsm_password is string
+      - sap_rhsm_password | trim | length > 0
+    fail_msg: |
+      The variable 'sap_rhsm_password' is undefined or invalid!
 
-    - name: Subscription Manager - Remove
-      ansible.builtin.command: "subscription-manager remove --all"
+- name: Assert that the variable 'sap_rhsm_pool_id' is valid
+  ansible.builtin.assert:
+    that:
+      - sap_rhsm_pool_id is defined
+      - sap_rhsm_pool_id is string
+      - sap_rhsm_pool_id | trim | length > 0
+    fail_msg: |
+      The variable 'sap_rhsm_pool_id' is undefined or invalid!
 
-    - name: Subscription Manager - Register
-      ansible.builtin.command: 'subscription-manager register --force --username={{ sap_rhsm_username }} --password="{{ sap_rhsm_password }}"'
 
-    - name: Subscription Manager - Identity Regenerate
-      ansible.builtin.command: 'subscription-manager identity --regenerate --force --username={{ sap_rhsm_username }} --password="{{ sap_rhsm_password }}"'
+- name: Register - Clean Subscription Manager
+  ansible.builtin.command:
+    cmd: "subscription-manager clean"
 
-    - name: Subscription Manager - Auto Attach
-      ansible.builtin.command: "subscription-manager auto-attach"
+- name: Register - Remove Subscription Manager
+  ansible.builtin.command:
+    cmd: "subscription-manager remove --all"
 
-    - name: Subscription Manager - Attach Pool
-      ansible.builtin.command: 'subscription-manager attach --pool="{{ sap_rhsm_pool_id }}"'
+- name: Register - Register Subscription Manager
+  ansible.builtin.command:
+    cmd: 'subscription-manager register --force --username={{ sap_rhsm_username }} --password="{{ sap_rhsm_password }}"'
+  no_log: true
 
-    - name: Subscription Manager - Lock Release
-      ansible.builtin.command: "subscription-manager release --set={{ ansible_distribution_version }}"
+- name: Register - Regenerate Identity
+  ansible.builtin.command:
+    cmd: 'subscription-manager identity --regenerate --force --username={{ sap_rhsm_username }} --password="{{ sap_rhsm_password }}"'
+  no_log: true
 
-    - name: Subscription Manager - Disable Repos
-      ansible.builtin.command: 'subscription-manager repos --disable="*"'
+- name: Register - Auto Attach
+  ansible.builtin.command:
+    cmd: "subscription-manager auto-attach"
 
-    - name: Subscription Manager - Enable Repos
-      ansible.builtin.command: 'subscription-manager repos --enable="{{ item }}"'
-      loop: "{{ sap_rhsm_repos }}"
+- name: Register - Attach Pool
+  ansible.builtin.command:
+    cmd: 'subscription-manager attach --pool="{{ sap_rhsm_pool_id }}"'
 
-    - name: Yum clean all
-      ansible.builtin.command: "yum clean all"
+- name: Register - Lock Release
+  ansible.builtin.command:
+    cmd: "subscription-manager release --set={{ ansible_distribution_version }}"
 
-    - name: Yum search sap-
-      ansible.builtin.command: "yum -y search sap-"
+- name: Register - Disable Repos
+  ansible.builtin.command:
+    cmd: 'subscription-manager repos --disable="*"'
 
-    # - name: Yum install yum-utils
-    #   command: 'yum -y install yum-utils'
+- name: Register - Enable Repos
+  ansible.builtin.command:
+    cmd: 'subscription-manager repos --enable="{{ item }}"'
+  loop: "{{ sap_rhsm_repos }}"
+  when:
+    - sap_rhsm_repos is defined
+    - sap_rhsm_repos is mapping
+    - sap_rhsm_repos | length > 0
 
-    # - name: Yum install nfs-utils
-    #   command: 'yum -y install nfs-utils'
+- name: Register - Yum clean all
+  ansible.builtin.command:
+    cmd: "yum clean all"
 
-    - name: Yum install
-      ansible.builtin.command: "yum -y install {{ item }}"
-      loop: "{{ sap_rhsm_packages }}"
+- name: Register - Yum search 'sap-'
+  ansible.builtin.command:
+    cmd: "yum -y search sap-"
 
-    - name: Clear dnf cache
-      ansible.builtin.file:
-        path: /var/cache/dnf
-        state: absent
+- name: Register - Yum install
+  ansible.builtin.command:
+    cmd: "yum -y install {{ item }}"
+  loop: "{{ sap_rhsm_packages }}"
+  when:
+    - sap_rhsm_packages is defined
+    - sap_rhsm_packages is mapping
+    - sap_rhsm_packages | length > 0
 
-    - name: Clear rhsm packages
-      ansible.builtin.file:
-        path: /var/lib/rhsm/packages/packages.json
-        state: absent
+- name: Register - Clear dnf cache
+  ansible.builtin.file:
+    path: /var/cache/dnf
+    state: absent
 
-    - name: Restart service rhsmcertd
-      ansible.builtin.service:
-        name: rhsmcertd
-        state: restarted
+- name: Register - Clear rhsm packages
+  ansible.builtin.file:
+    path: /var/lib/rhsm/packages/packages.json
+    state: absent
 
-  # - name: Register the system to Red Hat Insights
-  #   command: 'insights-client --register'
-
-  when: ansible_facts['distribution'] == 'RedHat'
+- name: Register - Restart service rhsmcertd
+  ansible.builtin.service:
+    name: rhsmcertd
+    state: restarted

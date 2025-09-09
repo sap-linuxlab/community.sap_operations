@@ -1,18 +1,24 @@
-# https://access.redhat.com/discussions/3936201
+# SPDX-License-Identifier: Apache-2.0
+---
+# RHEL 7 KB Note: https://access.redhat.com/discussions/3936201
 
-sap_fapolicy_sid:
-sap_fapolicy_type: "generic"
+# Select fapolicy type to configure. Options: 'generic', 'nw', 'hana'.
+sap_fapolicy_type: 'generic'
 
-sap_fapolicy_user:
-sap_fapolicy_uid:
+# The user for fapolicy configuration.
+# Mandatory when `sap_fapolicy_type` is set to 'generic'.
+# Automatically set as `sap_fapolicy_sid` + 'adm' if `sap_fapolicy_type` is 'nw' or 'hana'.
+sap_fapolicy_user: ''
 
-# sap_fapolicy_user_list:
-#   - "root"
-#   - "sapadm"
-#   - "uuidd"
+# The User ID of provided user `sap_fapolicy_user`.
+# Automatically set if `sap_fapolicy_user` or `sap_fapolicy_sid` is provided.
+sap_fapolicy_uid: ''
 
-# sap_fapolicy_uid_list: []
+# The SAP System ID (3 letter String).
+# Mandatory when `sap_fapolicy_type` is set to 'nw' or 'hana'.
+sap_fapolicy_sid: ''
 
+# The list of directories for fapolicy configuration.
 sap_fapolicy_directory_list:
   - "/hana/"
   - "/sapmnt/"
@@ -21,4 +27,5 @@ sap_fapolicy_directory_list:
   - "/var/tmp/"
   - "/tmp/"
 
+# The header line to add to fapolicy rules.
 sap_fapolicy_rules_header: "# Allow rules for SAP directories"

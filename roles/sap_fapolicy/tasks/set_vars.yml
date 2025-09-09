@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+- name: Assert that the variable 'sap_fapolicy_user' is valid
+  ansible.builtin.assert:
+    that:
+      - sap_fapolicy_user is defined
+      - sap_fapolicy_user is string
+      - sap_fapolicy_user | trim | length == 3
+    fail_msg: |
+      The variable 'sap_fapolicy_user' is undefined or invalid!
+      This variable is required when 'sap_fapolicy_type' is set to 'generic'.
+    when:
+      - sap_fapolicy_type == 'generic'
+
+- name: Assert that the variable 'sap_fapolicy_sid' is valid 3 letter String
+  ansible.builtin.assert:
+    that:
+      - sap_fapolicy_sid is defined
+      - sap_fapolicy_sid is string
+      - sap_fapolicy_sid | trim | length == 3
+    fail_msg: |
+      The variable 'sap_fapolicy_sid' is undefined or invalid!
+      This variable is required when 'sap_fapolicy_user' is undefined or invalid
+      and 'sap_fapolicy_type' is set to 'nw' or 'hana'.
+    when:
+      - sap_fapolicy_user is not defined
+        or sap_fapolicy_user is not string
+        or sap_fapolicy_user | trim | length == 0
+      - sap_fapolicy_type in ['nw', 'hana']
+
+- name: Set the variable 'sap_fapolicy_user'
+  ansible.builtin.set_fact:
+    __sap_fapolicy_user:
+      "{{ sap_fapolicy_user
+        if sap_fapolicy_user is defined
+          and sap_fapolicy_user is string
+          and sap_fapolicy_user | trim | length > 0
+        else (sap_fapolicy_sid | lower ~ 'adm')
+        }}"
+
+
+- name: Get UID if the 'sap_fapolicy_uid' is not provided
+  ansible.builtin.command:
+    cmd: id -u {{ __sap_fapolicy_user }}
+  register: __sap_fapolicy_uid_register
+  when:
+    - sap_fapolicy_uid is not defined
+      or sap_fapolicy_uid is not string
+      or sap_fapolicy_uid | trim | length == 0
+
+- name: Set the variable with fapolicy UID
+  ansible.builtin.set_fact:
+    __sap_fapolicy_uid:
+      "{{ sap_fapolicy_uid
+        if sap_fapolicy_uid is defined
+          and sap_fapolicy_uid is string
+          and sap_fapolicy_uid | trim | length > 0
+        else __sap_fapolicy_uid_register.stdout.split()
+        }}"

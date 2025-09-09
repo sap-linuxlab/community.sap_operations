@@ -1,85 +1,113 @@
+<!-- BEGIN Title -->
 # sap_fapolicy Ansible Role
+<!-- END Title -->
 
-Ansible role for updating fapolicy entries based on SAP instance numbers
+## Description
+<!-- BEGIN Description -->
+The Ansible Role `sap_rhsm` is used to update fapolicy configuration for SAP Systems. 
+<!-- END Description -->
 
-- **Generic** - use the `generic` option to update entries directly by providing a list of users
-- **SAP NW** - use the `nw` option to update SAP NW entries
-- **SAP HANA** - use the `hana` option to update SAP HANA entries
+<!-- BEGIN Dependencies -->
+<!-- END Dependencies -->
 
-## Overview
+<!-- BEGIN Prerequisites -->
+## Prerequisites
+Managed nodes:
+- Supported Operating System: Red Hat
+<!-- END Prerequisites -->
 
-Fapolicy entries will be updated to allow access to the following directories
-  - "/hana/"
-  - "/sapmnt/"
-  - "/usr/sap/"
-  - "/software/"
-  - "/var/tmp/"
-  - "/tmp/"
-
-![](/docs/diagrams/sap_fapolicy_workflow.svg)
-
-### Variables
-
-| **Variable**        | **Info**                                    | **Default** | **Required**      |
-| :---                | :---                                        | :---        | :---              |
-| sap_fapolicy_type   | 'generic' / 'nw' / 'hana'                   | 'generic'   | yes               |
-| sap_fapolicy_user   | Unix user to include in fapolicy entries    | <none>      | if 'generic'      |
-| sap_fapolicy_sid    | SAP system SID                              | <none>      | if 'nw' / 'hana'  |
-
-### Input and Execution
-
-- Sample execution:
-
-    ```bash
-    ansible-playbook --connection=local --limit localhost -i "localhost," sap-fapolicy-update.yml"
-    ```
-
-- Sample playbook using `generic` option
-
-    ```yaml
-    ---
-    - hosts: all
-      become: true
-
+## Execution
+<!-- BEGIN Execution -->
+<!-- END Execution -->
+### Example
+<!-- BEGIN Execution Example -->
+Configuration with `sap_fapolicy_type` set to `generic`.
+```yaml
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Configure fapolicy
+      ansible.builtin.include_role:
+        name: community.sap_operations.sap_fapolicy
       vars:
-        sap_fapolicy_user_generic_list:
-          - "root"
-          - "sapadm"
-          - "uuidd"
+        sap_fapolicy_type: "generic"
+```
 
-      tasks:
+Configuration for all SAP Systems on managed node.
+```yaml
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Run sap_facts module to gather SAP facts
+      community.sap_operations.sap_facts:
+        param: "all"
+      register: sap_facts_register
 
-      # Update fapolicy for generic users
-      - name: Fapolicy Update - generic
-        vars:
-          sap_fapolicy_type: "generic"
-        ansible.builtin.include_role:
-          name: community.sap_operations.sap_fapolicy
-        loop: "{{ sap_fapolicy_user_generic_list }}"
-        loop_control:
-          loop_var: sap_fapolicy_user
-    ```
+    - name: Fapolicy Update - SAP Users
+      vars:
+        sap_fapolicy_sid: "{{ item.Type }}"
+        sap_fapolicy_type: "{{ item.Type }}"
+      ansible.builtin.include_role:
+        name: community.sap_operations.sap_fapolicy
+      loop: "{{ sap_facts_register.sap_facts }}"
+```
+<!-- END Execution Example -->
 
-- Sample playbook using `sap_facts` module to get all SAP systems in the host
+<!-- BEGIN Role Tags -->
+<!-- END Role Tags -->
 
-    ```yaml
-    ---
-    - hosts: all
-      become: true
+<!-- BEGIN Further Information -->
+<!-- END Further Information -->
 
-      tasks:
+## License
+<!-- BEGIN License -->
+Apache 2.0
+<!-- END License -->
 
-      - name: Run sap_facts module to gather SAP facts
-        community.sap_operations.sap_facts:
-            param: "all"
-        register: sap_facts_register
+## Maintainers
+<!-- BEGIN Maintainers -->
+- SAP LinuxLab
+<!-- END Maintainers -->
 
-      # Update fapolicy for SAP users
-      - name: Fapolicy Update - SAP Users
-        vars:
-          sap_fapolicy_sid: "{{ item.Type }}"
-          sap_fapolicy_type: "{{ item.Type }}"
-        ansible.builtin.include_role:
-          name: community.sap_operations.sap_fapolicy
-        loop: "{{ sap_facts_register.sap_facts }}"
-    ```
+## Role Variables
+<!-- BEGIN Role Variables -->
+### sap_fapolicy_type
+- **Required**<br>
+- _Type:_ `string`<br>
+- _Default:_ `generic`<br>
+
+Select fapolicy type to configure. Options: `generic`, `nw`, `hana`.<br>
+
+### sap_fapolicy_user
+- _Type:_ `string`<br>
+
+The user for fapolicy configuration.<br>
+Mandatory when `sap_fapolicy_type` is set to `generic`.<br>
+Automatically set as `sap_fapolicy_sid` + 'adm' if `sap_fapolicy_type` is `nw` or `hana`.<br>
+
+### sap_fapolicy_uid
+- _Type:_ `string`<br>
+
+The User ID of provided user `sap_fapolicy_user`.<br>
+Automatically set if `sap_fapolicy_user` or `sap_fapolicy_sid` is provided.<br>
+
+### sap_fapolicy_sid
+- _Type:_ `string`<br>
+
+The SAP System ID (3 letter String).<br>
+Mandatory when `sap_fapolicy_type` is set to `nw` or `hana`.<br>
+
+### sap_fapolicy_directory_list
+- _Type:_ `list`<br>
+- _Default:_ `['/hana/', '/sapmnt/', '/usr/sap/', '/software/', '/var/tmp/', '/tmp/']`<br>
+
+The list of directories for fapolicy configuration.<br>
+
+### sap_fapolicy_rules_header
+- _Type:_ `string`<br>
+- _Default:_ `# Allow rules for SAP directories`<br>
+
+The header line to add to fapolicy rules.<br>
+<!-- END Role Variables -->

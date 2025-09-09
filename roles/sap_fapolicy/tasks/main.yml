@@ -1,39 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
 ---
-- name: SAP Fapolicy - Gathering Package Facts
+- name: Assert that the Operating System of Managed node is Red Hat
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == "RedHat"
+    fail_msg: |
+      Ensure that the role is executed on supported managed node operating system Red Hat.
+      Detected: {{ ansible_os_family }}
+      Expected: RedHat
+
+
+- name: Gather Package Facts
   ansible.builtin.package_facts:
     manager: auto
 
-- name: SAP Fapolicy - Setup
-  block:
-    - name: Get sidadm user of SID
-      ansible.builtin.include_tasks: get_sidadm_user.yml
-      when:
-        - "'generic' not in sap_fapolicy_type"
-        - sap_fapolicy_user is defined
-
-    # # At this point, we should have all sidadm user + the default users
-    # - debug:
-    #     msg:
-    #       - "{{ sap_fapolicy_user_list }}"
-
-    # Get UIDs of users
-    # List is stored in sap_fapolicy_uid_list
-    - name: Get UID of user
-      vars:
-        passed_user: "{{ sap_fapolicy_user | lower }}"
-      ansible.builtin.include_tasks: get_user_uid.yml
-
-    # # At this point, we should have all uids
-    # - debug:
-    #     msg:
-    #       - "{{ sap_fapolicy_uid_list }}"
-
-    - name: SAP Fapolicy - Enable Fapolicy
-      ansible.builtin.include_tasks: "enable_fapolicy.yml"
-
-    - name: SAP Fapolicy - Update Fapolicy
-      ansible.builtin.include_tasks: "update_fapolicy.yml"
-
+- name: Block to execute SAP fapolicy configuration
   when:
     - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
     - '"fapolicyd" in ansible_facts.packages'
+  block:
+    - name: Assert that the variable 'sap_fapolicy_type' is valid
+      ansible.builtin.assert:
+        that:
+          - sap_fapolicy_type is defined
+          - sap_fapolicy_type is string
+          - sap_fapolicy_type | trim | length > 0
+          - sap_fapolicy_type in ['generic', 'nw', 'hana']
+        fail_msg: |
+          The variable 'sap_fapolicy_type' is undefined or invalid!
+          Available options: generic, nw, hana
+
+    - name: Set fapolicy variables
+      ansible.builtin.include_tasks:
+        file: "set_vars.yml"
+
+    - name: Enable SAP fapolicy
+      ansible.builtin.include_tasks:
+        file: "enable_fapolicy.yml"
+
+    - name: Update SAP fapolicy
+      ansible.builtin.include_tasks:
+        file: "update_fapolicy.yml"

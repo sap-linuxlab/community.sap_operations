@@ -1,7 +1,20 @@
-sap_rhsm_function: "register"
+# SPDX-License-Identifier: Apache-2.0
+---
+# Select function to execute. Options: 'register', 'refresh'.
+sap_rhsm_function: ''
 
-sap_rhsm_username:
-sap_rhsm_password:
-sap_rhsm_pool_id:
+## The variables specific to 'sap_rhsm_function: register'
+# The username for registration.
+sap_rhsm_username: ''
+
+# The password for user defined in `sap_rhsm_username`.
+sap_rhsm_password: ''
+
+# The pool ID to attach to during registration.
+sap_rhsm_pool_id: ''
+
+# The optional list of repositories to enable.
 sap_rhsm_repos: []
+
+# The optional list of packages to install.
 sap_rhsm_packages: []
