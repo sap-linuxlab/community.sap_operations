@@ -32,9 +32,6 @@ Within this Ansible Collection, there are various Ansible Roles and Ansible Modu
 
 | Name &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; | Summary |
 | :-- | :-- |
-| [os_ansible_user](/roles/os_ansible_user) | creates Ansible user `ansadm` with ssh key |
-| [os_etchosts](/roles/os_etchosts) | updates `/etc/hosts` |
-| [os_knownhosts](/roles/os_knownhosts) | updates known hosts file `/.ssh/known_hosts` |
 | [sap_control](/roles/sap_control) | starting and stopping SAP systems |
 | [sap_fapolicy](/roles/sap_fapolicy) | update service `fapolicyd` for generic / sap nw / sap hana related uids |
 | [sap_firewall](/roles/sap_firewall) | update service `firewalld` for generic / sap nw / sap hana related ports |

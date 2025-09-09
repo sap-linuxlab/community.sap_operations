@@ -18,22 +18,6 @@ collection/
 │       ├── sap_monitor_nw_response.sh
 │       └── sap_monitor_nw_status.sh
 ├── roles/
-│   ├── os_ansible_user
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   └── tasks
-│   │       └── main.yml
-│   ├── os_etchosts
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   └── tasks
-│   │       ├── main.yml
-│   │       └── update_etchosts.yml
-│   ├── os_knownhosts
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   └── tasks
-│   │       └── main.yml
 │   ├── sap_control
 │   │   ├── defaults
 │   │   │   └── main.yml
