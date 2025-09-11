@@ -96,6 +96,18 @@ updatesystem_all_nw_list:
   - sap_control_function_current: "nw_startsystem"
   - sap_control_function_current: "nw_updatesystem"
 
+restartsystem_sap_nw_list:
+  - sap_control_function_current: "nw_restartsystem"
+
+updatesystem_sap_nw_list:
+  - sap_control_function_current: "nw_updatesystem"
+
+startsystem_sap_nw_list:
+  - sap_control_function_current: "nw_startsystem"
+
+stopsystem_sap_nw_list:
+  - sap_control_function_current: "nw_stopsystem"
+
 restart_all_sap_list:
   - sap_control_function_current: "nw_stop"
   - sap_control_function_current: "hana_stop"
