@@ -33,11 +33,19 @@ Within this Ansible Collection, there are various Ansible Roles and Ansible Modu
 | Name &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; | Summary |
 | :-- | :-- |
 | [sap_control](/roles/sap_control) | starting and stopping SAP systems |
-| [sap_fapolicy](/roles/sap_fapolicy) | update service `fapolicyd` for generic / sap nw / sap hana related uids |
 | [sap_firewall](/roles/sap_firewall) | update service `firewalld` for generic / sap nw / sap hana related ports |
+| [sap_hana_backint](/roles/sap_hana_backint) | |
+| [sap_hana_sr_takeover](/roles/sap_hana_sr_takeover) | |
 | [sap_profile_update](/roles/sap_profile_update) | update default and instance profiles |
 | [sap_rfc](/roles/sap_rfc) | executes SAP RFCs |
-| [sap_rhsm](/roles/sap_rhsm) | Red Hat subscription manager registration |
+
+**Deprecated Roles**  
+Following Ansible Roles were deprecated:
+- os_ansible_user
+- os_etchosts
+- os_knownhosts
+- sap_fapolicy - Alternative role is available in [Linux System Roles](https://github.com/linux-system-roles/fapolicyd).
+- sap_rhsm - Alternative role is available in [Linux System Roles](https://github.com/linux-system-roles/rhc).
 
 #### Ansible Modules
 
