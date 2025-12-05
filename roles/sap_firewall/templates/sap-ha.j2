@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>SAP HA Cluster (Pacemaker/Corosync)</short>
+  <description>Core ports required for High Availability (HA). Maintained by Ansible Role sap_operations.sap_firewall.</description>
+  
+  {# Default UDP ports used by Corosync for inter-node communication and cluster heartbeats. #}
+  <port protocol="udp" port="5404-5405"/>
+  
+  {# TCP port used by the Pacemaker Remote service to manage remote nodes or containerized resources. #}
+  <port protocol="tcp" port="2224"/>
+
+</service>

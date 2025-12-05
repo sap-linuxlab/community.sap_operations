@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>SAP NetWeaver Application</short>
+  <description>Ports required for SAP NetWeaver Application Server. Maintained by Ansible Role sap_operations.sap_firewall.</description>
+
+  {# SAP Host Agent ports for status and metrics communication. -#} 
+  <port protocol="tcp" port="1128-1129"/>
+
+  {# The 3200-3399 range covers all essential SAP Gateway (33NN) and SAP Dispatcher (32NN) communication for all instance numbers (00-99). -#}
+  <port protocol="tcp" port="3200-3399"/>
+
+  {# SAP Message Server port (36NN). Used for internal communication between application servers. -#}
+  <port protocol="tcp" port="36{{ sap_firewall_instance_number }}"/>
+
+  {# SAP Internet Communication Manager (ICM) HTTP port (80NN). Used for non-secure web client access. -#}
+  <port protocol="tcp" port="80{{ sap_firewall_instance_number }}"/>
+
+  {# SAP Message Server HTTP port (81NN), configured via ms/http_port_<n> profile parameter. -#}
+  <port protocol="tcp" port="81{{ sap_firewall_instance_number }}"/>
+
+  {# SAP Internet Communication Manager (ICM) HTTPS port (443NN). Used for secure web client access. -#}
+  <port protocol="tcp" port="443{{ sap_firewall_instance_number }}"/>
+
+  {# Ports for SAP Start Service (sapstartsrv) communication. Used for service control and status checks. -#}
+  <port protocol="tcp" port="5{{ sap_firewall_instance_number }}13"/>
+  <port protocol="tcp" port="5{{ sap_firewall_instance_number }}14"/>
+  <port protocol="tcp" port="5{{ sap_firewall_instance_number }}16"/>
+
+  {# JAVA ports (62NNN), commonly used for communication within the AS-Java stack, e.g., P4/P4S protocols. -#}
+  <port protocol="tcp" port="620{{ sap_firewall_instance_number }}"/>
+  <port protocol="tcp" port="621{{ sap_firewall_instance_number }}"/>
+
+</service>

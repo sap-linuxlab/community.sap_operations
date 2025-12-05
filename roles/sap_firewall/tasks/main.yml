@@ -1,34 +1,87 @@
+# SPDX-License-Identifier: Apache-2.0
 ---
-- name: SAP Firewall
+
+# Example of files loading order:
+# 1. Suse.yml / RedHat.yml - Specific to OS family.
+# 2. SLES_15.yml / RedHat_9.yml - Specific to distribution (SLES, SLES_SAP or RedHat) and major release.
+# 3. SLES_15.6.yml / RedHat_9.2 - Specific to distribution (SLES, SLES_SAP or RedHat) and minor release.
+# 4. SLES_SAP_15.yml - Specific to distribution SLES_SAP and major release.
+# 5. SLES_SAP_15.6.yml - Specific to distribution SLES_SAP and minor release.
+- name: SAP Firewall - Include OS specific vars
+  ansible.builtin.include_vars: "{{ __vars_file }}"
+  loop: "{{ __var_files }}"
+  vars:
+    __vars_file: "{{ role_path }}/vars/{{ item }}"
+    __distribution_major: "{{ ansible_distribution ~ '_' ~ ansible_distribution_major_version }}"
+    __distribution_minor: "{{ ansible_distribution ~ '_' ~ ansible_distribution_version }}"
+    # Enables loading of shared vars between SLES and SLES_SAP
+    __distribution_major_split: "{{ ansible_distribution.split('_')[0] ~ '_' ~ ansible_distribution_major_version }}"
+    __distribution_minor_split: "{{ ansible_distribution.split('_')[0] ~ '_' ~ ansible_distribution_version }}"
+    __var_files: >-
+      {{
+        [
+          ansible_os_family ~ '.yml',
+          (ansible_distribution ~ '.yml') if ansible_distribution != ansible_os_family else None,
+          (__distribution_major_split ~ '.yml') if __distribution_major_split != __distribution_major else None,
+          (__distribution_minor_split ~ '.yml') if __distribution_minor_split != __distribution_minor else None,
+          __distribution_major ~ '.yml',
+          __distribution_minor ~ '.yml'
+        ] | select('defined') | select('string') | list
+      }}
+  when: __vars_file is file
+
+
+- name: SAP Firewall - Prepare and validate variables
+  ansible.builtin.include_tasks:
+    file: assert_variables.yml
+
+
+# This block stops execution on docker containers or when inputs are undefined or empty.
+- name: Block for main configuration
+  when:
+    - ansible_facts['virtualization_type'] != "docker"
+    - (sap_firewall_ports is defined and sap_firewall_ports | length > 0)
+      or (sap_firewall_presets is defined and sap_firewall_presets | length > 0)
   block:
-    - name: SAP Firewall - Gathering Package Facts
-      ansible.builtin.package_facts:
-        manager: auto
 
-    - name: SAP Firewall - Setup
-      block:
-        - name: SAP Firewall - Enable Firewall
-          ansible.builtin.include_tasks: "enable_firewall.yml"
+    - name: SAP Firewall - Ensure firewalld is present and enabled
+      ansible.builtin.include_tasks:
+        file: enable_firewall.yml
 
-        - name: SAP Firewall - Generate Ports
-          ansible.builtin.include_tasks: "generate_ports_{{ sap_firewall_type }}.yml"
+    # We need to check if zones and services is valid and fail fast if not.
+    - name: SAP Firewall - Validate inputs against available firewalld options
+      ansible.builtin.include_tasks:
+        file: validate_inputs.yml
 
-        - name: SAP Firewall - Add ports
-          block:
-            - name: SAP Firewall - Add Ports
-              ansible.builtin.include_tasks: update_firewall.yml
-              loop: "{{ sap_firewall_ports }}"
-              loop_control:
-                loop_var: passed_port
-
-          when:
-            - sap_firewall_ports is defined
-
-        - name: SAP Firewall - Reload Firewall
-          ansible.builtin.shell: |
-            firewall-cmd --reload
-
+    - name: SAP Firewall - Manage service file for preset
+      ansible.builtin.include_tasks:
+        file: configure_preset.yml
+      loop: "{{ sap_firewall_presets }}"
+      loop_control:
+        loop_var: preset_item
+      vars:
+        __sap_firewall_preset: "{{ preset_item }}"
       when:
-        - '"firewalld" in ansible_facts.packages'
+        - preset_item is defined
+        - preset_item | length > 0
 
-  when: ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+    - name: SAP Firewall - Manage custom ports from 'sap_firewall_ports'
+      ansible.builtin.include_tasks:
+        file: configure_ports.yml
+      loop: "{{ sap_firewall_ports }}"
+      loop_control:
+        loop_var: port_item
+        label: "Zone: {{ port_item.zone }}"
+      vars:
+        __sap_firewall_port: "{{ port_item }}"
+      when:
+        - sap_firewall_ports is defined
+        - sap_firewall_ports | length > 0
+
+    - name: SAP Firewall - Stop and disable firewalld service
+      ansible.builtin.systemd_service:
+        name: firewalld
+        state: stopped
+        enabled: false
+        masked: false
+      when: sap_firewall_end_status == 'disabled' | d('enabled')

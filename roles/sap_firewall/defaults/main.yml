@@ -1,12 +1,59 @@
-# Firewall type
-sap_firewall_type: "generic"
-# generic | hana | nw
+# SPDX-License-Identifier: Apache-2.0
+---
 
-# sap_firewall_type - set to 'generic' will go thru all the ports defined in this list
+# Sets the desired state of the firewall configuration for SAP (String).
+# 'present' - Creates and enables the firewall services for SAP.
+# 'absent'  - Removes the firewall services for SAP.
+sap_firewall_state: present
+
+# A list of SAP Firewall configuration presets to apply.
+# Each item is a dictionary defining the preset and its zone.
+# Preset options:
+# hana      - Use predefined ports for SAP HANA.
+# netweaver - Use predefined ports for SAP NetWeaver.
+# ha        - Use predefined ports for SAP High Availability.
+# Example zone values: block, dmz, drop, external, home, internal, public, trusted, work.
+# Example:
+# sap_firewall_presets:
+#   - preset: hana
+#     zone: public
+#   - preset: netweaver
+#     zone: internal
+sap_firewall_presets: []
+
+# A list of custom firewall rules to apply.
+# Each item in the list is a dictionary that defines a zone and the ports to open.
+# Example zone values: block, dmz, drop, external, home, internal, public, trusted, work.
+# Example:
+# sap_firewall_ports:
+#   - zone: public
+#     tcp:
+#       - "3200-3399"  # A range of ports
+#       - "3600"       # A single port
+#     udp:
+#       - "1234"
+#     service:
+#       - "ssh"
+#   - zone: internal
+#     tcp:
+#       - "8080"
 sap_firewall_ports: []
 
-# sap_firewall_type - set to 'nw' or 'hana' to make use of instance_nr
-sap_firewall_instance_nr:
+# The SAP Instance number (String).
+# Required if sap_firewall_presets contains 'hana' or 'netweaver'.
+sap_firewall_instance_number: ''
 
-# Set this parameter to true to disable firewall at the end of execution
-sap_firewall_disable_end: 'false'
+# Status of firewall at the end of the playbook (String).
+# This will be used only when 'sap_firewall_presets' or 'sap_firewall_ports' are not empty.
+# enabled  - Firewall will be enabled and started.
+# disabled - Firewall will be disabled and stopped.
+sap_firewall_end_status: enabled
+
+# The name of the firewall service for SAP (String).
+# If not provided, the service name is generated based on sap_firewall_presets and sap_firewall_instance_number.
+# Example: 'sap-netweaver-00' for sap_firewall_presets: ['netweaver'] and sap_firewall_instance_number: '00'.
+# sap_firewall_service_name: ''
+
+# Allow overriding existing configuration files (Boolean).
+# If set to true, the role will overwrite an existing firewalld service file if it has the same name as one being created.
+# sap_firewall_service_force: false

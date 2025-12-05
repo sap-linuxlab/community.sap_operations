@@ -1,6 +1,13 @@
+# SPDX-License-Identifier: Apache-2.0
 ---
-- name: SAP Firewall - Service firewalld state - start & enable
-  ansible.builtin.systemd:
+
+- name: SAP Firewall - Install firewalld packages
+  ansible.builtin.package:
+    name: "{{ __sap_firewall_packages + __sap_firewall_extra_packages }}"
+    state: present
+
+- name: SAP Firewall - Start and enable firewalld service
+  ansible.builtin.systemd_service:
     name: firewalld
     state: started
     enabled: true

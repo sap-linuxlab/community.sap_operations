@@ -1,0 +1,179 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Validate mandatory  variables
+- name: SAP Firewall - Assert that the variable 'sap_firewall_state' is defined with valid value
+  ansible.builtin.assert:
+    that:
+      - sap_firewall_state is defined
+      - sap_firewall_state is string
+      - sap_firewall_state | trim | length > 0
+      - sap_firewall_state in ['present', 'absent']
+    success_msg: |
+      PASS: The 'sap_firewall_state' variable is defined with a valid value.
+    fail_msg: |
+      {% if sap_firewall_state is not string %}
+        FAIL: The 'sap_firewall_state' variable must be a string, but it is not.
+      {% elif sap_firewall_state | trim | length == 0 %}
+        FAIL: The 'sap_firewall_state' variable cannot be an empty string.
+      {% else %}
+        FAIL: The value '{{ sap_firewall_state }}' is not valid for 'sap_firewall_state'.
+        Available values are 'present' or 'absent'.
+      {% endif %}
+
+# This will be used for 'state' parameter in posix.firewall.
+- name: SAP Firewall - Set firewall action state
+  ansible.builtin.set_fact:
+    __sap_firewall_state: "{{ 'enabled' if sap_firewall_state == 'present' else 'disabled' }}"
+
+
+- name: Block to assert sap_firewall_presets
+  when:
+    - sap_firewall_presets is defined
+    - sap_firewall_presets | length > 0
+  block:
+    - name: SAP Firewall - Assert that the variable 'sap_firewall_presets' is defined as a list
+      ansible.builtin.assert:
+        that:
+          - sap_firewall_presets | type_debug == 'list'
+        success_msg: |
+          PASS: The 'sap_firewall_presets' variable is a list.
+        fail_msg: |
+          FAIL: The 'sap_firewall_presets' variable must be a list, but it is of type '{{ sap_firewall_presets | type_debug }}'.
+
+    - name: SAP Firewall - Assert that the variable 'sap_firewall_presets' contains valid presets
+      ansible.builtin.assert:
+        that:
+          - preset_item.preset is defined
+          - preset_item.preset | string in ['hana', 'netweaver', 'ha']
+        success_msg: |
+          PASS: The value '{{ preset_item.preset | d('') }}' is a valid preset.
+        fail_msg: |
+          {% if preset_item.preset is not defined %}
+            FAIL: A list item in 'sap_firewall_presets' is missing the 'preset' key. Item: {{ preset_item }}
+          {% else %}
+            FAIL: '{{ preset_item.preset }}' is not a valid value for 'preset'.
+            Allowed presets are: 'hana', 'netweaver', 'ha'.
+          {% endif %}
+      loop: "{{ sap_firewall_presets }}"
+      loop_control:
+        loop_var: preset_item
+
+
+- name: Block to assert sap_firewall_ports
+  when:
+    - sap_firewall_ports is defined
+    - sap_firewall_ports | length > 0
+  block:
+    - name: SAP Firewall - Assert that the variable 'sap_firewall_ports' is defined as a list
+      ansible.builtin.assert:
+        that:
+          - sap_firewall_ports | type_debug == 'list'
+        success_msg: |
+          PASS: The 'sap_firewall_ports' variable is a list.
+        fail_msg: |
+          FAIL: The 'sap_firewall_ports' variable must be a list, but it is of type '{{ sap_firewall_ports | type_debug }}'.
+
+    - name: SAP Firewall - Assert that the variable 'sap_firewall_ports' contains valid zones
+      ansible.builtin.assert:
+        that:
+          - port_item.zone is defined
+        success_msg: |
+          PASS: The value '{{ port_item.zone | d('') }}' is a valid zone.
+        fail_msg: |
+          FAIL: A list item in 'sap_firewall_ports' is missing the required 'zone' key. Item: {{ port_item }}
+      loop: "{{ sap_firewall_ports }}"
+      loop_control:
+        loop_var: port_item
+
+    - name: SAP Firewall - Assert that the variable 'sap_firewall_ports' contains non empty protocols or services
+      ansible.builtin.assert:
+        that:
+          - port_item.keys() | intersect(['tcp', 'udp', 'service']) | length > 0
+          - (port_item.tcp is not defined) or (port_item.tcp | type_debug == 'list' and port_item.tcp | length > 0)
+          - (port_item.udp is not defined) or (port_item.udp | type_debug == 'list' and port_item.udp | length > 0)
+          - (port_item.service is not defined) or (port_item.service | type_debug == 'list' and port_item.service | length > 0)
+        success_msg: |
+          PASS: Zone '{{ port_item.zone }}' contains at least one non-empty list of ports or services.
+        fail_msg: |
+          {% if port_item.keys() | intersect(['tcp', 'udp', 'service']) | length == 0 %}
+            FAIL: Zone '{{ port_item.zone }}' must contain at least one of 'tcp', 'udp', or 'service'.
+          {% else %}
+            FAIL: In zone '{{ port_item.zone }}', any defined 'tcp', 'udp', or 'service' key must be a non-empty list.
+          {% endif %}
+      loop: "{{ sap_firewall_ports }}"
+      loop_control:
+        loop_var: port_item
+
+    - name: SAP Firewall - Assert that TCP and UDP ports are valid
+      ansible.builtin.include_tasks:
+        file: assert_ports.yml
+      loop: "{{ sap_firewall_ports }}"
+      loop_control:
+        loop_var: port_item
+      vars:
+        __sap_firewall_port_assert: "{{ port_item }}"
+      when:
+        - (port_item.tcp is defined and port_item.tcp | length > 0)
+          or (port_item.udp is defined and port_item.udp | length > 0)
+
+
+# Validate variables for 'hana' and 'netweaver' firewall type
+- name: SAP Firewall - Assert that the variable 'sap_firewall_instance_number' is defined as String consisting of 2 digits
+  ansible.builtin.assert:
+    that:
+      - sap_firewall_instance_number is defined
+      - sap_firewall_instance_number is string
+      - sap_firewall_instance_number | trim | length == 2
+      - sap_firewall_instance_number is match('^[0-9]{2}$')
+    success_msg: |
+      PASS: The SAP Instance Number '{{ sap_firewall_instance_number }}' is defined as String consisting of 2 digits.
+    fail_msg: |
+      {% if sap_firewall_instance_number is not string %}
+        FAIL: The 'sap_firewall_instance_number' variable must be a string.
+      {% elif sap_firewall_instance_number | trim | length == 0 %}
+        FAIL: The 'sap_firewall_instance_number' variable cannot be empty.
+      {% else %}
+        FAIL: The SAP Instance Number '{{ sap_firewall_instance_number }}' is not valid.
+        It must be a two-digit string (e.g., '00', '42').
+      {% endif %}
+  when:
+    - sap_firewall_presets is defined
+    - sap_firewall_presets | map(attribute='preset') | intersect(['hana', 'netweaver']) | length > 0
+
+- name: SAP Firewall - Assert that the variable 'sap_firewall_service_name' is defined as non empty String
+  ansible.builtin.assert:
+    that:
+      - sap_firewall_service_name is string
+      - sap_firewall_service_name | trim | length > 0
+    success_msg: |
+      PASS: The 'sap_firewall_service_name' variable is a non-empty string.
+    fail_msg: |
+      {% if sap_firewall_service_name is not string %}
+        FAIL: The 'sap_firewall_service_name' variable must be a string, but it is of type '{{ sap_firewall_service_name | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_firewall_service_name' variable cannot be an empty string.
+      {% endif %}
+  when:
+    - sap_firewall_presets is defined
+    - sap_firewall_presets | map(attribute='preset') | intersect(['hana', 'netweaver', 'ha']) | length > 0
+    - sap_firewall_service_name is defined
+
+
+# Show warnings without immediate failure.
+- name: SAP Firewall - Inform that host will be skipped (No Action)
+  ansible.builtin.debug:
+    msg: |
+      WARN: Both the 'sap_firewall_ports' and 'sap_firewall_presets' variables are undefined or empty.
+      Configuration steps will be skipped for this host.
+  when:
+    - (sap_firewall_ports is not defined or sap_firewall_ports | length == 0)
+    - (sap_firewall_presets is not defined or sap_firewall_presets | length == 0)
+
+- name: SAP Firewall - Inform that host will be skipped (Docker)
+  ansible.builtin.debug:
+    msg: |
+      WARN: This role is restricted from running inside a Docker container.
+      Configuration steps will be skipped for this host.
+      virtualization_type: {{ ansible_facts['virtualization_type'] }}
+  when: ansible_facts['virtualization_type'] == "docker"

@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Port protocols are separated into own tasks to simplify loop logic and improve readability.
+
+- name: SAP Firewall - Manage TCP ports in zone {{ __sap_firewall_port.zone }}
+  ansible.posix.firewalld:
+    zone: "{{ __sap_firewall_port.zone }}"
+    port: "{{ port_list_item }}/tcp"
+    permanent: true
+    immediate: true
+    state: "{{ __sap_firewall_state }}"
+  loop: "{{ __sap_firewall_port.tcp | default([]) }}"
+  loop_control:
+    loop_var: port_list_item
+  when:
+    - __sap_firewall_port.tcp is defined
+    - __sap_firewall_port.tcp | length > 0
+    - __sap_firewall_port.tcp | type_debug == 'list'
+    - port_list_item is string
+  notify: Reload firewalld
+
+- name: SAP Firewall - Manage UDP ports in zone {{ __sap_firewall_port.zone }}
+  ansible.posix.firewalld:
+    zone: "{{ __sap_firewall_port.zone }}"
+    port: "{{ port_list_item }}/udp"
+    permanent: true
+    immediate: true
+    state: "{{ __sap_firewall_state }}"
+  loop: "{{ __sap_firewall_port.udp | default([]) }}"
+  loop_control:
+    loop_var: port_list_item
+  when:
+    - __sap_firewall_port.udp is defined
+    - __sap_firewall_port.udp | length > 0
+    - __sap_firewall_port.udp | type_debug == 'list'
+    - port_list_item is string
+  notify: Reload firewalld
+
+
+- name: Block for services
+  when:
+    - __sap_firewall_port.service is defined
+    - __sap_firewall_port.service | length > 0
+    - __sap_firewall_port.service | type_debug == 'list'
+    - service_item is string
+  block:
+    - name: SAP Firewall - Manage services in zone {{ __sap_firewall_port.zone }}
+      ansible.posix.firewalld:
+        zone: "{{ __sap_firewall_port.zone }}"
+        service: "{{ service_item }}"
+        permanent: true
+        immediate: true
+        state: "{{ __sap_firewall_state }}"
+      loop: "{{ __sap_firewall_port.service | default([]) }}"
+      loop_control:
+        loop_var: service_item
+      notify: Reload firewalld

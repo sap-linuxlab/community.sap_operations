@@ -1,0 +1,98 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# This task file will create temporary service file and compare it with existing one.
+# If they differ, and override is not allowed, the task will fail.
+
+- name: SAP Firewall - Determine service name - {{ __sap_firewall_preset.preset }}
+  ansible.builtin.set_fact:
+    __sap_firewall_service_name: >-
+      {{
+        sap_firewall_service_name
+        if sap_firewall_service_name | default('') | trim | length > 0
+        else lookup('ansible.builtin.vars', '__sap_firewall_service_name_' ~ __sap_firewall_preset.preset)
+      }}
+
+- name: SAP Firewall - Stat existing service file - {{ __sap_firewall_preset.preset | d('') }}
+  ansible.builtin.stat:
+    path: "{{ __sap_firewall_service_path }}/{{ __sap_firewall_service_name }}.xml"
+  register: __sap_firewall_service_stat_service_existing
+
+
+- name: Block for creating new service file
+  when: sap_firewall_state == 'present'
+  block:
+
+    - name: SAP Firewall - Create temporary file for generation - {{ __sap_firewall_preset.preset }}
+      ansible.builtin.tempfile:
+        state: file
+        suffix: _sap_firewall_service
+      register: __sap_firewall_register_service_tempfile
+
+    - name: SAP Firewall - Generate service file from template - {{ __sap_firewall_preset.preset }}
+      ansible.builtin.template:
+        src: sap-{{ __sap_firewall_preset.preset }}.j2
+        dest: "{{ __sap_firewall_register_service_tempfile.path }}"
+        owner: 'root'
+        group: 'root'
+        mode: '0640'
+
+    - name: SAP Firewall - Stat new service file - {{ __sap_firewall_preset.preset | d('') }}
+      ansible.builtin.stat:
+        path: "{{ __sap_firewall_register_service_tempfile.path }}"
+      register: __sap_firewall_service_stat_service_new
+      when: __sap_firewall_service_stat_service_existing.stat.exists
+
+    - name: SAP Firewall - Fail if service file differs to existing - {{ __sap_firewall_preset.preset }}
+      ansible.builtin.fail:
+        msg: |
+          FAIL: Existing service file differs to the newly generated one.
+          Path: {{ __sap_firewall_service_path }}/{{ __sap_firewall_service_name }}.xml
+
+          The new content differs from the existing content.
+          To allow this change and overwrite the file, run the playbook again
+          with the variable 'sap_firewall_service_force' se to true (Boolean).
+      when:
+        - not sap_firewall_service_force | default(false)
+        - __sap_firewall_service_stat_service_existing.stat.exists
+        - __sap_firewall_service_stat_service_existing.stat.checksum != __sap_firewall_service_stat_service_new.stat.checksum
+
+
+    - name: SAP Firewall - Copy new service file to destination - {{ __sap_firewall_preset.preset }}
+      ansible.builtin.copy:
+        src: "{{ __sap_firewall_register_service_tempfile.path }}"
+        dest: "{{ __sap_firewall_service_path }}/{{ __sap_firewall_service_name }}.xml"
+        owner: 'root'
+        group: 'root'
+        mode: '0640'
+        remote_src: true
+      register: __sap_firewall_register_copy_service
+      changed_when: __sap_firewall_register_copy_service.changed
+
+    - name: SAP Firewall - Reload firewalld after applying new service file - {{ __sap_firewall_preset.preset }}
+      ansible.builtin.command:
+        cmd: firewall-cmd --reload
+      when: __sap_firewall_register_copy_service.changed
+
+    - name: SAP Firewall - Remove temporary service file - {{ __sap_firewall_preset.preset }}
+      ansible.builtin.file:
+        path: "{{ __sap_firewall_register_service_tempfile.path }}"
+        state: absent
+
+
+- name: SAP Firewall - Configure service in firewall - {{ __sap_firewall_preset.preset }}
+  ansible.posix.firewalld:
+    zone: "{{ __sap_firewall_preset.zone | d('public') }}"
+    service: "{{ __sap_firewall_service_name }}"
+    permanent: true
+    immediate: true
+    state: "{{ __sap_firewall_state }}"
+  notify: Reload firewalld
+
+
+- name: SAP Firewall - Cleanup service files for 'absent' - {{ __sap_firewall_preset.preset }}
+  ansible.builtin.file:
+    path: "{{ __sap_firewall_service_path }}/{{ __sap_firewall_service_name }}.xml"
+    state: absent
+  when: sap_firewall_state == 'absent'
+  notify: Reload firewalld
