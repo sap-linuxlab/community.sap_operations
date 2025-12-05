@@ -8,9 +8,11 @@
     fail_msg: |
       FAIL: Port '{{ port_list_item | string }}' in zone '{{ __sap_firewall_port_assert.zone }}' is not a String.
       Data type: {{ port_list_item | type_debug }}
+    quiet: true
   loop: "{{ (__sap_firewall_port_assert.tcp | default([])) + (__sap_firewall_port_assert.udp | default([])) }}"
   loop_control:
     loop_var: port_list_item
+    label: "Port: {{ port_list_item }}"
 
 - name: SAP Firewall - Assert that single TCP and UDP ports are valid
   ansible.builtin.assert:
@@ -19,9 +21,11 @@
     fail_msg: |
       FAIL: Port '{{ port_list_item }}' in zone '{{ __sap_firewall_port_assert.zone }}' is invalid.
       Must be a single port between 1 and 65535.
+    quiet: true
   loop: "{{ (__sap_firewall_port_assert.tcp | default([])) + (__sap_firewall_port_assert.udp | default([])) }}"
   loop_control:
     loop_var: port_list_item
+    label: "Port: {{ port_list_item }}"
   when: "'-' not in port_list_item"
 
 - name: SAP Firewall - Assert that TCP and UDP port ranges are valid
@@ -41,7 +45,9 @@
         FAIL: Invalid port range '{{ port_list_item }}' in zone '{{ __sap_firewall_port_assert.zone }}'.
         Both start and end of range must be a valid port number between 1 and 65535.
       {% endif %}
+    quiet: true
   loop: "{{ (__sap_firewall_port_assert.tcp | default([])) + (__sap_firewall_port_assert.udp | default([])) }}"
   loop_control:
     loop_var: port_list_item
+    label: "Port: {{ port_list_item }}"
   when: "'-' in port_list_item"

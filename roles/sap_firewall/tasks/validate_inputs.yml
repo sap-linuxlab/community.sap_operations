@@ -24,9 +24,11 @@
     fail_msg: |
       FAIL: The zone '{{ preset_item.zone }}' is not preset in firewalld.
       Available zones: {{ __sap_firewall_register_zones.stdout }}
+    quiet: true
   loop: "{{ sap_firewall_presets }}"
   loop_control:
     loop_var: preset_item
+    label: "Zone: {{ preset_item.zone }}"
   when:
     - preset_item.zone is defined
     - preset_item.zone | length > 0
@@ -43,6 +45,7 @@
     fail_msg: |
       FAIL: The zone '{{ port_item.zone }}' is not preset in firewalld.
       Available zones: {{ __sap_firewall_register_zones.stdout }}
+    quiet: true
   loop: "{{ sap_firewall_ports }}"
   loop_control:
     loop_var: port_item
@@ -78,6 +81,8 @@
         fail_msg: |
           FAIL: The service '{{ service_item }}' is not preset in firewalld.
           Available services: {{ __sap_firewall_register_services.stdout }}
+        quiet: true
       loop: "{{ __sap_firewall_fact_port_services }}"
       loop_control:
         loop_var: service_item
+        label: "Service: {{ service_item }}"

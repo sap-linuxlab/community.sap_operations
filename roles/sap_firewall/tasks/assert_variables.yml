@@ -55,9 +55,11 @@
             FAIL: '{{ preset_item.preset }}' is not a valid value for 'preset'.
             Allowed presets are: 'hana', 'netweaver', 'ha'.
           {% endif %}
+        quiet: true
       loop: "{{ sap_firewall_presets }}"
       loop_control:
         loop_var: preset_item
+        label: "Preset: {{ preset_item.preset | d('UNDEFINED') }}"
 
 
 - name: Block to assert sap_firewall_ports
@@ -82,9 +84,11 @@
           PASS: The value '{{ port_item.zone | d('') }}' is a valid zone.
         fail_msg: |
           FAIL: A list item in 'sap_firewall_ports' is missing the required 'zone' key. Item: {{ port_item }}
+        quiet: true
       loop: "{{ sap_firewall_ports }}"
       loop_control:
         loop_var: port_item
+        label: "Zone: {{ port_item.zone | d('UNDEFINED') }}"
 
     - name: SAP Firewall - Assert that the variable 'sap_firewall_ports' contains non empty protocols or services
       ansible.builtin.assert:
@@ -101,9 +105,11 @@
           {% else %}
             FAIL: In zone '{{ port_item.zone }}', any defined 'tcp', 'udp', or 'service' key must be a non-empty list.
           {% endif %}
+        quiet: true
       loop: "{{ sap_firewall_ports }}"
       loop_control:
         loop_var: port_item
+        label: "Zone: {{ port_item.zone }}"
 
     - name: SAP Firewall - Assert that TCP and UDP ports are valid
       ansible.builtin.include_tasks:
@@ -111,6 +117,7 @@
       loop: "{{ sap_firewall_ports }}"
       loop_control:
         loop_var: port_item
+        label: "Zone: {{ port_item.zone }}"
       vars:
         __sap_firewall_port_assert: "{{ port_item }}"
       when:
