@@ -112,10 +112,18 @@
   ansible.builtin.debug:
     msg:
       - "Starting sap_control with the following parameters: "
-      - "{{ sap_control_function }}"
-      - "{{ sap_control_start }}"
-      - "{{ sap_control_stop }}"
-      - "{{ nowait }}"
+      - "Function: {{ sap_control_function }}"
+      - "Standard commands:"
+      - "  Start: {{ sap_control_start }}"
+      - "  Stop: {{ sap_control_stop }}"
+      - "System commands (if applicable):"
+      - "  StartSystem: {{ sap_control_startsystem }}"
+      - "  StopSystem: {{ sap_control_stopsystem }}"
+      - "  RestartSystem: {{ sap_control_restartsystem }}"
+      - "  UpdateSystem: {{ sap_control_updatesystem }}"
+      - "  WaitforStopped: {{ sap_control_waitforstopped }}"
+      - "  WaitforStarted: {{ sap_control_waitforstarted }}"
+      - "NoWait: {{ nowait }}"
 
 # Start SAP Control
 - name: SAP Control

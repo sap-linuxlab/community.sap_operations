@@ -22,6 +22,14 @@
   register: sapcontrol_status
   failed_when: "'FAIL' in sapcontrol_status.stdout"
 
+# Include sapcontrol async tasks
+- name: SAP {{ sap_control_name_header }} - Include async tasks
+  vars:
+    async_function_dict: "{{ vars['sap_control_' + funct_type + '_waitforasync'] }}"
+  ansible.builtin.include_tasks: sapcontrol_async.yml
+  when:
+    - funct_type is match('.*system')
+
 # Cleanipc
 - name: SAP {{ sap_control_name_header }} - Cleanipc
   ansible.builtin.include_tasks: functions/cleanipc.yml

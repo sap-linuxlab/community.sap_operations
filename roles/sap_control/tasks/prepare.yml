@@ -36,3 +36,18 @@
   loop: "{{ sorted_sap_facts }}"
   when:
     - item.InstanceType | lower == sap_type | lower
+    - not funct_type is match('.*system')
+
+- name: Prepare - SAP Control for system functions
+  vars:
+    sap_control_execute_sid: "{{ item.SID }}"
+    sap_control_execute_type: "{{ item.Type }}"
+    sap_control_execute_instance_nr: "{{ item.NR }}"
+    sap_control_execute_instance_type: "{{ item.InstanceType }}"
+  ansible.builtin.include_tasks: "sapcontrol.yml"
+  loop: "{{ sorted_sap_facts }}"
+  when:
+    - item.InstanceType | lower == sap_type | lower
+    - funct_type is match('.*system')
+    - item.TYPE | lower == 'ascs'
+      or item.TYPE | lower == 'scs'

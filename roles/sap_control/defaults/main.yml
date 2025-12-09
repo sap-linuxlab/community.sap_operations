@@ -6,6 +6,41 @@ sap_control_name_header: "initial"
 nowait: false
 sap_control_start: "StartWait 180 2"
 sap_control_stop: "StopWait 180 2"
+sap_control_startsystem: "StartSystem ALL 180"  # function StartSystem waittimeout
+sap_control_stopsystem: "StopSystem ALL 180 480"  # function StopSystem waittimeout softtimeout
+sap_control_restartsystem: "RestartSystem ALL 180 480"  # function RestartSystem waittimeout softtimeout
+sap_control_updatesystem: "UpdateSystem 180 480 0"  # function UpdateSystem waittimeout softtimeout force
+sap_control_waitforstopped: "WaitforStopped 180 2"  # function WaitforStopped waittimeout delay
+sap_control_waitforstarted: "WaitforStarted 180 2"  # function WaitforStarted waittimeout delay
+
+# Parameters to handle async functions in sapcontrol_async.yml
+
+sap_control_startsystem_waitforasync:
+  test_function: "GetSystemInstanceList"
+  retries: 60
+  delay: 10
+  until_false: 'GRAY\s*$|RED\s*$|YELLOW\s*$'
+  until_true: 'GREEN\s*$'
+
+sap_control_restartsystem_waitforasync:
+  test_function: "GetSystemInstanceList"
+  retries: 60
+  delay: 10
+  until_false: 'GRAY\s*$|RED\s*$|YELLOW\s*$'
+  until_true: 'GREEN\s*$'
+
+sap_control_stopsystem_waitforasync:
+  test_function: "GetSystemInstanceList"
+  retries: 60
+  delay: 10
+  until_false: 'GREEN\s*$|RED\s*$|YELLOW\s*$'
+  until_true: 'GRAY\s*$'
+
+sap_control_updatesystem_waitforasync:
+  test_function: "GetSystemUpdateList"
+  retries: 60
+  delay: 10
+  until_false: 'GRAY\s*$|RED\s*$|YELLOW\s*$|GREEN\s*$'
 
 # get_all_sap_sid_dir_nw: "/sapmnt"
 # get_all_sap_sid_dir_hana: "/hana/shared"
@@ -22,6 +57,14 @@ sap_control_instance_type_sortorder:
 
 # Functions
 sap_control_functions_list:
+  - restartsystem_all_nw
+  - updatesystem_all_nw
+  - startsystem_all_nw
+  - stopsystem_all_nw
+  - restartsystem_sap_nw
+  - updatesystem_sap_nw
+  - startsystem_sap_nw
+  - stopsystem_sap_nw
   - restart_all_sap
   - stop_all_sap
   - start_all_sap
@@ -38,7 +81,33 @@ sap_control_functions_list:
   - stop_sap_hana
   - start_sap_hana
 
+
 # Functions flow
+restartsystem_all_nw_list:
+  - sap_control_function_current: "nw_restartsystem"
+
+startsystem_all_nw_list:
+  - sap_control_function_current: "nw_startsystem"
+
+stopsystem_all_nw_list:
+  - sap_control_function_current: "nw_stopsystem"
+
+updatesystem_all_nw_list:
+  - sap_control_function_current: "nw_startsystem"
+  - sap_control_function_current: "nw_updatesystem"
+
+restartsystem_sap_nw_list:
+  - sap_control_function_current: "nw_restartsystem"
+
+updatesystem_sap_nw_list:
+  - sap_control_function_current: "nw_updatesystem"
+
+startsystem_sap_nw_list:
+  - sap_control_function_current: "nw_startsystem"
+
+stopsystem_sap_nw_list:
+  - sap_control_function_current: "nw_stopsystem"
+
 restart_all_sap_list:
   - sap_control_function_current: "nw_stop"
   - sap_control_function_current: "hana_stop"
