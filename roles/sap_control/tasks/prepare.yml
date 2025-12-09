@@ -4,6 +4,7 @@
   ansible.builtin.set_fact:
     sap_type: "{{ function_list.sap_control_function_current.split('_')[0] | lower }}"
     funct_type: "{{ function_list.sap_control_function_current.split('_')[1] | lower }}"
+    sorted_sap_facts: []
 
 - name: Prepare - Set header
   ansible.builtin.set_fact:
