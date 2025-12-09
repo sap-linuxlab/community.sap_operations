@@ -1,0 +1,78 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# 1. Go through slurped profile and find line with current parameter
+- name: SAP Profile Update - Find current parameter line in profile content
+  ansible.builtin.set_fact:
+    __sap_profile_update_fact_parameter_line: >-
+      {{ (__sap_profile_update_profile_dict['slurp'] | b64decode).splitlines()
+          | select('regex', '^' + (parameter_item.name | regex_escape()) + '\s*=')
+          | first | d('') }}
+
+# 2. Extract value of current parameter line or default to 'NOT_FOUND'.
+- name: SAP Profile Update - Set fact for current parameter value
+  ansible.builtin.set_fact:
+    __sap_profile_update_fact_current_value: >-
+      {{ (__sap_profile_update_fact_parameter_line | regex_replace('^[^=]+=\s*([^#]+).*$', '\1') | trim)
+        if __sap_profile_update_fact_parameter_line
+        else 'NOT_FOUND' }}
+
+# 3. Add or Update parameter when state is 'present'.
+# Audit comment is added when change is required.
+# Example of adding new parameter:
+# 2025-12-09 09:58:34 'rdisp/wp_no_btc' added with value '6' by Ansible Role community.sap_operations.sap_profile_update.
+# Example of updating existing parameter:
+# 2025-12-09 10:00:25 'rdisp/wp_no_btc' changed from '6' to '7' by Ansible Role community.sap_operations.sap_profile_update.
+- name: SAP Profile Update - Ensure parameter is present
+  ansible.builtin.lineinfile:
+    path: "{{ __sap_profile_update_profile_dict['path'] }}"
+    regexp: '^(#\s*)?{{ parameter_item.name | regex_escape() }}\s*='
+    line: |-
+      {% if __sap_profile_update_fact_current_value != parameter_item.value %}
+      {%   if parameter_item.name not in __sap_profile_update_profile_dict['parameters'] %}
+      # {{ __add_comment }}
+      {%   else %}
+      # {{ __update_comment }}
+      {%   endif %}
+      {{ parameter_item.name }} = {{ parameter_item.value }}
+      {% else %}
+      {{ parameter_item.name }} = {{ parameter_item.value }}
+      {% endif %}
+    backup: true
+    firstmatch: true
+  vars:
+    __add_comment: >-
+      {{ __sap_profile_update_parameter_timestamp }}
+      '{{ parameter_item.name }}' added with value
+      '{{ parameter_item.value }}'
+      by Ansible Role community.sap_operations.sap_profile_update.
+    __update_comment: >-
+      {{ __sap_profile_update_parameter_timestamp }}
+      '{{ parameter_item.name }}' changed from
+      '{{ __sap_profile_update_fact_current_value }}' to
+      '{{ parameter_item.value }}'
+      by Ansible Role community.sap_operations.sap_profile_update.
+  when: (parameter_item.state | d('present')) == 'present'
+
+
+# 4. Comment out parameter when state is 'absent', but don't remove it for audit purposes.
+# Audit comment is added when change is required.
+# Example of commenting out parameter:
+# 2025-12-09 10:01:04 'rdisp/wp_no_btc' commented out by Ansible Role community.sap_operations.sap_profile_update.
+- name: SAP Profile Update - Comment out parameter (absent)
+  ansible.builtin.replace:
+    path: "{{ __sap_profile_update_profile_dict['path'] }}"
+    backup: true
+    regexp: '^(#\s*)?({{ parameter_item.name | regex_escape() }}\s*=\s*.*)$'
+    replace: |
+      # {{ __delete_comment }}
+      # \2
+  vars:
+    __delete_comment: >-
+      {{ __sap_profile_update_parameter_timestamp }}
+      '{{ parameter_item.name }}' commented out
+      by Ansible Role community.sap_operations.sap_profile_update.
+  when:
+    - (parameter_item.state | d('present')) == 'absent'
+    - __sap_profile_update_fact_current_line | length > 0
+    - not __sap_profile_update_fact_current_line.startswith('#')

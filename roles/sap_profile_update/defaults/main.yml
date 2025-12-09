@@ -1,20 +1,32 @@
-# SAP system details
-sap_update_profile_sid:
-sap_update_profile_instance_nr:
+# SPDX-License-Identifier: Apache-2.0
+---
 
-# List of profile parameters to be updated in the DEFAULT profile
-sap_update_profile_default_profile_params: []
-# Sample list
-# sap_update_profile_default_profile_params:
-#     - sapgui/user_scripting = TRUE
-#     - ssl/ciphersuites = 135:PFS:HIGH::EC_P256:EC_HIGH
-#     - ssl/client_ciphersuites = 150:PFS:HIGH::EC_P256:EC_HIGH
+# This variable defines all SAP systems, profiles, and parameters to be managed
+# or updated on the current host. It is structured as a list of dictionaries,
+# where each top-level dictionary defines a specific SAP System ID (SID).
+#
+# Structure:
+# - List of Systems (sid)
+#   - List of Profiles (type: default/instance)
+#     - List of Parameters (name, value, state)
+#
+# Key fields:
+# * sid: The 3-letter SAP System ID (e.g., 'PRD', 'QAS').
+# * profiles: A list of profile files to manage for this SID.
+#   * type: 'default' or 'instance'. Used for dynamic path calculation.
+#   * instance_number: Required if type is 'instance' (e.g., '00', '10').
+#   * path: (Optional) Explicit file path to the profile. If omitted, the path
+#           will be constructed based on 'sid', 'type', and discovered facts.
+#   * parameters: The list of parameters to apply to this profile file.
+#     * name: Parameter name to update (e.g., 'ssl/ciphersuites').
+#     * value: New value for the parameter. Not required if state is 'absent'.
+#     * state: (Optional) 'present' (default) or 'absent'.
+#
+sap_profile_update_definitions: []
 
-# List of profile parameters to be updated in the instance profile
-sap_update_profile_instance_profile_params: []
-# Sample list
-# sap_update_profile_instance_profile_params:
-#     - PHYS_MEMSIZE = 32768
-#     - icm/server_port_0 = PROT=HTTP,PORT=80$$,PROCTIMEOUT=600,TIMEOUT=3600
-#     - icm/server_port_1 = PROT=HTTPS,PORT=443$$,PROCTIMEOUT=600,TIMEOUT=3600
-#     - icm/server_port_2 = PROT=SMTP,PORT=25$$,PROCTIMEOUT=120,TIMEOUT=120
+
+# Enable this variable to restart sapstartsrv service after updating parameters.
+# This is applicable only for 'instance' type profiles as DEFAULT.PFL does not have sapstartsrv.
+# This role does not manage restart of complete SAP System,
+# and this parameter is limited to 'sapcontrol -function RestartService' only.
+sap_profile_update_restart_sapstartsrv: false
