@@ -1,0 +1,101 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Detection follows default SAP directories:
+# /hana/shared - Contains HANA SIDs, but they must be present in /usr/sap.
+# /sapmnt - Contains Netweaver SIDs, but they must be present in /usr/sap.
+# Expected SID format is: 3 capital letters or digits using '^[A-Z][A-Z0-9][A-Z0-9]$'
+
+- name: SAP Control - Find directories in '/usr/sap'
+  ansible.builtin.find:
+    paths: "/usr/sap"
+    file_type: directory
+    patterns: '*'
+    depth: 1
+  register: __sap_control_register_usr_sap_dirs
+  ignore_errors: true
+
+- name: SAP Control - Find directories in '/sapmnt'
+  ansible.builtin.find:
+    paths: "/sapmnt"
+    file_type: directory
+    patterns: '*'
+    depth: 1
+  register: __sap_control_register_sapmnt_dirs
+  ignore_errors: true
+
+- name: SAP Control - Find directories in '/hana/shared'
+  ansible.builtin.find:
+    paths: "/hana/shared"
+    file_type: directory
+    patterns: '*'
+    depth: 1
+  register: __sap_control_register_hana_shared_dirs
+  ignore_errors: true
+
+- name: SAP Control - Determine SIDs in /usr/sap
+  ansible.builtin.set_fact:
+    __sap_control_fact_usr_sap_sids: >-
+      {{ __sap_control_register_usr_sap_dirs.files
+        | map(attribute='path') |map('basename')
+        | select('match', '^[A-Z][A-Z0-9][A-Z0-9]$')
+        | list }}
+
+
+# Get list of all operating system users.
+# This is required before checking existence of .profile.
+- name: SAP Control - Get list of available OS users
+  ansible.builtin.getent:
+    database: passwd
+
+- name: SAP Control - Validate SID by checking for .profile file
+  ansible.builtin.stat:
+    path: "~/.profile"
+  become: true
+  become_user: "{{ sid_item | lower }}adm"
+  register: __sap_control_register_sid_profile_stat
+  loop: "{{ __sap_control_fact_usr_sap_sids }}"
+  loop_control:
+    loop_var: sid_item
+  when: "(sid_item | lower ~ 'adm') in ansible_facts['getent_passwd']"
+
+- name: SAP Control - Determine SIDs in /usr/sap
+  ansible.builtin.set_fact:
+    __sap_control_fact_usr_sap_sids_valid: >-
+      {{ __sap_control_register_sid_profile_stat.results
+         | selectattr('stat.exists', 'defined')
+         | selectattr('stat.exists', 'equalto', true)
+         | map(attribute='sid_item')
+         | list }}
+
+- name: SAP Control - Inform about skipped SIDs
+  ansible.builtin.debug:
+    msg: |
+      WARN: Following SIDs were skipped because either:
+      - OS user '<sid>adm' is missing
+      - Profile file '~/.profile' is missing
+      SIDs: {{ __diff | join(', ') }}
+  when:
+    - __diff | length > 0
+  vars:
+    __diff: "{{ __sap_control_fact_usr_sap_sids | difference(__sap_control_fact_usr_sap_sids_valid) }}"
+
+
+- name: SAP Control - Determine SAP SIDs in /sapmnt and /hana/shared
+  ansible.builtin.set_fact:
+    __sap_control_fact_nw_sids:
+      "{{ __sap_control_fact_usr_sap_sids_valid | intersect(__nw_sids) }}"
+    __sap_control_fact_hana_sids:
+      "{{ __sap_control_fact_usr_sap_sids_valid | intersect(__hana_sids) }}"
+  vars:
+    # List of SIDs that need to be validated against /usr/sap using intersect
+    __nw_sids: >-
+      {{ __sap_control_register_sapmnt_dirs.files
+        | map(attribute='path') |map('basename')
+        | select('match', '^[A-Z][A-Z0-9][A-Z0-9]$')
+        | list }}
+    __hana_sids: >-
+      {{ __sap_control_register_hana_shared_dirs.files
+        | map(attribute='path') |map('basename')
+        | select('match', '^[A-Z][A-Z0-9][A-Z0-9]$')
+        | list }}

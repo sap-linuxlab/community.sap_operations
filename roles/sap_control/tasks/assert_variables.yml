@@ -1,0 +1,104 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP Control - Assert that functions definition variable is defined as a dictionary
+  ansible.builtin.assert:
+    that:
+      - __sap_control_function_definitions is defined
+      - __sap_control_function_definitions is mapping
+    fail_msg: |
+      FAIL: The functions definition variable must be a dictionary,
+      but it is of type '{{ sap_profile_update_definitions | type_debug }}'.
+
+      This variable is predefined in 'vars/main.yml' and it should not be removed.
+      Variable: '__sap_control_function_definitions'
+
+
+- name: SAP Control - Assert that the variable 'sap_control_function' is defined as string
+  ansible.builtin.assert:
+    that:
+      - sap_control_function is defined
+      - sap_control_function is string
+      - sap_control_function | length > 0
+      - sap_control_function in __sap_control_function_definitions.keys()
+    fail_msg: |
+      {% if sap_control_function is not defined %}
+        FAIL: The 'sap_control_function' variable must be defined as non-empty string.
+      {% elif sap_control_function is not string %}
+        FAIL: The 'sap_control_function' variable must be a string.
+      {% elif sap_control_function | trim | length == 0 %}
+        FAIL: The 'sap_control_function' variable cannot be empty.
+      {% else %}
+        FAIL: The 'sap_control_function' variable value is not valid.
+        Value: {{ sap_control_function }}
+        It must be one of the following:
+        {{ __sap_control_function_definitions.keys() | join(', ') }}
+      {% endif %}
+
+
+- name: SAP Control - Set fact with chosen function definition
+  ansible.builtin.set_fact:
+    __sap_control_function: "{{ __sap_control_function_definitions[sap_control_function] | d({}) }}"
+
+
+- name: SAP Control - Assert that the functions definition variable contains required keys
+  ansible.builtin.assert:
+    that:
+      # target must be 'all' or 'sid'
+      - __sap_control_function.target is defined
+      - __sap_control_function.target is string
+      - __sap_control_function.target in ['all', 'sid']
+
+      # steps must be a non-empty list
+      - __sap_control_function.steps is defined
+      - __sap_control_function.steps | type_debug == 'list'
+      - __sap_control_function.steps | length > 0
+
+    fail_msg: |
+      FAIL: Validation failed for function '{{ sap_control_function }}'.
+      Function has to be defined with required keys in '__sap_control_function_definitions'.
+      Revert your changes in 'vars/main.yml', if you modified it, otherwise raise issue.
+
+
+- name: SAP Control - Assert that steps in functions definition are valid
+  ansible.builtin.assert:
+    that:
+      # Each step must be a dictionary and contain a 'command' key
+      - command_step_item is mapping
+      - command_step_item.command is defined
+      - command_step_item.command is string
+      # The command must be defined in __sap_control_command_definitions
+      - command_step_item.command in __sap_control_command_definitions
+      # The command type must be defined
+      - command_step_item.type is defined
+      - command_step_item.type is string
+      - command_step_item.type in ['nw', 'hana', 'system']
+    fail_msg: |
+      FAIL: Invalid step found in function '{{ sap_control_function }}'.
+      Command: {{ command_step_item.command | d('N/A') }}
+      Command must be one of the following:
+      {{ __sap_control_command_definitions.keys() | join(', ') }}
+      Type: {{ command_step_item.type | d('N/A') }}"
+      Type must be one of the following: 'nw', 'hana', 'system'
+    quiet: true
+  loop: "{{ __sap_control_function_definitions[sap_control_function]['steps'] }}"
+  loop_control:
+    loop_var: command_step_item
+    label: "Step Command: {{ command_step_item.command | d('N/A') }}"
+
+
+- name: SAP Control - Assert that the variable 'sap_control_sid' is defined as 3 letter string
+  ansible.builtin.assert:
+    that:
+      - sap_control_sid is defined
+      - sap_control_sid is string
+      - sap_control_sid | length == 3
+    fail_msg: |
+      {% if sap_control_sid is not defined %}
+        FAIL: The 'sap_control_sid' variable must be defined as non-empty string.
+      {% elif sap_control_sid is not string %}
+        FAIL: The 'sap_control_sid' variable must be a string.
+      {% else %}
+        FAIL: The 'sap_control_sid' variable must be 3 letter string
+      {% endif %}
+  when: __sap_control_function['target'] == 'sid'

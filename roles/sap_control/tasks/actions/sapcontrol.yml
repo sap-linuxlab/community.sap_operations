@@ -1,0 +1,143 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP Control - Show command to be executed - {{ command_item['nr'] }}
+  ansible.builtin.debug:
+    msg: |
+      User: {{ command_item['user'] }}
+      Command: {{ command_item['command'] }}
+
+- name: SAP Control - Execute sapcontrol command  # noqa command-instead-of-shell no-changed-when
+  ansible.builtin.shell:
+    cmd: "{{ command_item['command'] }}"
+  become: true
+  become_user: "{{ command_item['user'] }}"
+  register: __sap_control_register_command_output
+  ignore_errors: true
+
+
+- name: Block to wait for status to change if using restart or update
+  when:
+    - sap_control_function is match('restart|update')
+    - command_item['async'] is defined
+    - command_item['async'] | length > 0
+  block:
+    - name: SAP Control - Get current system state - {{ command_item['nr'] }}  # noqa no-changed-when
+      ansible.builtin.shell:
+        cmd: >-
+          source ~/.profile &&
+          sapcontrol
+          -nr {{ command_item['nr'] }}
+          -function {{ command_item['async']['test_function'] | d('GetSystemInstanceList') }}
+      become: true
+      become_user: "{{ command_item['user'] }}"
+      register: __sap_control_register_async_update_before
+      changed_when: false
+
+    - name: SAP Control - Wait for state to change for update and restart - {{ command_item['nr'] }}
+      ansible.builtin.shell:
+        cmd: >-
+          source ~/.profile &&
+          sapcontrol
+          -nr {{ command_item['nr'] }}
+          -function {{ command_item['async']['test_function'] | d('GetSystemInstanceList') }}
+      become: true
+      become_user: "{{ command_item['user'] }}"
+      register: __sap_control_register_async_update_after
+      changed_when: false
+      retries: "{{ command_item['async']['retries'] | d(0) | int }}"
+      delay: "{{ command_item['async']['delay'] | d(0) | int }}"
+      until: >
+        (__sap_control_register_async_update_after.stdout
+          | regex_findall('GREEN|YELLOW|GRAY|RED', multiline=True)  | sort | join(','))
+        != (__sap_control_register_async_update_before.stdout
+          | regex_findall('GREEN|YELLOW|GRAY|RED', multiline=True)  | sort | join(','))
+
+
+- name: Block for async wait
+  when:
+    - command_item['async'] is defined
+    - command_item['async'] | length > 0
+  block:
+    - name: SAP Control - Wait for 20 Seconds to ensure the async function is started
+      ansible.builtin.wait_for:
+        timeout: 20
+
+    - name: SAP Control - Wait for state to change in retry loop - {{ command_item['nr'] }}
+      ansible.builtin.shell:
+        cmd: >-
+          source ~/.profile &&
+          sapcontrol
+          -nr {{ command_item['nr'] }}
+          -function {{ command_item['async']['test_function'] | d('GetSystemInstanceList') }}
+      become: true
+      become_user: "{{ command_item['user'] }}"
+      register: __sap_control_register_async_command_output
+      changed_when: false
+      retries: "{{ command_item['async']['retries'] | d(0) | int }}"
+      delay: "{{ command_item['async']['delay'] | d(0) | int }}"
+      until: >
+        ( command_item['async']['until_false'] is not defined
+        or command_item['async']['until_false'] is defined
+        and __sap_control_register_async_command_output.stdout
+          | regex_search(command_item['async']['until_false'], multiline=True) is none) and
+        (command_item['async']['until_true'] is not defined or
+        command_item['async']['until_true'] is defined
+        and __sap_control_register_async_command_output.stdout
+          | regex_search(command_item['async']['until_true'], multiline=True) is not none)
+
+
+- name: SAP Control - Execute 'cleanipc' command
+  ansible.builtin.shell:
+    cmd: >-
+      source ~/.profile &&
+      cleanipc {{ command_item['nr'] }} remove
+  become: true
+  become_user: "{{ command_item['user'] }}"
+  register: __sap_control_register_cleanipc
+  when:
+    - sap_control_cleanipc | d(true)
+    - command_item['name'] is match('stop')
+  changed_when: >-
+    (__sap_control_register_cleanipc.stdout_lines
+      | select('match', '^Number of IPC-Objects.*')
+      | first
+      | d('Number of IPC-Objects: 0')
+      | split(':'))[1]
+      | trim
+      | int > 0
+
+
+- name: SAP Control - Get final status of instance - {{ command_item['nr'] }}
+  ansible.builtin.shell:
+    cmd: >-
+      source ~/.profile &&
+      sapcontrol
+      -nr {{ command_item['nr'] }}
+      -function {{ __function }}
+  become: true
+  become_user: "{{ command_item['user'] }}"
+  register: __sap_control_register_final_status
+  changed_when: false
+  # We have to ignore errors because sapcontrol does not return correct return codes.
+  failed_when: false
+  ignore_errors: true
+  vars:
+    __function: >-
+      {{ 'GetSystemInstanceList'
+        if command_item['command'] is match('.*system$')
+          or (sap_control_function.split('_')[0] | lower) is match('.*system$')
+        else
+          'GetProcessList'
+      }}
+
+
+- name: SAP Control - Show final status of instance - {{ command_item['nr'] }}
+  ansible.builtin.debug:
+    msg: |
+      Execution of sapcontrol command was finished.
+      User: {{ command_item['user'] }}
+      Command: {{ command_item['command'] }}
+
+      Status:
+      {{ __sap_control_register_final_status.stdout }}

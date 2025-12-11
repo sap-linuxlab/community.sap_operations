@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP Control - Find directories in {{ __sap_control_detect_dir }}
+  ansible.builtin.find:
+    paths: "{{ __sap_control_detect_dir }}/{{ sid_item }}"
+    file_type: directory
+    patterns: '*'
+    depth: 1
+  register: __sap_control_register_instance_dirs
+  ignore_errors: true
+
+# Filter to include only directories matching SAP instance name structure (Type + 2 Digits)
+- name: SAP Control - Determine SAP Instances in {{ __sap_control_detect_dir }}
+  ansible.builtin.set_fact:
+    __sap_control_fact_potential_instance_dirs: >-
+      {{ __sap_control_register_instance_dirs.files
+          | map(attribute='path') | map('basename')
+          | select('match', '^[A-Z]+\d{2}$')
+          | list }}
+
+- name: SAP Control - Validate Instance by checking for the sapcontrol executable
+  ansible.builtin.stat:
+    path: "/usr/sap/{{ sid_item }}/{{ instance_dir }}/exe/sapcontrol"
+  register: __sap_control_register_potential_instance_dirs_stat
+  loop: "{{ __sap_control_fact_potential_instance_dirs }}"
+  loop_control:
+    loop_var: instance_dir
+
+- name: SAP Control - Create list of Instances with sapcontrol executable present
+  ansible.builtin.set_fact:
+    __sap_control_fact_valid_instance_dirs: >
+      {{ __sap_control_register_potential_instance_dirs_stat.results
+         | selectattr('stat.exists', 'defined')
+         | selectattr('stat.exists', 'equalto', true)
+         | map(attribute='instance_dir')
+         | list }}
+
+# Generate output list with identical format as 'community.sap_libs.sap_system_facts'.
+# __sap_control_fact_detected_instances:
+#   -   InstanceType: HANA
+#       NR: '90'
+#       SID: H01
+#       TYPE: HDB
+#   -   InstanceType: NW
+#       NR: '11'
+#       SID: B01
+#       TYPE: PAS
+- name: SAP Control - Add detected instances into system facts
+  ansible.builtin.set_fact:
+    __sap_control_fact_detected_instances:
+      "{{ __sap_control_fact_detected_instances | d([]) + __system_fragment }}"
+  loop: "{{ __sap_control_fact_valid_instance_dirs }}"
+  loop_control:
+    loop_var: instance_item
+  vars:
+    __instance_prefix: "{{ instance_item[0] }}"
+    __type: >-
+      {{ __sap_control_type_dict[__instance_prefix]
+        if __instance_prefix in __sap_control_type_dict.keys()
+        else 'XXX' }}
+    __system_fragment:
+      - 'InstanceType': "{{ __sap_control_detect_instance_type }}"
+        'NR': "{{ instance_item[-2:] }}"
+        'SID': "{{ sid_item }}"
+        'TYPE': "{{ __type }}"

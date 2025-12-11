@@ -1,133 +1,61 @@
+# SPDX-License-Identifier: Apache-2.0
 ---
-# Lowercase input
-- name: Lowercase input
-  ansible.builtin.set_fact:
-    sap_control_function: "{{ sap_control_function | lower }}"
 
-# Check inputs
-- name: Check function validity
-  ansible.builtin.fail:
-    msg: "Function {{ sap_control_function }} is invalid"
+- name: SAP Control - Assert variables
+  ansible.builtin.include_tasks:
+    file: assert_variables.yml
+
+- name: SAP Control - Gather facts about SAP Instances on the host
+  ansible.builtin.include_tasks:
+    file: detection/detect_sap.yml
+
+- name: SAP Control - Prepare commands to be executed
+  ansible.builtin.include_tasks:
+    file: prepare.yml
   when:
-    - "sap_control_function not in sap_control_functions_list"
+    - __sap_control_fact_detected_instances is defined
+    - __sap_control_fact_detected_instances | length > 0
 
-- name: Check function if defined
-  ansible.builtin.fail:
-    msg: "No sap_control_function defined"
+
+- name: Block to execute only when commands are defined
   when:
-    - "sap_control_function == 'initial'"
+    - __sap_control_fact_detected_instances is defined
+    - __sap_control_fact_detected_instances | length > 0
+    - __sap_control_commands is defined
+    - __sap_control_commands | length > 0
+  block:
+    - name: SAP Control - Show execution steps
+      ansible.builtin.debug:
+        msg: |
+          The Ansible Role `sap_control` is executed with function: '{{ sap_control_function }}'
 
-# - name: Check function - all and SID
-#   ansible.builtin.fail:
-#     msg: "An 'all' function and a 'SID' cant be used at the same time"
-#   when:
-#     - (sap_sid != 'initial') and ('all' in sap_control_function)
+          Following commands will now be executed in this order by listed users:
+          {% for command in __sap_control_commands %}
+          {{ command.user }}: {{ command.command }}
+          {% endfor %}
 
-- name: Check function - all and SID
-  ansible.builtin.fail:
-    msg: "Parameter 'sap_sid' is required when not using an 'all' function"
-  when:
-    - (sap_sid == 'initial') and ('all' not in sap_control_function)
 
-# Set facts when nowait is true
-- name: Set facts when nowait is true
-  ansible.builtin.set_fact:
-    sap_control_start: "Start"
-    sap_control_stop: "Stop"
-  when: nowait | bool
+    # Loop over unique SID + NR combinations, instead of full list.
+    # This helps with functions like restart, where command list contains duplicates.
+    - name: SAP Control - Ensure 'sapstartsrv' service is running
+      ansible.builtin.include_tasks:
+        file: actions/sapstartsrv.yml
+      loop: "{{ __sap_control_commands | map(attribute='sid_nr') | list | unique }}"
+      loop_control:
+        loop_var: instance_sid_nr_item
+        label: "{{ __command_sid }}_{{ __command_nr }}"
+      vars:
+        # Extraction from loop item is required, because we cannot access
+        # them directly after selecting unique combination.
+        __command_sid: "{{ instance_sid_nr_item.split('_')[0] | upper }}"
+        __command_nr: "{{ instance_sid_nr_item.split('_')[1] }}"
+        __command_user: "{{ __command_sid | lower }}adm"
 
-# sap_control_functions_list:
-#   - restart_all_sap
-#   - stop_all_sap
-#   - start_all_sap
-#   - restart_all_nw
-#   - restart_all_hana
-#   - stop_all_nw
-#   - start_all_nw
-#   - stop_all_hana
-#   - start_all_hana
-#   - restart_sap_nw
-#   - restart_sap_hana
-#   - stop_sap_nw
-#   - start_sap_nw
-#   - stop_sap_hana
-#   - start_sap_hana
 
-# These facts were only used for the sap_system_facts module, but it doesn't accept sap_facts_param anymore.
-# - name: Set function list facts
-#   ansible.builtin.set_fact:
-#     sap_control_act_type: "{{ sap_control_function.split('_')[0] | lower }}"
-#     sap_control_get_type: "{{ sap_control_function.split('_')[1] | lower }}"
-#     sap_control_sap_type: "{{ sap_control_function.split('_')[2] | lower }}"
-
-# - name: Set sap_facts_param
-#   ansible.builtin.set_fact:
-#     sap_facts_param: "{{ sap_control_get_type }}"
-
-# - name: Set sap_facts_param
-#   ansible.builtin.set_fact:
-#     sap_facts_param: "{{ sap_control_sap_type }}"
-#   when:
-#     - "'all' in sap_control_function"
-#     - "'sap' not in sap_control_sap_type"
-
-# # When not all
-# - name: Set sap_facts_param
-#   ansible.builtin.set_fact:
-#     sap_facts_param: "{{ sap_sid }}"
-#   when:
-#     - "'all' not in sap_control_function"
-
-# # Get SAP Info
-# - name: Get SAP Info
-#   vars:
-#     sap_info_get_function: "get_{{ sap_control_get_type }}_{{ sap_control_sap_type }}"
-#   ansible.builtin.include_role:
-#     name: roles/sap_info
-
-# # Get SAP Info
-# - name: Get SAP Info
-#   vars:
-#     sap_info_get_function: "get_{{ sap_control_get_type }}_{{ sap_control_sap_type }}"
-#   ansible.builtin.include_role:
-#     name: roles/sap_info
-
-# Get SAP Facts
-- name: Run sap_facts module to gather SAP facts
-  community.sap_libs.sap_system_facts:
-    # param: "{{ sap_facts_param }}"
-  register: sap_facts_register
-
-- name: Debug result from sap_libs.sap_system_facts
-  ansible.builtin.debug:
-    msg: "{{ sap_facts_register.ansible_facts.sap }}"
-    verbosity: 1
-
-- name: pause for 10 Seconds
-  ansible.builtin.wait_for:
-    timeout: 10
-
-# Debugging stuff
-- name: Display parameters for runtime
-  ansible.builtin.debug:
-    msg:
-      - "Starting sap_control with the following parameters: "
-      - "Function: {{ sap_control_function }}"
-      - "Standard commands:"
-      - "  Start: {{ sap_control_start }}"
-      - "  Stop: {{ sap_control_stop }}"
-      - "System commands (if applicable):"
-      - "  StartSystem: {{ sap_control_startsystem }}"
-      - "  StopSystem: {{ sap_control_stopsystem }}"
-      - "  RestartSystem: {{ sap_control_restartsystem }}"
-      - "  UpdateSystem: {{ sap_control_updatesystem }}"
-      - "  WaitforStopped: {{ sap_control_waitforstopped }}"
-      - "  WaitforStarted: {{ sap_control_waitforstarted }}"
-      - "NoWait: {{ nowait }}"
-
-# Start SAP Control
-- name: SAP Control
-  ansible.builtin.include_tasks: prepare.yml
-  loop: "{{ vars[sap_control_function + '_list'] }}"
-  loop_control:
-    loop_var: function_list
+    - name: SAP Control - Execute sapcontrol commands steps
+      ansible.builtin.include_tasks:
+        file: actions/sapcontrol.yml
+      loop: "{{ __sap_control_commands }}"
+      loop_control:
+        loop_var: command_item
+        label: "{{ command_item['sid'] }}_{{ command_item['nr'] }}_{{ command_item['name'] }}"

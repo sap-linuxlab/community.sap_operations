@@ -1,0 +1,311 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Defines the base sapcontrol commands and their default parameters.
+# These are the low-level building blocks for the functions defined in '__sap_control_function_definitions'.
+# The format generally follows: sapcontrol -function <COMMAND_STRING>
+__sap_control_command_definitions:
+  start: "Start"
+  stop: "Stop"
+  startwait: "StartWait 180 2"                # -function StartWait <waittimeout> <delay>
+  stopwait: "StopWait 180 2"                  # -function StopWait <waittimeout> <delay>
+  startsystem: "StartSystem ALL 180"          # -function StartSystem ALL <waittimeout>
+  stopsystem: "StopSystem ALL 180 480"        # -function StopSystem ALL <waittimeout> <softtimeout>
+  restartsystem: "RestartSystem ALL 180 480"  # -function RestartSystem ALL <waittimeout> <softtimeout>
+  updatesystem: "UpdateSystem 180 480 0"      # -function UpdateSystem <waittimeout> <softtimeout> <force>
+  waitforstopped: "WaitforStopped 180 2"      # -function WaitforStopped <waittimeout> <delay>
+  waitforstarted: "WaitforStarted 180 2"      # -function WaitforStarted <waittimeout> <delay>
+
+
+# This dictionary orchestrates the high-level functions exposed to the user via the 'sap_control_function' variable.
+# Each key is a user-callable function name.
+# Each function definition contains:
+#   - description: A human-readable explanation of what the function does.
+#   - target: 'all' (for all instances of a type) or 'sid' (for a specific instance).
+#   - steps: A list of commands from '__sap_control_command_definitions' to execute in order.
+#   - async (optional): Defines parameters for asynchronous tasks, which poll for a specific state.
+# NOTE: Adding new function might require updating some tasks that validate values.
+# Example: __sap_control_fact_instances_sorted checks for ['start', 'startwait', 'startsystem', 'updatesystem', 'waitforstarted']
+__sap_control_function_definitions:
+  # SAP HANA functions - Single actions
+  start_all_hana:
+    description: "Starts all SAP HANA instances on the host."
+    target: all
+    steps:
+      - command: startwait
+        type: hana
+
+  stop_all_hana:
+    description: "Stops all SAP HANA instances on the host."
+    target: all
+    steps:
+      - command: stopwait
+        type: hana
+
+  start_sap_hana:
+    description: "Starts SID specific SAP HANA instance on the host."
+    target: sid
+    steps:
+      - command: startwait
+        type: hana
+
+  stop_sap_hana:
+    description: "Stops SID specific SAP HANA instance on the host."
+    target: sid
+    steps:
+      - command: stopwait
+        type: hana
+
+  # SAP HANA functions - Composite actions
+  restart_all_hana:
+    description: "Restarts all SAP HANA instances on the host."
+    target: all
+    steps:
+      - command: stopwait
+        type: hana
+      - command: startwait
+        type: hana
+
+  restart_sap_hana:
+    description: "Restarts SID specific SAP HANA instance on the host."
+    target: sid
+    steps:
+      - command: stopwait
+        type: hana
+      - command: startwait
+        type: hana
+
+  # SAP Netweaver functions - Single actions
+  start_all_nw:
+    description: "Starts all SAP Netweaver instances on the host."
+    target: all
+    steps:
+      - command: startwait
+        type: nw
+
+  stop_all_nw:
+    description: "Stops all SAP Netweaver instances on the host."
+    target: all
+    steps:
+      - command: stopwait
+        type: nw
+
+  start_sap_nw:
+    description: "Starts SID specific SAP Netweaver instance on the host."
+    target: sid
+    steps:
+      - command: startwait
+        type: nw
+
+  stop_sap_nw:
+    description: "Stops SID specific SAP Netweaver instance on the host."
+    target: sid
+    steps:
+      - command: stopwait
+        type: nw
+
+  # SAP Netweaver functions - Composite actions
+  restart_all_nw:
+    description: "Restarts all SAP Netweaver instances on the host."
+    target: all
+    steps:
+      - command: stopwait
+        type: nw
+      - command: startwait
+        type: nw
+
+  restart_sap_nw:
+    description: "Restarts SID specific SAP Netweaver instance on the host."
+    target: sid
+    steps:
+      - command: stopwait
+        type: nw
+      - command: startwait
+        type: nw
+
+  # SAP System functions - Composite actions
+  start_all_sap:
+    description: "Starts all SAP System instances on the host."
+    target: all
+    steps:
+      - command: startwait
+        type: hana
+      - command: startwait
+        type: nw
+
+
+  stop_all_sap:
+    description: "Stops all SAP System instances on the host."
+    target: all
+    steps:
+      - command: stopwait
+        type: nw
+      - command: stopwait
+        type: hana
+
+  restart_all_sap:
+    description: "Restarts all SAP System instances on the host."
+    target: all
+    steps:
+      - command: stopwait
+        type: nw
+      - command: stopwait
+        type: hana
+      - command: startwait
+        type: hana
+      - command: startwait
+        type: nw
+
+  # System-level functions - Single action
+  startsystem_all_nw:
+    description: "Starts all NetWeaver systems on the host using StartSystem."
+    target: all
+    steps:
+      - command: startsystem
+        type: nw
+        async:
+          test_function: "GetSystemInstanceList"
+          retries: 60
+          delay: 10
+          until_true: 'GREEN\s*$'
+          until_false: 'GRAY\s*$|RED\s*$|YELLOW\s*$'
+
+  stopsystem_all_nw:
+    description: "Stops all NetWeaver systems on the host using StopSystem."
+    target: all
+    steps:
+      - command: stopsystem
+        type: nw
+        async:
+          test_function: "GetSystemInstanceList"
+          retries: 60
+          delay: 10
+          until_true: 'GRAY\s*$'
+          until_false: 'GREEN\s*$|RED\s*$|YELLOW\s*$'
+
+  startsystem_sap_nw:
+    description: "Starts SID specific NetWeaver systems on the host using StartSystem."
+    target: sid
+    steps:
+      - command: startsystem
+        type: nw
+        async:
+          test_function: "GetSystemInstanceList"
+          retries: 60
+          delay: 10
+          until_true: 'GREEN\s*$'
+          until_false: 'GRAY\s*$|RED\s*$|YELLOW\s*$'
+
+  stopsystem_sap_nw:
+    description: "Stops SID specific NetWeaver systems on the host using StopSystem."
+    target: sid
+    steps:
+      - command: stopsystem
+        type: nw
+        async:
+          test_function: "GetSystemInstanceList"
+          retries: 60
+          delay: 10
+          until_true: 'GRAY\s*$'
+          until_false: 'GREEN\s*$|RED\s*$|YELLOW\s*$'
+
+  restartsystem_all_nw:
+    description: "Restarts all NetWeaver systems on the host using StopSystem."
+    target: all
+    steps:
+      - command: restartsystem
+        type: nw
+        async:
+          test_function: "GetSystemInstanceList"
+          retries: 60
+          delay: 10
+          until_true: 'GREEN\s*$'
+          until_false: 'GRAY\s*$|RED\s*$|YELLOW\s*$'
+
+  restartsystem_sap_nw:
+    description: "Restarts SID specific NetWeaver systems on the host using StopSystem."
+    target: sid
+    steps:
+      - command: restartsystem
+        type: nw
+        async:
+          test_function: "GetSystemInstanceList"
+          retries: 60
+          delay: 10
+          until_true: 'GREEN\s*$'
+          until_false: 'GRAY\s*$|RED\s*$|YELLOW\s*$'
+
+  # System-level functions - Composite actions
+  updatesystem_all_nw:
+    description: "Starts and update all NetWeaver systems on the host using StopSystem."
+    target: all
+    steps:
+      - command: startsystem
+        type: nw
+        async:
+          test_function: "GetSystemInstanceList"
+          retries: 60
+          delay: 10
+          until_true: 'GREEN\s*$'
+          until_false: 'GRAY\s*$|RED\s*$|YELLOW\s*$'
+      - command: restartsystem
+        type: nw
+        async:
+          test_function: "GetSystemUpdateList"
+          retries: 60
+          delay: 10
+          until_false: 'GRAY\s*$|RED\s*$|YELLOW\s*$|GREEN\s*$'
+
+  updatesystem_sap_nw:
+    description: "Starts and update SID specific NetWeaver systems on the host using StopSystem."
+    target: sid
+    steps:
+      - command: startsystem
+        type: nw
+        async:
+          test_function: "GetSystemInstanceList"
+          retries: 60
+          delay: 10
+          until_true: 'GREEN\s*$'
+          until_false: 'GRAY\s*$|RED\s*$|YELLOW\s*$'
+      - command: restartsystem
+        type: nw
+        async:
+          test_function: "GetSystemUpdateList"
+          retries: 60
+          delay: 10
+          until_false: 'GRAY\s*$|RED\s*$|YELLOW\s*$|GREEN\s*$'
+
+
+# Defines the execution order for starting and stopping different SAP instance types.
+# This ensures dependencies are handled correctly (e.g., the database starts before application servers).
+__sap_control_execution_order:
+  start:
+    - "HDB"
+    - "ERS"
+    - "ASCS"
+    - "SCS"
+    - "PAS"
+    - "Java"
+    - "WebDisp"
+  stop:
+    - "WebDisp"
+    - "Java"
+    - "PAS"
+    - "SCS"
+    - "ASCS"
+    - "ERS"
+    - "HDB"
+
+
+# Maps the first letter of an SAP instance directory name to a standardized, human-readable type.
+# This is used to identify the type of an instance (e.g., a directory named 'DVEBMGS00' starts with 'D', mapping to 'PAS').
+__sap_control_type_dict:
+  # Key is the first letter of the instance directory name, Value is the desired type name
+  "A": "ASCS"     # ASCS## -> ASCS (ABAP Central Services)
+  "D": "PAS"      # D## (DVEBMGS##) -> PAS (Primary Application Server) or Dialog Instance
+  "W": "WebDisp"  # W## -> WebDispatcher
+  "J": "Java"     # J## (J##, JEM##) -> Java Application Server
+  "S": "SCS"      # SCS## -> SCS (Java Central Services)
+  "E": "ERS"      # ERS## -> ERS (Enque Replication Server)
+  "H": "HDB"      # HDB## (for HANA DB) - Added for completeness
