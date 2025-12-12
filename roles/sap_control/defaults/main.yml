@@ -39,9 +39,14 @@ sap_control_function: ''
 # If set to false, the 'cleanipc' command will not be executed after stopping an SAP instance.
 # sap_control_cleanipc: true
 
-# Override for the number of retries and delay for asynchronous tasks.
-# Asynchronous steps are part of functions that include 'system' in their name (e.g., 'startsystem_all_nw').
+# Overrides the number of retries for asynchronous tasks.
+# If not set, the role uses the default value defined in the function step (e.g., 60 for 'startsystem_all_nw').
+# Applies to functions that include 'system' in their name.
 # sap_control_async_retries: '60'
+
+# Overrides the delay (in seconds) between retries for asynchronous tasks.
+# If not set, the role uses the default value defined in the function step (e.g., 10 for 'startsystem_all_nw').
+# Applies to functions that include 'system' in their name.
 # sap_control_async_delay: '10'
 
 # Enable this variable to use 'community.sap_libs.sap_system_facts' to detect SAP instances.

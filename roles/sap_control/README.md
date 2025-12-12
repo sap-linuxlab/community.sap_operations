@@ -29,8 +29,12 @@ The Ansible role `sap_control` executes predefined that cover range of SAP admin
 
 <!-- BEGIN Prerequisites -->
 This Ansible Role assumes that SAP Netweaver and HANA are installed in standard locations.
-- `/sapmnt` and `/usr/sap` for SAP Netweaver
-- `/shared/hana/` and `/usr/sap` for SAP Netweaver
+- The `<sid>adm` user exists for each SAP system.
+- The `sapcontrol` executable is in the `PATH` of the `<sid>adm` user.
+   - This role validates standard `sapcontrol` location `/usr/sap/<SID>/<INSTANCE>/exe/sapcontrol`.
+- Standard SAP directory structures are used:
+  - `/usr/sap` and `/sapmnt` for SAP Netweaver
+  - `/usr/sap` and `/hana/shared` for SAP HANA
 <!-- END Prerequisites -->
 
 ## Execution
@@ -41,7 +45,6 @@ The function names are constructed using the pattern: [`ACTION`]_[`SCOPE`]_[`TAR
 `ACTION`: The operation to perform.
 - Process-level: `start`, `stop`, `restart`
 - System-level (asynchronous): `startsystem`, `stopsystem`, `restartsystem`, `updatesystem`
-> `system` functions leave everything to `sapcontrol` and check in asynchronous mode if it is completed.
 
 `SCOPE`: The instances the action applies to.
 - `all`: Applies to all detected instances of the target type.
@@ -55,10 +58,20 @@ The function names are constructed using the pattern: [`ACTION`]_[`SCOPE`]_[`TAR
 Following functions are available:
 | Target and Scope | Start | Stop | Restart | Other |
 | --- | --- | --- | --- | --- |
-| HANA | start_all_hana<br>start_sap_hana | stop_all_hana<br>stop_sap_hana | restart_all_hana<br>restart_sap_hana | | |
-| Netweaver | start_all_nw<br>start_sap_nw | stop_all_nw<br>stop_sap_nw | restart_all_nw<br>restart_sap_nw | | |
-| Combined | start_all_sap | stop_all_sap | restart_all_sap | | |
+| HANA | start_all_hana<br>start_sap_hana | stop_all_hana<br>stop_sap_hana | restart_all_hana<br>restart_sap_hana | |
+| Netweaver | start_all_nw<br>start_sap_nw | stop_all_nw<br>stop_sap_nw | restart_all_nw<br>restart_sap_nw | |
+| Combined | start_all_sap | stop_all_sap | restart_all_sap | |
 | System | startsystem_all_nw<br>startsystem_sap_nw | stopsystem_all_nw<br>stopsystem_sap_nw | restartsystem_all_nw<br>restartsystem_sap_nw | updatesystem_all_nw<br>updatesystem_sap_nw |
+
+### System Functions
+`system` functions are not operating SAP systems instance by instance, instead they leave this for `sapcontrol` to decide by utilizing functions like `StartSystem`, `StopSystem` and others.
+
+This role will asynchronously poll completion of these functions by getting system status (e.g. `GetSystemInstanceList`).
+The default polling duration is 600 seconds (60 retries with a 10-second delay)
+
+For larger systems where this may not be sufficient, you can adjust the duration using the following variables:
+- `sap_control_async_retries`
+- `sap_control_async_delay`
 <!-- END Execution -->
 
 ### Execution Flow
@@ -162,4 +175,18 @@ If set to `false`, the `cleanipc` command will not be executed after stopping an
 Enable this variable to use `community.sap_libs.sap_system_facts` to detect SAP instances.  
 This can be useful if this role is part of a playbook that expects facts set by that module.  
 > **NOTE:** This module will not detect instances with `sapstartsrv` stopped.
+
+### sap_control_async_retries
+- _Type:_ `string` or `integer`
+
+Overrides the number of retries for asynchronous tasks.  
+If not set, the role uses the default value defined in the function step (e.g., 60 for `startsystem_all_nw`).  
+Applies to functions that include `system` in their name.  
+
+### sap_control_async_delay
+- _Type:_ `string` or `integer`
+
+Overrides the delay (in seconds) between retries for asynchronous tasks.  
+If not set, the role uses the default value defined in the function step (e.g., 10 for `startsystem_all_nw`).  
+Applies to functions that include `system` in their name.  
 <!-- END Role Variables -->

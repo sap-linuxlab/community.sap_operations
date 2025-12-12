@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ---
 
-# This step is important for functions like 'restart' where start order would be wrong. 
+# This step is important for functions like 'restart' where start order would be wrong.
 - name: SAP Control - Set fact with empty sort list for step {{ command_step_item['command'] }}
   ansible.builtin.set_fact:
     __sap_control_fact_instances_sorted: []
