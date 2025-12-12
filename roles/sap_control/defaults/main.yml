@@ -34,17 +34,17 @@ sap_control_function: ''
 
 # If set to true, the role will not wait for start/stop operations to complete.
 # This option should be used with caution, as the role will not verify the final status of the instance.
-sap_control_command_nowait: false
+# sap_control_command_nowait: false
 
 # If set to false, the 'cleanipc' command will not be executed after stopping an SAP instance.
-sap_control_cleanipc: true
+# sap_control_cleanipc: true
 
 # Override for the number of retries and delay for asynchronous tasks.
 # Asynchronous steps are part of functions that include 'system' in their name (e.g., 'startsystem_all_nw').
-sap_control_async_retries: '60'
-sap_control_async_delay: '10'
+# sap_control_async_retries: '60'
+# sap_control_async_delay: '10'
 
 # Enable this variable to use 'community.sap_libs.sap_system_facts' to detect SAP instances.
 # This can be useful if this role is part of a playbook that expects facts set by that module.
 # NOTE: This module will not detect instances with 'sapstartsrv' stopped.
-sap_control_use_sap_system_facts: false
+# sap_control_use_sap_system_facts: false

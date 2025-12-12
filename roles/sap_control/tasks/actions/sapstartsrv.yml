@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ---
 
-- name: SAP Control - Get status of 'sapstartsrv' service - {{ __command_nr }}
+- name: SAP Control - Get status of 'sapstartsrv' service for instance - {{ __command_nr }}
   ansible.builtin.shell:
     cmd: >-
       source ~/.profile &&
@@ -20,7 +20,7 @@
     'FAIL' in __sap_control_register_sapstartsrv_check.stdout
     or 'NIECONN_REFUSED' in __sap_control_register_sapstartsrv_check.stdout
   block:
-    - name: SAP Control - Stop 'sapstartsrv' service - {{ __command_nr }}  # noqa no-changed-when
+    - name: SAP Control - Stop 'sapstartsrv' service for instance - {{ __command_nr }}  # noqa no-changed-when
       ansible.builtin.shell:
         cmd: >-
           source ~/.profile &&
@@ -32,7 +32,7 @@
       register: __sap_control_register_sapstartsrv_stop
       ignore_errors: true
 
-    - name: SAP Control - Start 'sapstartsrv' service - {{ __command_nr }}  # noqa no-changed-when
+    - name: SAP Control - Start 'sapstartsrv' service for instance - {{ __command_nr }}  # noqa no-changed-when
       ansible.builtin.shell:
         cmd: >-
           source ~/.profile &&
@@ -44,7 +44,7 @@
       register: __sap_control_register_sapstartsrv_start
       ignore_errors: true
 
-    - name: SAP Control - Get status of 'sapstartsrv' service - {{ __command_nr }}
+    - name: SAP Control - Get status of 'sapstartsrv' service for instance - {{ __command_nr }}
       ansible.builtin.shell:
         cmd: >-
           source ~/.profile &&
@@ -58,7 +58,7 @@
       changed_when: false
 
 
-    - name: SAP Control - Fail when 'sapstartsrv' cannot be verified - {{ __command_nr }}
+    - name: SAP Control - Fail when 'sapstartsrv' cannot be verified for instance - {{ __command_nr }}
       ansible.builtin.fail:
         msg: |
           FAIL: Unable to verify that 'sapstartsrv' is running.
@@ -69,7 +69,7 @@
         or 'NIECONN_REFUSED' in __sap_control_register_sapstartsrv_recheck.stdout
 
 
-    - name: SAP Control - Wait for 10 seconds for sapstartsrv to initialize
+    - name: SAP Control - Wait for 10 seconds for sapstartsrv to initialize for instance - {{ __command_nr }}
       ansible.builtin.wait_for:
         timeout: 10
       when:

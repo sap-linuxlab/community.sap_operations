@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 ---
 
-- name: SAP Control - Show command to be executed - {{ command_item['nr'] }}
+- name: SAP Control - Show command to be executed for instance - {{ command_item['nr'] }}
   ansible.builtin.debug:
     msg: |
       User: {{ command_item['user'] }}
       Command: {{ command_item['command'] }}
 
-- name: SAP Control - Execute sapcontrol command  # noqa command-instead-of-shell no-changed-when
+- name: SAP Control - Execute sapcontrol command for instance - {{ command_item['nr'] }}  # noqa command-instead-of-shell no-changed-when
   ansible.builtin.shell:
     cmd: "{{ command_item['command'] }}"
   become: true
@@ -16,78 +16,15 @@
   ignore_errors: true
 
 
-- name: Block to wait for status to change if using restart or update
-  when:
-    - sap_control_function is match('restart|update')
-    - command_item['async'] is defined
-    - command_item['async'] | length > 0
-  block:
-    - name: SAP Control - Get current system state - {{ command_item['nr'] }}  # noqa no-changed-when
-      ansible.builtin.shell:
-        cmd: >-
-          source ~/.profile &&
-          sapcontrol
-          -nr {{ command_item['nr'] }}
-          -function {{ command_item['async']['test_function'] | d('GetSystemInstanceList') }}
-      become: true
-      become_user: "{{ command_item['user'] }}"
-      register: __sap_control_register_async_update_before
-      changed_when: false
-
-    - name: SAP Control - Wait for state to change for update and restart - {{ command_item['nr'] }}
-      ansible.builtin.shell:
-        cmd: >-
-          source ~/.profile &&
-          sapcontrol
-          -nr {{ command_item['nr'] }}
-          -function {{ command_item['async']['test_function'] | d('GetSystemInstanceList') }}
-      become: true
-      become_user: "{{ command_item['user'] }}"
-      register: __sap_control_register_async_update_after
-      changed_when: false
-      retries: "{{ command_item['async']['retries'] | d(0) | int }}"
-      delay: "{{ command_item['async']['delay'] | d(0) | int }}"
-      until: >
-        (__sap_control_register_async_update_after.stdout
-          | regex_findall('GREEN|YELLOW|GRAY|RED', multiline=True)  | sort | join(','))
-        != (__sap_control_register_async_update_before.stdout
-          | regex_findall('GREEN|YELLOW|GRAY|RED', multiline=True)  | sort | join(','))
-
-
-- name: Block for async wait
+- name: SAP Control - Start asynchronous monitoring for instance - {{ command_item['nr'] }}
+  ansible.builtin.include_tasks:
+    file: actions/async_monitor.yml
   when:
     - command_item['async'] is defined
     - command_item['async'] | length > 0
-  block:
-    - name: SAP Control - Wait for 20 Seconds to ensure the async function is started
-      ansible.builtin.wait_for:
-        timeout: 20
-
-    - name: SAP Control - Wait for state to change in retry loop - {{ command_item['nr'] }}
-      ansible.builtin.shell:
-        cmd: >-
-          source ~/.profile &&
-          sapcontrol
-          -nr {{ command_item['nr'] }}
-          -function {{ command_item['async']['test_function'] | d('GetSystemInstanceList') }}
-      become: true
-      become_user: "{{ command_item['user'] }}"
-      register: __sap_control_register_async_command_output
-      changed_when: false
-      retries: "{{ command_item['async']['retries'] | d(0) | int }}"
-      delay: "{{ command_item['async']['delay'] | d(0) | int }}"
-      until: >
-        ( command_item['async']['until_false'] is not defined
-        or command_item['async']['until_false'] is defined
-        and __sap_control_register_async_command_output.stdout
-          | regex_search(command_item['async']['until_false'], multiline=True) is none) and
-        (command_item['async']['until_true'] is not defined or
-        command_item['async']['until_true'] is defined
-        and __sap_control_register_async_command_output.stdout
-          | regex_search(command_item['async']['until_true'], multiline=True) is not none)
 
 
-- name: SAP Control - Execute 'cleanipc' command
+- name: SAP Control - Execute 'cleanipc' command for instance - {{ command_item['nr'] }}
   ansible.builtin.shell:
     cmd: >-
       source ~/.profile &&
@@ -108,7 +45,7 @@
       | int > 0
 
 
-- name: SAP Control - Get final status of instance - {{ command_item['nr'] }}
+- name: SAP Control - Get final status for instance - {{ command_item['nr'] }}
   ansible.builtin.shell:
     cmd: >-
       source ~/.profile &&
@@ -128,8 +65,7 @@
         if command_item['command'] is match('.*system$')
           or (sap_control_function.split('_')[0] | lower) is match('.*system$')
         else
-          'GetProcessList'
-      }}
+          'GetProcessList' }}
 
 
 - name: SAP Control - Show final status of instance - {{ command_item['nr'] }}
@@ -138,6 +74,12 @@
       Execution of sapcontrol command was finished.
       User: {{ command_item['user'] }}
       Command: {{ command_item['command'] }}
+
+      {% if sap_control_command_nowait | d(false)
+        and (command_item['async'] is not defined or command_item['async'] | length == 0) %}
+      This role was executed with 'sap_control_command_nowait' set to 'true',
+      which skipped waiting for command and reported status can be inaccurate.
+      {% endif %}
 
       Status:
       {{ __sap_control_register_final_status.stdout }}

@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 ---
 
-- name: SAP Control - Prepare sorted lists of SAP instances for command {{ command_step_item.command }}
+- name: SAP Control - Prepare sorted lists of SAP instances for command {{ command_step_item['command'] }}
   ansible.builtin.set_fact:
     __sap_control_fact_instances_sorted: >-
       {{ (__sap_control_fact_instances_sorted | d([]) | unique)
         + (__sort_fragment | difference(__sap_control_fact_instances_sorted | d([]))) }}
   loop: >-
     {{ __sap_control_execution_order['start']
-        if command_step_item.command in ['start', 'startwait', 'startsystem', 'updatesystem', 'waitforstarted']
+        if command_step_item['command'] in ['start', 'startwait', 'startsystem', 'updatesystem', 'waitforstarted']
         else __sap_control_execution_order['stop']
     }}
   loop_control:
@@ -17,17 +17,17 @@
     __sort_fragment: "{{ __sap_control_fact_instances | selectattr('TYPE', 'equalto', sort_item) | list }}"
 
 
-- name: SAP Control - Set fact with type specific instances for step {{ command_step_item.command }}
+- name: SAP Control - Set fact with type specific instances for step {{ command_step_item['command'] }}
   ansible.builtin.set_fact:
     __sap_control_fact_instances_type_specific: >-
-      {{ __sap_control_fact_instances_sorted | selectattr('InstanceType', 'equalto', command_step_item.type | upper) | list }}
+      {{ __sap_control_fact_instances_sorted | selectattr('InstanceType', 'equalto', command_step_item['type'] | upper) | list }}
 
 
 # Resulting dictionary is complex variable that contains extra details.
 # These parameters are used in consequent tasks to avoid calling original lists again.
 - name: Block for non-System functions
   when:
-    - not (command_step_item.command is match('.*system$')
+    - not (command_step_item['command'] is match('.*system$')
         and (sap_control_function.split('_')[0] | lower) is match('.*system$'))
   block:
     - name: SAP Control - Generate commands without system functions
@@ -39,13 +39,13 @@
         loop_var: instance_item
       vars:
         __command_dict:
-          - name: "{{ command_step_item.command }}"
+          - name: "{{ command_step_item['command'] }}"
             user: "{{ instance_item['SID'] | lower }}adm"
             command: "{{ __command_fragment }}"
             sid: "{{ instance_item['SID'] }}"
             nr: "{{ instance_item['NR'] }}"
             sid_nr: "{{ instance_item['SID'] }}_{{ instance_item['NR'] }}"
-            async: "{{ command_step_item.async | d({}) }}"
+            async: "{{ command_step_item['async'] | d({}) }}"
 
         __command_fragment: >-
           source ~/.profile &&
@@ -55,15 +55,15 @@
 
         __command: >-
           {{ 'start'
-            if sap_control_command_nowait | d(false) and command_step_item.command == 'startwait'
+            if sap_control_command_nowait | d(false) and command_step_item['command'] == 'startwait'
             else ('stop'
-              if sap_control_command_nowait | d(false) and command_step_item.command == 'stopwait'
-              else command_step_item.command) }}
+              if sap_control_command_nowait | d(false) and command_step_item['command'] == 'stopwait'
+              else command_step_item['command']) }}
 
 
 - name: Block for System functions
   when:
-    - command_step_item.command is match('.*system$')
+    - command_step_item['command'] is match('.*system$')
       or (sap_control_function.split('_')[0] | lower) is match('.*system$')
   block:
 
@@ -79,16 +79,16 @@
           {{ __sap_control_fact_instances_type_specific | selectattr('SID', 'equalto', system_sid_item) | list | first }}
 
         __command_dict:
-          - name: "{{ command_step_item.command }}"
+          - name: "{{ command_step_item['command'] }}"
             user: "{{ system_sid_item | lower }}adm"
             command: "{{ __command_fragment }}"
             sid: "{{ __instance_sid_dict['SID'] }}"
             nr: "{{ __instance_sid_dict['NR'] }}"
             sid_nr: "{{ __instance_sid_dict['SID'] }}_{{ __instance_sid_dict['NR'] }}"
-            async: "{{ command_step_item.async | d({}) }}"
+            async: "{{ command_step_item['async'] | d({}) }}"
 
         __command_fragment: >-
           source ~/.profile &&
           sapcontrol
           -nr {{ __instance_sid_dict['NR'] }}
-          -function {{ __sap_control_command_definitions[command_step_item.command] }}
+          -function {{ __sap_control_command_definitions[command_step_item['command']] }}

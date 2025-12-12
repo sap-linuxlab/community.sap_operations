@@ -8,7 +8,7 @@
       - __sap_control_function_definitions is mapping
     fail_msg: |
       FAIL: The functions definition variable must be a dictionary,
-      but it is of type '{{ sap_profile_update_definitions | type_debug }}'.
+      but it is of type '{{ __sap_control_function_definitions | type_debug }}'.
 
       This variable is predefined in 'vars/main.yml' and it should not be removed.
       Variable: '__sap_control_function_definitions'
@@ -45,14 +45,14 @@
   ansible.builtin.assert:
     that:
       # target must be 'all' or 'sid'
-      - __sap_control_function.target is defined
-      - __sap_control_function.target is string
-      - __sap_control_function.target in ['all', 'sid']
+      - __sap_control_function['target'] is defined
+      - __sap_control_function['target'] is string
+      - __sap_control_function['target'] in ['all', 'sid']
 
       # steps must be a non-empty list
-      - __sap_control_function.steps is defined
-      - __sap_control_function.steps | type_debug == 'list'
-      - __sap_control_function.steps | length > 0
+      - __sap_control_function['steps'] is defined
+      - __sap_control_function['steps'] | type_debug == 'list'
+      - __sap_control_function['steps'] | length > 0
 
     fail_msg: |
       FAIL: Validation failed for function '{{ sap_control_function }}'.
@@ -65,26 +65,30 @@
     that:
       # Each step must be a dictionary and contain a 'command' key
       - command_step_item is mapping
-      - command_step_item.command is defined
-      - command_step_item.command is string
+      - command_step_item['command'] is defined
+      - command_step_item['command'] is string
       # The command must be defined in __sap_control_command_definitions
-      - command_step_item.command in __sap_control_command_definitions
+      - command_step_item['command'] in __sap_control_command_definitions
       # The command type must be defined
-      - command_step_item.type is defined
-      - command_step_item.type is string
-      - command_step_item.type in ['nw', 'hana', 'system']
+      - command_step_item['type'] is defined
+      - command_step_item['type'] is string
+      - command_step_item['type'] in ['nw', 'hana', 'system']
+      # The async is optional
+      - command_step_item['async'] is not defined
+        or command_step_item['async'] is mapping
     fail_msg: |
       FAIL: Invalid step found in function '{{ sap_control_function }}'.
-      Command: {{ command_step_item.command | d('N/A') }}
-      Command must be one of the following:
-      {{ __sap_control_command_definitions.keys() | join(', ') }}
-      Type: {{ command_step_item.type | d('N/A') }}"
-      Type must be one of the following: 'nw', 'hana', 'system'
+
+      Command: '{{ command_step_item['command'] | d('N/A') }}'
+      Command must be one of the following: {{ __sap_control_command_definitions.keys() | join(', ') }}
+
+      Type: '{{ command_step_item['type'] | d('N/A') }}'
+      Type must be one of the following: 'nw', 'hana', 'system'.
     quiet: true
   loop: "{{ __sap_control_function_definitions[sap_control_function]['steps'] }}"
   loop_control:
     loop_var: command_step_item
-    label: "Step Command: {{ command_step_item.command | d('N/A') }}"
+    label: "Step Command: {{ command_step_item['command'] | d('N/A') }}"
 
 
 - name: SAP Control - Assert that the variable 'sap_control_sid' is defined as 3 letter string
@@ -102,3 +106,92 @@
         FAIL: The 'sap_control_sid' variable must be 3 letter string
       {% endif %}
   when: __sap_control_function['target'] == 'sid'
+
+
+- name: SAP Control - Assert that async steps have valid mapping
+  ansible.builtin.assert:
+    that:
+      # The 'test_function' is optional with default to 'GetSystemInstanceList'
+      - command_async_item['async']['test_function'] is not defined
+        or (command_async_item['async']['test_function'] is string and command_async_item['async']['test_function'] | length > 0)
+
+      # These keys are optional, but if they exist, they must be integers or strings representing integers.
+      - command_async_item['async']['retries'] is not defined
+        or (command_async_item['async']['retries'] is number
+        or (command_async_item['async']['retries'] is string and command_async_item['async']['retries'] | trim is match('^[0-9]+$')))
+
+      - command_async_item['async']['delay'] is not defined
+        or (command_async_item['async']['delay'] is number
+        or (command_async_item['async']['delay'] is string and command_async_item['async']['delay'] | trim is match('^[0-9]+$')))
+
+      # At least one 'until' condition must be defined for the async wait.
+      - (command_async_item['async']['until_true'] is defined
+          and command_async_item['async']['until_true'] is string
+          and command_async_item['async']['until_true'] | length > 0)
+        or (command_async_item['async']['until_false'] is defined
+          and command_async_item['async']['until_false'] is string
+          and command_async_item['async']['until_false'] | length > 0)
+    fail_msg: |
+      FAIL: Invalid 'async' definition for step '{{ command_async_item['command'] }}' in function '{{ sap_control_function }}'.
+      - 'test_function' must be defined as string if defined.
+      - 'retries' and 'delay' must be numbers or strings representing numbers if defined.
+      - At least one of 'until_true' or 'until_false' must be defined.
+    quiet: true
+  loop: "{{ __sap_control_function_definitions[sap_control_function]['steps'] }}"
+  loop_control:
+    loop_var: command_async_item
+    label: "Async Step: {{ command_async_item['command'] }}"
+  when: command_async_item['async'] is defined and command_async_item['async'] is mapping
+
+
+- name: SAP Control - Assert that the variable 'sap_control_async_retries' is valid
+  ansible.builtin.assert:
+    that:
+      - sap_control_async_retries is number
+        or (sap_control_async_retries is string
+          and sap_control_async_retries | length > 0
+          and sap_control_async_retries | trim is match('^[0-9]+$'))
+    fail_msg: |
+      FAIL: The 'sap_control_async_retries' variable must be defined as number or string representing number.
+      Value: '{{ sap_control_async_retries }}' of type '{{ sap_control_async_retries | type_debug }}'.
+  when: sap_control_async_retries is defined
+
+- name: SAP Control - Assert that the variable 'sap_control_async_delay' is valid
+  ansible.builtin.assert:
+    that:
+      - sap_control_async_delay is number
+        or (sap_control_async_delay is string
+          and sap_control_async_delay | length > 0
+          and sap_control_async_delay | trim is match('^[0-9]+$'))
+    fail_msg: |
+      FAIL: The 'sap_control_async_delay' variable must be defined as number or string representing number.
+      Value: '{{ sap_control_async_delay }}' of type '{{ sap_control_async_delay | type_debug }}'.
+  when: sap_control_async_delay is defined
+
+
+- name: SAP Control - Assert that the variable 'sap_control_command_nowait' is boolean
+  ansible.builtin.assert:
+    that:
+      - sap_control_command_nowait is boolean
+    fail_msg: |
+      FAIL: The 'sap_control_command_nowait' variable must be defined as boolean.
+      Value: '{{ sap_control_command_nowait }}' of type '{{ sap_control_command_nowait | type_debug }}'.
+  when: sap_control_command_nowait is defined
+
+- name: SAP Control - Assert that the variable 'sap_control_cleanipc' is boolean
+  ansible.builtin.assert:
+    that:
+      - sap_control_cleanipc is boolean
+    fail_msg: |
+      FAIL: The 'sap_control_cleanipc' variable must be defined as boolean.
+      Value: '{{ sap_control_cleanipc }}' of type '{{ sap_control_cleanipc | type_debug }}'.
+  when: sap_control_cleanipc is defined
+
+- name: SAP Control - Assert that the variable 'sap_control_use_sap_system_facts' is boolean
+  ansible.builtin.assert:
+    that:
+      - sap_control_use_sap_system_facts is boolean
+    fail_msg: |
+      FAIL: The 'sap_control_use_sap_system_facts' variable must be defined as boolean.
+      Value: '{{ sap_control_use_sap_system_facts }}' of type '{{ sap_control_use_sap_system_facts | type_debug }}'.
+  when: sap_control_use_sap_system_facts is defined

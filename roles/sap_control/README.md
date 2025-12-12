@@ -10,6 +10,14 @@ The Ansible role `sap_control` executes predefined that cover range of SAP admin
 - Start/Stop/Restart/Update of SAP Netweaver System.
 <!-- END Description -->
 
+<!-- BEGIN Disclaimer -->
+## Disclaimer
+> **IMPORTANT:** This role is designed to perform administrative actions on SAP systems, such as starting and stopping instances.  
+> Misuse of this role, especially in production environments, can lead to system downtime and potential data loss.  
+> It is crucial to understand the function you are executing and its impact on your SAP landscape.  
+> Always test in non-production environments before applying to production systems. Use with caution.  
+<!-- END Disclaimer -->
+
 <!-- BEGIN Dependencies -->
 ## Dependencies
 > This is optional dependency, active only when the variable `sap_control_use_sap_system_facts` is set to `true`.
@@ -27,7 +35,7 @@ This Ansible Role assumes that SAP Netweaver and HANA are installed in standard 
 
 ## Execution
 <!-- BEGIN Execution -->
-Primary variable is `sap_control_function` and it drives all logic of this role.</br>
+Primary variable is `sap_control_function` and it drives all logic of this role.  
 The function names are constructed using the pattern: [`ACTION`]_[`SCOPE`]_[`TARGET`]
 
 `ACTION`: The operation to perform.
@@ -125,33 +133,33 @@ Apache 2.0
 ### sap_control_function
 - _Type:_ `string`
 
-The sapcontrol function to execute on target host.</br>
+The sapcontrol function to execute on target host.  
 These are predefined functions defined in variable `__sap_control_function_definitions`.
 
 ### sap_control_sid
 - _Type:_ `string`
 
-The 3-letter SAP System ID (e.g., 'PRD', 'QAS').</br>
+The 3-letter SAP System ID (e.g., 'PRD', 'QAS').  
 This is required when executing a function that targets a specific SAP instance (e.g., `start_sap_nw`) instead of all instances on the host.
 
 ### sap_control_command_nowait
 - _Type:_ `boolean`
 - _Default:_ `false`
 
-If set to `true`, the role will not wait for start/stop operations to complete.</br>
+If set to `true`, the role will not wait for start/stop operations to complete.  
 > **NOTE:** This option should be used with caution, as the role will not verify the final status of the instance.
 
 ### sap_control_cleanipc
 - _Type:_ `boolean`
 - _Default:_ `true`
 
-If set to false, the 'cleanipc' command will not be executed after stopping an SAP instance.
+If set to `false`, the `cleanipc` command will not be executed after stopping an SAP instance.
 
 ### sap_control_use_sap_system_facts
 - _Type:_ `boolean`
 - _Default:_ `false`
 
-Enable this variable to use `community.sap_libs.sap_system_facts` to detect SAP instances.</br>
-This can be useful if this role is part of a playbook that expects facts set by that module.</br>
+Enable this variable to use `community.sap_libs.sap_system_facts` to detect SAP instances.  
+This can be useful if this role is part of a playbook that expects facts set by that module.  
 > **NOTE:** This module will not detect instances with `sapstartsrv` stopped.
 <!-- END Role Variables -->

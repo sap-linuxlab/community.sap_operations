@@ -41,5 +41,4 @@
     __sap_control_fact_instances: >-
       {{ __sap_control_fact_detected_instances
         if not sap_control_use_sap_system_facts | d(false)
-        else ansible_facts['sap']
-      }}
+        else ansible_facts['sap'] }}

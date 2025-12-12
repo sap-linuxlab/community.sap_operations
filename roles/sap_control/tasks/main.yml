@@ -13,14 +13,14 @@
   ansible.builtin.include_tasks:
     file: prepare.yml
   when:
-    - __sap_control_fact_detected_instances is defined
-    - __sap_control_fact_detected_instances | length > 0
+    - __sap_control_fact_instances is defined
+    - __sap_control_fact_instances | length > 0
 
 
 - name: Block to execute only when commands are defined
   when:
-    - __sap_control_fact_detected_instances is defined
-    - __sap_control_fact_detected_instances | length > 0
+    - __sap_control_fact_instances is defined
+    - __sap_control_fact_instances | length > 0
     - __sap_control_commands is defined
     - __sap_control_commands | length > 0
   block:
