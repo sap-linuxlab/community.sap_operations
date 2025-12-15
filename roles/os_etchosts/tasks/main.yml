@@ -1,7 +1,0 @@
-# SAP OS Tools - /etc/hosts
-
-- name: SAP OS Tools - /etc/hosts
-  ansible.builtin.include_tasks: update_etchosts.yml
-  loop: "{{ os_etchosts_entries }}"
-  loop_control:
-    loop_var: passed_entry

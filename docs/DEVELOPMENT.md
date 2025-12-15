@@ -18,22 +18,6 @@ collection/
 │       ├── sap_monitor_nw_response.sh
 │       └── sap_monitor_nw_status.sh
 ├── roles/
-│   ├── os_ansible_user
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   └── tasks
-│   │       └── main.yml
-│   ├── os_etchosts
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   └── tasks
-│   │       ├── main.yml
-│   │       └── update_etchosts.yml
-│   ├── os_knownhosts
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   └── tasks
-│   │       └── main.yml
 │   ├── sap_control
 │   │   ├── defaults
 │   │   │   └── main.yml
@@ -45,15 +29,6 @@ collection/
 │   │       ├── main.yml
 │   │       ├── prepare.yml
 │   │       └── sapcontrol.yml
-│   ├── sap_fapolicy
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   └── tasks
-│   │       ├── enable_fapolicy.yml
-│   │       ├── get_sidadm_user.yml
-│   │       ├── get_user_uid.yml
-│   │       ├── main.yml
-│   │       └── update_fapolicy.yml
 │   ├── sap_firewall
 │   │   ├── defaults
 │   │   │   └── main.yml
@@ -64,19 +39,12 @@ collection/
 │   │       ├── generate_ports_nw.yml
 │   │       ├── main.yml
 │   │       └── update_firewall.yml
-│   ├── sap_profile_update
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   └── tasks
-│   │       ├── main.yml
-│   │       └── update_parameter.yml
-│   └── sap_rhsm
+│   └── sap_profile_update
 │       ├── defaults
 │       │   └── main.yml
 │       └── tasks
 │           ├── main.yml
-│           ├── rhsm_refresh.yml
-│           └── rhsm_register.yml
+│           └── update_parameter.yml
 ├── playbooks/
 │   ├── sample-os-yum-update.yml
 │   ├── sample-sap-control-all-restart-nw.yml
