@@ -74,5 +74,5 @@
       by Ansible Role community.sap_operations.sap_profile_update.
   when:
     - (parameter_item.state | d('present')) == 'absent'
-    - __sap_profile_update_fact_current_line | length > 0
-    - not __sap_profile_update_fact_current_line.startswith('#')
+    - __sap_profile_update_fact_parameter_line | length > 0
+    - not __sap_profile_update_fact_parameter_line.startswith('#')
