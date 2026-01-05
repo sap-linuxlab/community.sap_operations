@@ -55,7 +55,7 @@ The function names are constructed using the pattern: [`ACTION`]_[`SCOPE`]_[`TAR
 - `nw`: SAP NetWeaver instances.
 - `sap`: All SAP instances (both `hana` and `nw`).
 
-Following functions are available:
+The following functions are available:
 | Target and Scope | Start | Stop | Restart | Other |
 | --- | --- | --- | --- | --- |
 | HANA | start_all_hana<br>start_sap_hana | stop_all_hana<br>stop_sap_hana | restart_all_hana<br>restart_sap_hana | |

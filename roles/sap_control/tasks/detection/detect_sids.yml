@@ -71,7 +71,7 @@
 - name: SAP Control - Inform about skipped SIDs
   ansible.builtin.debug:
     msg: |
-      WARN: Following SIDs were skipped because either:
+      WARN: The following SIDs were skipped because either:
       - OS user '<sid>adm' is missing
       - Profile file '~/.profile' is missing
       SIDs: {{ __diff | join(', ') }}

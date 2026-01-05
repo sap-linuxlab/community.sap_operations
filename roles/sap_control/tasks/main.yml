@@ -29,7 +29,7 @@
         msg: |
           The Ansible Role `sap_control` is executed with function: '{{ sap_control_function }}'
 
-          Following commands will now be executed in this order by listed users:
+          The following commands will now be executed in this order by listed users:
           {% for command in __sap_control_commands %}
           {{ command.user }}: {{ command.command }}
           {% endfor %}
