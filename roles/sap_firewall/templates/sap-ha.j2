@@ -6,7 +6,8 @@
   {# Default UDP ports used by Corosync for inter-node communication and cluster heartbeats. #}
   <port protocol="udp" port="5404-5405"/>
   
-  {# TCP port used by the Pacemaker Remote service to manage remote nodes or containerized resources. #}
+  {# TCP ports used by the Pacemaker Remote service to manage remote nodes or containerized resources. #}
   <port protocol="tcp" port="2224"/>
+  <port protocol="tcp" port="3121"/>
 
 </service>

@@ -15,6 +15,12 @@
   {# Main SAP HANA SQL and internal communication range for the IndexServer and distributed nodes. -#}  
   <port protocol="tcp" port="3{{ sap_firewall_instance_number }}00-3{{ sap_firewall_instance_number }}90"/>
 
+  {# SQL/MDX access port for standard access to the system database of a multitenant system. -#}  
+  <port protocol="tcp" port="3{{ sap_firewall_instance_number }}13"/>
+
+  {# SQL/MDX access port for standard database access in a single-container system. -#}  
+  <port protocol="tcp" port="3{{ sap_firewall_instance_number }}15"/>
+
   {# Fixed ports for SAP HANA System Replication (SR) and internal endpoint communication. -#}
   <port protocol="tcp" port="30105"/>
   <port protocol="tcp" port="30107"/>

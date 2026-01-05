@@ -6,11 +6,23 @@
   {# SAP Host Agent ports for status and metrics communication. -#} 
   <port protocol="tcp" port="1128-1129"/>
 
-  {# The 3200-3399 range covers all essential SAP Gateway (33NN) and SAP Dispatcher (32NN) communication for all instance numbers (00-99). -#}
-  <port protocol="tcp" port="3200-3399"/>
+  {# SAP Dispatcher (32NN) communication. -#}
+  <port protocol="tcp" port="32{{ sap_firewall_instance_number }}"/>
+
+  {# SAP Gateway (33NN) communication. -#}
+  <port protocol="tcp" port="33{{ sap_firewall_instance_number }}"/>
 
   {# SAP Message Server port (36NN). Used for internal communication between application servers. -#}
   <port protocol="tcp" port="36{{ sap_firewall_instance_number }}"/>
+
+  {# SAP Enqueue Server port (39NN). -#}
+  <port protocol="tcp" port="39{{ sap_firewall_instance_number }}"/>
+
+  {# SAP Dispatcher (47NN) SNC secured for CPIC and RFC communication. -#}
+  <port protocol="tcp" port="47{{ sap_firewall_instance_number }}"/>
+
+  {# SAP Gateway (48NN) SNC secured for CPIC and RFC communication. -#}
+  <port protocol="tcp" port="48{{ sap_firewall_instance_number }}"/>
 
   {# SAP Internet Communication Manager (ICM) HTTP port (80NN). Used for non-secure web client access. -#}
   <port protocol="tcp" port="80{{ sap_firewall_instance_number }}"/>

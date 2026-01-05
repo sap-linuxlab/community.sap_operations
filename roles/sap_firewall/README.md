@@ -31,19 +31,28 @@ For example, the `python311-firewall` package might need to be installed on some
 
 ### Available Presets
 Following presets are defined by Ansible Role with ports below.
-> `NN` specifies the SAP Instance Number defined in `sap_firewall_instance_number`.
+> `NN` specifies the SAP Instance Number defined in `sap_firewall_instance_number`.  
+
+> `Process` specifies name of process listening on this port.  
+> `Service` specifies name of service defined in `/etc/services` listening on this port.  
 
 #### Preset: netweaver
-| Ports | Protocol | Reason |
-| --- | --- | --- |
-| 1128-1129 | TCP | SAP Host Agent ports for status and metrics communication. |
-| 3200-3399 | TCP | Essential SAP Gateway (33NN) and SAP Dispatcher (32NN) communication for all instance numbers (00-99) |
-| 36NN | TCP | SAP Message Server port (36NN). Used for internal communication between application servers. |
-| 80NN | TCP | SAP Internet Communication Manager (ICM) HTTP port (80NN). Used for non-secure web client access. |
-| 81NN | TCP | SAP Message Server HTTP port (81NN), configured via the `ms/http_port_<n>` profile parameter. |
-| 443NN | TCP | SAP Internet Communication Manager (ICM) HTTPS port (443NN). Used for secure web client access. |
-| 5NN13</br>5NN14<br>5NN16 | TCP | SAP Start Service (sapstartsrv) communication. Used for service control and status checks. |
-| 620NN<br>621NN | TCP | JAVA ports (62NNN), commonly used for communication within the AS-Java stack, e.g., P4/P4S protocols. |
+| Ports | Protocol | Reason | Process | Service |
+| --- | --- | --- | --- | --- |
+| 1128-1129 | TCP | SAP Host Agent ports for status and metrics communication. | sapstartsrv | |
+| 32NN | TCP | SAP Dispatcher (32NN) communication | dw.sap | sapdpNN |
+| 33NN | TCP | SAP Gateway (33NN) communication | | sapgwNN |
+| 36NN | TCP | SAP Message Server port (36NN). Used for internal communication between application servers. | ms.sap | |
+| 39NN | TCP | SAP SAP Enqueue Server port (39NN). | enq.sap | |
+| 47NN | TCP | SAP Dispatcher (47NN) SNC secured for CPIC and RFC communication. | dw.sap | sapdpNNs |
+| 48NN | TCP | SAP Gateway (48NN) SNC secured for CPIC and RFC communication. | | sapgwNNs |
+| 80NN | TCP | SAP Internet Communication Manager (ICM) HTTP port (80NN). Used for non-secure web client access. | | |
+| 81NN | TCP | SAP Message Server HTTP port (81NN), configured via the `ms/http_port_<n>` profile parameter. | ms.sap | |
+| 443NN | TCP | SAP Internet Communication Manager (ICM) HTTPS port (443NN). Used for secure web client access. | | |
+| 5NN13 | TCP | SAP Start Service (sapstartsrv) communication. Used for service control and status checks. | | sapenqrepl |
+| 5NN14 | TCP | SAP Start Service (sapstartsrv) communication. Used for service control and status checks. | | sapctrlNN |
+| 5NN16 | TCP | SAP Start Service (sapstartsrv) communication. Used for service control and status checks. | | sapctrlsNN |
+| 620NN<br>621NN | TCP | JAVA ports (62NNN), commonly used for communication within the AS-Java stack, e.g., P4/P4S protocols. | | |
 
 #### Preset: hana
 | Ports | Protocol | Reason |
@@ -51,7 +60,9 @@ Following presets are defined by Ansible Role with ports below.
 | 1128-1129 | TCP | SAP Host Agent ports for status and metrics communication. |
 | 5050 | TCP | SAP HANA Data Provisioning Agent (DP Agent) port for SDA/SDI connectivity. |
 | 43NN | TCP | SAP HANA Web Dispatcher HTTPS port. |
-| 3NN90 | TCP | SAP HANA SQL and internal communication range for the IndexServer and distributed nodes. |
+| 3NN00-3NN90 | TCP | SAP HANA SQL and internal communication range for the IndexServer and distributed nodes. |
+| 5NN13 | TCP | SQL/MDX access port for standard access to the system database of a multitenant system. |
+| 5NN15 | TCP | SQL/MDX access port for standard database access in a single-container system. |
 | 30105<br>30107<br>30140 | TCP | SAP HANA System Replication (SR) and internal endpoint communication. |
 | 4NN01</br>4NN02<br>4NN06<br>4NN12<br>4NN14<br>4NN40 | TCP | SAP HANA Extended Application Services (XS) and other key internal services. |
 | 5NN13</br>5NN14<br>5NN16 | TCP | SAP Start Service (sapstartsrv) communication. Used for service control and status checks. |
@@ -62,7 +73,8 @@ Following presets are defined by Ansible Role with ports below.
 | Ports | Protocol | Reason |
 | --- | --- | --- |
 | 5404-5405 | UDP | UDP ports used by Corosync for inter-node communication and cluster heartbeats. |
-| 2224 | TCP | TCP port used by the Pacemaker Remote service to manage remote nodes or containerized resources. |
+| 2224<br>3121 | TCP | TCP ports used by the Pacemaker Remote service to manage remote nodes or containerized resources. |
+<!-- END Execution -->
 
 ### Execution Flow
 <!-- BEGIN Execution Flow -->
@@ -149,6 +161,7 @@ Example of removing configured `hana` preset and custom TCP port `3700` into `pu
             tcp:
               - '3700'
 ```
+<!-- END Execution Example -->
 
 ## License
 <!-- BEGIN License -->
