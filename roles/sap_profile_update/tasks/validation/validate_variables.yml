@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# 1. Loop through all top level System items and validate all required keys.
+- name: SAP Profile Update - Assert that the variable 'sap_profile_update_definitions' is defined as a list
+  ansible.builtin.assert:
+    that:
+      - sap_profile_update_definitions is defined
+      - sap_profile_update_definitions | type_debug == 'list'
+    success_msg: |
+      PASS: The 'sap_profile_update_definitions' variable is a list.
+    fail_msg: |
+      FAIL: The 'sap_profile_update_definitions' variable must be a list,
+      but it is of type '{{ sap_profile_update_definitions | type_debug }}'.
+
+
+- name: SAP Profile Update - Assert that the variable 'sap_profile_update_definitions' contains required keys
+  ansible.builtin.assert:
+    that:
+      # SID must be defined as string of 3 letters
+      - definition_item.sid is defined
+      - definition_item.sid is string
+      - definition_item.sid | trim | length == 3
+
+      # Profiles must be defined as non-empty list
+      - definition_item.profiles is defined
+      - definition_item.profiles | type_debug == 'list'
+      - definition_item.profiles | length > 0
+
+    success_msg: |
+      PASS: Definition of '{{ definition_item.sid }}' contains 'sid' and 'profiles' keys."
+
+    fail_msg: |
+      {% if definition_item.sid is not defined or definition_item.sid | length == 0 %}
+        FAIL: A definition is missing the 'sid' key or its empty.
+      {% elif definition_item.sid is not string %}
+        FAIL: Parameter 'sid' must be a string,but it is of type '{{ definition_item.sid | type_debug }}'
+      {% elif definition_item.profiles is not defined or definition_item.profiles | length == 0 %}
+        FAIL: A definition is missing the 'profiles' key or its empty.
+      {% else %}
+        FAIL: Parameter 'profiles' must be a list, but it is of type '{{ definition_item.profiles | type_debug }}'
+      {% endif %}
+
+    quiet: true
+  loop: "{{ sap_profile_update_definitions }}"
+  loop_control:
+    loop_var: definition_item
+    label: "{{ definition_item.sid | d('UNKNOWN') }}"
+
+
+# 2. Check presence of sapcontrol executable
+- name: SAP Profile Update - Check presence of sapcontrol executable
+  ansible.builtin.stat:
+    path: "/usr/sap/hostctrl/exe/sapcontrol"
+  register: __sap_profile_update_register_sapcontrol_stat
+
+
+# 3. Loop through all top level System items again to validate their Profile items.
+# We loop using same list so we can retain 'SID' inside of loop,
+# which would not be possible if we flattened list or used 'sap_profile_update_definitions.profiles'.
+- name: SAP Profile Update - Loop through each System (SID) to validate profile-level details
+  ansible.builtin.include_tasks:
+    file: validation/validate_system.yml
+  loop: "{{ sap_profile_update_definitions }}"
+  loop_control:
+    loop_var: __sap_profile_update_validate_system
+    label: "SID: {{ __sap_profile_update_validate_system.sid }}"

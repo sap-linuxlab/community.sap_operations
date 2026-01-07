@@ -1,0 +1,108 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# 1. Loop through all Profile items under System and validate all required keys.
+- name: SAP Profile Update - Assert Profile-Level details (Type, Instance Number, Parameters List)
+  ansible.builtin.assert:
+    that:
+      # Type must be defined and one of the allowed values
+      - profile_item.type is defined
+      - profile_item.type is string
+      - profile_item.type | lower in ['default', 'instance']
+
+      # 'instance_number' requirements
+      - >-
+        (profile_item.type | lower == 'default')
+        or
+        (profile_item.type | lower == 'instance'
+         and profile_item.instance_number is defined
+         and profile_item.instance_number is string
+         and profile_item.instance_number | trim | length == 2
+         and profile_item.instance_number is match('^[0-9]{2}$'))
+
+      # Parameters must be defined as non-empty list
+      - profile_item.parameters is defined
+      - profile_item.parameters | type_debug == 'list'
+      - profile_item.parameters | length > 0
+
+      # Parameter 'path' is a string (optional)
+      - (profile_item.path is not defined) or (profile_item.path is string)
+
+    success_msg: |
+      PASS: Profile definition of '{{ profile_item.type | d('UNKNOWN') }}' is valid.
+      SID: {{ __sap_profile_update_validate_system.sid }}
+    fail_msg: |
+      {% if profile_item.type is not defined or profile_item.type is not string %}
+        FAIL: A profile item is missing the 'type' key or its not a string type.
+      {% elif profile_item.type | lower not in ['default', 'instance'] %}
+        FAIL: Parameter 'type' must be one of values: 'default', 'instance'.
+        Current value: {{ profile_item.type }}
+      {% elif profile_item.path is defined and profile_item.path is not string %}
+        FAIL: Parameter 'path' must be a string, but it is of type '{{ profile_item.path | type_debug }}'
+      {% elif profile_item.parameters is not defined or profile_item.parameters | length == 0 %}
+        FAIL: A profile item is missing the 'parameters' key or its empty.
+      {% elif profile_item.parameters | type_debug != 'list' %}
+        FAIL: Parameter 'profiles' must be a list, but it is of type '{{ profile_item.parameters | type_debug }}'
+      {% else %}
+        FAIL: Parameter 'instance_number' must be a string consisting of 2 digits.
+      {% endif %}
+        Type: {{ profile_item.type | d('UNKNOWN') }}
+        Inst: {{ profile_item.instance_number | d('N/A') }}
+        SID:  {{ __sap_profile_update_validate_system.sid }}
+
+    quiet: true
+  loop: "{{ __sap_profile_update_validate_system.profiles }}"
+  loop_control:
+    loop_var: profile_item
+    label: "Type: {{ profile_item.type | d('UNKNOWN') }} Inst: {{ profile_item.instance_number | d('N/A') }}"
+
+
+# 3. Assert that only one 'default' profile is defined per SID.
+- name: SAP Profile Update - Assert that only one 'default' profile is defined per SID
+  ansible.builtin.assert:
+    that:
+      - __sap_profile_update_validate_system.profiles | selectattr('type', 'equalto', 'default') | list | length <= 1
+    fail_msg: |
+      FAIL: More than one profile with type 'default' is defined for SID '{{ __sap_profile_update_validate_system.sid }}'.
+      Please define only one 'default' profile per SID.
+
+
+# 4. Assert that 'instance' profiles have unique instance numbers.
+- name: SAP Profile Update - Set fact for instance profile numbers
+  ansible.builtin.set_fact:
+    __sap_profile_update_fact_instance_numbers: >-
+      {{ __sap_profile_update_validate_system.profiles
+         | selectattr('type', 'equalto', 'instance')
+         | map(attribute='instance_number')
+         | list }}
+
+- name: SAP Profile Update - Assert that 'instance' profiles have unique instance numbers
+  ansible.builtin.assert:
+    that:
+      - __sap_profile_update_fact_instance_numbers | unique | length == __sap_profile_update_fact_instance_numbers | length
+    fail_msg: |
+      FAIL: Duplicate 'instance' profiles found for SID '{{ __sap_profile_update_validate_system.sid }}'.
+      Each profile with type 'instance' must have a unique 'instance_number'.
+
+      Duplicated instance numbers found:
+      {% set counts = {} %}
+      {% for item in __sap_profile_update_fact_instance_numbers %}
+      {%   if counts.update({item: (counts[item] | d(0)) + 1}) %}{% endif %}
+      {% endfor %}
+      {% for key, value in counts.items() if value > 1 %}
+      - {{ key }}
+      {% endfor %}
+
+# 5. Loop through all Profile items again to validate their keys and parameters.
+# We loop using same list so we can retain 'SID' and 'Type' inside of loop,
+# which would not be possible if we flattened list or used 'sap_profile_update_definitions.profiles.parameters'.
+- name: SAP Profile Update - Loop through each profile to validate parameters
+  ansible.builtin.include_tasks:
+    file: validation/validate_profile.yml
+  loop: "{{ __sap_profile_update_validate_system.profiles }}"
+  loop_control:
+    loop_var: __sap_profile_update_validate_profile
+    label: >-
+      SID: {{ __sap_profile_update_validate_system.sid }} |
+      Type: {{ __sap_profile_update_validate_profile.type }} |
+      Inst: {{ __sap_profile_update_validate_profile.instance_number | d('N/A') }}
