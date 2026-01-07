@@ -27,7 +27,11 @@ The Ansible role `sap_control` executes predefined that cover range of SAP admin
   - This collection is part of main Ansible package.
 <!-- END Dependencies -->
 
+## Prerequisites
 <!-- BEGIN Prerequisites -->
+> The Ansible execution user must have `sudo` privileges configured to allow running commands as the `<sid>adm` user of the target SAP system.  
+> This is necessary because SAP executables, such as `sapcontrol`, must be run as `<sid>adm` to inherit the correct environment variables and permissions.
+
 This Ansible Role assumes that SAP Netweaver and HANA are installed in standard locations.
 - The `<sid>adm` user exists for each SAP system.
 - The `sapcontrol` executable is in the `PATH` of the `<sid>adm` user.
