@@ -5,6 +5,7 @@
 ## Description
 <!-- BEGIN Description -->
 The Ansible role `sap_control` executes predefined that cover range of SAP administration tasks, including:
+
 - Start/Stop/Restart of SAP HANA Database Server.
 - Start/Stop/Restart of SAP NetWeaver Application Server.
 - Start/Stop/Restart/Update of SAP Netweaver System.
@@ -12,54 +13,60 @@ The Ansible role `sap_control` executes predefined that cover range of SAP admin
 
 <!-- BEGIN Disclaimer -->
 ## Disclaimer
-> **IMPORTANT:** This role is designed to perform administrative actions on SAP systems, such as starting and stopping instances.  
-> Misuse of this role, especially in production environments, can lead to system downtime and potential data loss.  
-> It is crucial to understand the function you are executing and its impact on your SAP landscape.  
-> Always test in non-production environments before applying to production systems. Use with caution.  
+> **IMPORTANT:** This role is designed to perform administrative actions on SAP systems, such as starting and stopping instances.<br>
+> Misuse of this role, especially in production environments, can lead to system downtime and potential data loss.<br>
+> It is crucial to understand the function you are executing and its impact on your SAP landscape.<br>
+> Always test in non-production environments before applying to production systems. Use with caution.
 <!-- END Disclaimer -->
 
 <!-- BEGIN Dependencies -->
 ## Dependencies
-> This is optional dependency, active only when the variable `sap_control_use_sap_system_facts` is set to `true`.
+> This is optional dependency, active only when the variable `sap_control_use_sap_system_facts` is set to `true`.<br>
+
 - `community.sap_libs`
     - Modules:
         - `sap_system_facts`
-  - This collection is part of main Ansible package.
+    - This collection is part of main Ansible package.
 <!-- END Dependencies -->
 
 ## Prerequisites
 <!-- BEGIN Prerequisites -->
-> The Ansible execution user must have `sudo` privileges configured to allow running commands as the `<sid>adm` user of the target SAP system.  
+> The Ansible execution user must have `sudo` privileges configured to allow running commands as the `<sid>adm` user of the target SAP system.<br>
 > This is necessary because SAP executables, such as `sapcontrol`, must be run as `<sid>adm` to inherit the correct environment variables and permissions.
 
 This Ansible Role assumes that SAP Netweaver and HANA are installed in standard locations.
+
 - The `<sid>adm` user exists for each SAP system.
 - The `sapcontrol` executable is in the `PATH` of the `<sid>adm` user.
-   - This role validates standard `sapcontrol` location `/usr/sap/<SID>/<INSTANCE>/exe/sapcontrol`.
+    - This role validates standard `sapcontrol` location `/usr/sap/<SID>/<INSTANCE>/exe/sapcontrol`.
 - Standard SAP directory structures are used:
-  - `/usr/sap` and `/sapmnt` for SAP Netweaver
-  - `/usr/sap` and `/hana/shared` for SAP HANA
+    - `/usr/sap` and `/sapmnt` for SAP Netweaver
+    - `/usr/sap` and `/hana/shared` for SAP HANA
 <!-- END Prerequisites -->
 
 ## Execution
 <!-- BEGIN Execution -->
-Primary variable is `sap_control_function` and it drives all logic of this role.  
+Primary variable is `sap_control_function` and it drives all logic of this role.<br>
 The function names are constructed using the pattern: [`ACTION`]_[`SCOPE`]_[`TARGET`]
 
 `ACTION`: The operation to perform.
+
 - Process-level: `start`, `stop`, `restart`
 - System-level (asynchronous): `startsystem`, `stopsystem`, `restartsystem`, `updatesystem`
 
 `SCOPE`: The instances the action applies to.
+
 - `all`: Applies to all detected instances of the target type.
 - `sap`: Applies to a single instance specified by `sap_control_sid`.
 
 `TARGET`: The type of SAP system.
+
 - `hana`: SAP HANA instances.
 - `nw`: SAP NetWeaver instances.
 - `sap`: All SAP instances (both `hana` and `nw`).
 
 The following functions are available:
+
 | Target and Scope | Start | Stop | Restart | Other |
 | --- | --- | --- | --- | --- |
 | HANA | start_all_hana<br>start_sap_hana | stop_all_hana<br>stop_sap_hana | restart_all_hana<br>restart_sap_hana | |
@@ -70,10 +77,11 @@ The following functions are available:
 ### System Functions
 `system` functions are not operating SAP systems instance by instance, instead they leave this for `sapcontrol` to decide by utilizing functions like `StartSystem`, `StopSystem` and others.
 
-This role will asynchronously poll completion of these functions by getting system status (e.g. `GetSystemInstanceList`).
-The default polling duration is 600 seconds (60 retries with a 10-second delay)
+This role will asynchronously poll completion of these functions by getting system status (e.g. `GetSystemInstanceList`).<br>
+The default polling duration is 600 seconds (60 retries with a 10-second delay).
 
 For larger systems where this may not be sufficient, you can adjust the duration using the following variables:
+
 - `sap_control_async_retries`
 - `sap_control_async_delay`
 <!-- END Execution -->
@@ -82,10 +90,10 @@ For larger systems where this may not be sufficient, you can adjust the duration
 <!-- BEGIN Execution Flow -->
 1. Assert and validate all variables.
 2. Detect existing SAP System IDs and Instances on host.
-   - Alternatively collection this information using `community.sap_libs.sap_system_facts` module if the variable `sap_control_use_sap_system_facts` is set to `true`.
+    - Alternatively collection this information using `community.sap_libs.sap_system_facts` module if the variable `sap_control_use_sap_system_facts` is set to `true`.
 3. Prepare list of commands for execution.
 4. Check if `sapstartsrv` service is running.
-   - Service is restarted when required, because it is required for `sapcontrol` commands.
+    - Service is restarted when required, because it is required for `sapcontrol` commands.
 5. Execute `sapcontrol` commands and wait for completion.
 6. Execute `cleanipc` command unless the variable `sap_control_cleanipc` is set to `false`.
 7. Show output message with current status of processes for each instance.
@@ -94,6 +102,7 @@ For larger systems where this may not be sufficient, you can adjust the duration
 ### Example
 <!-- BEGIN Execution Example -->
 Example of starting all SAP Netweaver instances on host(s).
+
 ```yaml
 ---
 - name: Ansible Play for SAP Control
@@ -108,6 +117,7 @@ Example of starting all SAP Netweaver instances on host(s).
 ```
 
 Example of stopping `B01` SAP Netweaver and HANA instances on host(s) using `community.sap_libs.sap_system_facts`, without `cleanipc` execution.
+
 ```yaml
 ---
 - name: Ansible Play for SAP Control
@@ -128,10 +138,12 @@ Example of stopping `B01` SAP Netweaver and HANA instances on host(s) using `com
 ## Testing
 This Ansible Role has been tested in following scenarios.
 Operating systems:
+
  - SUSE Linux Enterprise Server for SAP applications 15 SP6 and SP7 (SLE4SAP)
  - SUSE Linux Enterprise Server for SAP applications 16 (SLE4SAP)
 
 SAP Products:
+
 - SAP Netweaver 7.50 and higher
 - SAP HANA 2.0 SP04 and higher
 
@@ -150,20 +162,20 @@ Apache 2.0
 ### sap_control_function
 - _Type:_ `string`
 
-The sapcontrol function to execute on target host.  
+The sapcontrol function to execute on target host.<br>
 These are predefined functions defined in variable `__sap_control_function_definitions`.
 
 ### sap_control_sid
 - _Type:_ `string`
 
-The 3-letter SAP System ID (e.g., 'PRD', 'QAS').  
+The 3-letter SAP System ID (e.g., `PRD`, `QAS`).<br>
 This is required when executing a function that targets a specific SAP instance (e.g., `start_sap_nw`) instead of all instances on the host.
 
 ### sap_control_command_nowait
 - _Type:_ `boolean`
 - _Default:_ `false`
 
-If set to `true`, the role will not wait for start/stop operations to complete.  
+If set to `true`, the role will not wait for start/stop operations to complete.<br>
 > **NOTE:** This option should be used with caution, as the role will not verify the final status of the instance.
 
 ### sap_control_cleanipc
@@ -176,21 +188,21 @@ If set to `false`, the `cleanipc` command will not be executed after stopping an
 - _Type:_ `boolean`
 - _Default:_ `false`
 
-Enable this variable to use `community.sap_libs.sap_system_facts` to detect SAP instances.  
-This can be useful if this role is part of a playbook that expects facts set by that module.  
+Enable this variable to use `community.sap_libs.sap_system_facts` to detect SAP instances.<br>
+This can be useful if this role is part of a playbook that expects facts set by that module.<br>
 > **NOTE:** This module will not detect instances with `sapstartsrv` stopped.
 
 ### sap_control_async_retries
 - _Type:_ `string` or `integer`
 
-Overrides the number of retries for asynchronous tasks.  
-If not set, the role uses the default value defined in the function step (e.g., 60 for `startsystem_all_nw`).  
-Applies to functions that include `system` in their name.  
+Overrides the number of retries for asynchronous tasks.<br>
+If not set, the role uses the default value defined in the function step (e.g., 60 for `startsystem_all_nw`).<br>
+Applies to functions that include `system` in their name.
 
 ### sap_control_async_delay
 - _Type:_ `string` or `integer`
 
-Overrides the delay (in seconds) between retries for asynchronous tasks.  
-If not set, the role uses the default value defined in the function step (e.g., 10 for `startsystem_all_nw`).  
-Applies to functions that include `system` in their name.  
+Overrides the delay (in seconds) between retries for asynchronous tasks.<br>
+If not set, the role uses the default value defined in the function step (e.g., 10 for `startsystem_all_nw`).<br>
+Applies to functions that include `system` in their name.
 <!-- END Role Variables -->
