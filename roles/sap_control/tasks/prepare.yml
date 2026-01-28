@@ -1,54 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
 ---
 
-- name: Prepare - Set function control facts
-  ansible.builtin.set_fact:
-    sap_type: "{{ function_list.sap_control_function_current.split('_')[0] | lower }}"
-    funct_type: "{{ function_list.sap_control_function_current.split('_')[1] | lower }}"
-    sorted_sap_facts: []
+- name: SAP Control - Fail if 'sap_control_sid' is not present on host
+  ansible.builtin.fail:
+    msg: |
+      FAIL: The variable 'sap_control_sid' is defined with '{{ sap_control_sid }}',
+      but this SID is not present on this host.
 
-- name: Prepare - Set header
-  ansible.builtin.set_fact:
-    sap_control_name_header: "{{ sap_type | upper }} {{ funct_type | capitalize }}"
-
-- name: Prepare - Sort sap_facts_register by sap_control_instance_type_sortorder
-  ansible.builtin.set_fact:
-    sorted_sap_facts: "{{ (sorted_sap_facts | default([]) | unique) + (__type_list | difference(sorted_sap_facts | default([]))) }}"
-  loop: "{{ sap_control_instance_type_sortorder | reverse if funct_type == 'stop' else sap_control_instance_type_sortorder }}"
-  vars:
-    __type_list: "{{ sap_facts_register.ansible_facts.sap | selectattr('TYPE', 'equalto', item) | list }}"
+      Detected SIDs: {{ __sap_control_fact_instances | map(attribute='SID') | list | unique | join(', ') }}
   when:
-    - __type_list | length > 0
+    - __sap_control_function['target'] == 'sid'
+    - __sap_control_fact_instances | selectattr('SID', 'eq', sap_control_sid | upper)| list | length == 0
 
-- name: Prepare - Filter sorted_sap_facts by sap_sid
+- name: SAP Control - Prepare instance list filtered by SID
   ansible.builtin.set_fact:
-    sorted_sap_facts: "{{ sorted_sap_facts | default([])
-      | selectattr('SID', 'eq', sap_sid | upper)
-      | list }}"
-  when:
-    - not 'all' in sap_control_function
+    __sap_control_fact_instances: >-
+      {{ __sap_control_fact_instances
+        | selectattr('SID', 'eq', sap_control_sid | upper)
+        | list }}
+  when: __sap_control_function['target'] == 'sid'
 
-- name: Prepare - SAP Control
-  vars:
-    sap_control_execute_sid: "{{ item.SID }}"
-    sap_control_execute_type: "{{ item.TYPE }}"
-    sap_control_execute_instance_nr: "{{ item.NR }}"
-    sap_control_execute_instance_type: "{{ item.InstanceType }}"
-  ansible.builtin.include_tasks: "sapcontrol.yml"
-  loop: "{{ sorted_sap_facts }}"
-  when:
-    - item.InstanceType | lower == sap_type | lower
-    - not funct_type is match('.*system')
-
-- name: Prepare - SAP Control for system functions
-  vars:
-    sap_control_execute_sid: "{{ item.SID }}"
-    sap_control_execute_type: "{{ item.Type }}"
-    sap_control_execute_instance_nr: "{{ item.NR }}"
-    sap_control_execute_instance_type: "{{ item.InstanceType }}"
-  ansible.builtin.include_tasks: "sapcontrol.yml"
-  loop: "{{ sorted_sap_facts }}"
-  when:
-    - item.InstanceType | lower == sap_type | lower
-    - funct_type is match('.*system')
-    - item.TYPE | lower == 'ascs'
-      or item.TYPE | lower == 'scs'
+- name: SAP Control - Prepare commands to be executed
+  ansible.builtin.include_tasks:
+    file: prepare_commands.yml
+  loop: "{{ __sap_control_function['steps'] }}"
+  loop_control:
+    loop_var: command_step_item

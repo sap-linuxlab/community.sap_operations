@@ -1,0 +1,77 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP Control - Get status of 'sapstartsrv' service for instance - {{ __command_nr }}
+  ansible.builtin.shell:
+    cmd: >-
+      source ~/.profile &&
+      sapcontrol
+      -nr {{ __command_nr }}
+      -function GetSystemInstanceList
+  become: true
+  become_user: "{{ __command_user }}"
+  register: __sap_control_register_sapstartsrv_check
+  ignore_errors: true
+  changed_when: false
+
+
+- name: Block to restart 'sapstartsrv'
+  when: >-
+    'FAIL' in __sap_control_register_sapstartsrv_check.stdout
+    or 'NIECONN_REFUSED' in __sap_control_register_sapstartsrv_check.stdout
+  block:
+    - name: SAP Control - Stop 'sapstartsrv' service for instance - {{ __command_nr }}  # noqa no-changed-when
+      ansible.builtin.shell:
+        cmd: >-
+          source ~/.profile &&
+          sapcontrol
+          -nr {{ __command_nr }}
+          -function StopService
+      become: true
+      become_user: "{{ __command_user }}"
+      register: __sap_control_register_sapstartsrv_stop
+      ignore_errors: true
+
+    - name: SAP Control - Start 'sapstartsrv' service for instance - {{ __command_nr }}  # noqa no-changed-when
+      ansible.builtin.shell:
+        cmd: >-
+          source ~/.profile &&
+          sapcontrol
+          -nr {{ __command_nr }}
+          -function StartService {{ __command_sid | upper }}
+      become: true
+      become_user: "{{ __command_user }}"
+      register: __sap_control_register_sapstartsrv_start
+      ignore_errors: true
+
+    - name: SAP Control - Get status of 'sapstartsrv' service for instance - {{ __command_nr }}
+      ansible.builtin.shell:
+        cmd: >-
+          source ~/.profile &&
+          sapcontrol
+          -nr {{ __command_nr }}
+          -function GetSystemInstanceList
+      become: true
+      become_user: "{{ __command_user }}"
+      register: __sap_control_register_sapstartsrv_recheck
+      ignore_errors: true
+      changed_when: false
+
+
+    - name: SAP Control - Fail when 'sapstartsrv' cannot be verified for instance - {{ __command_nr }}
+      ansible.builtin.fail:
+        msg: |
+          FAIL: Unable to verify that 'sapstartsrv' is running.
+          Please check for issues with service with command:
+          'sapcontrol -nr {{ __command_nr }} -function GetSystemInstanceList'
+      when: >-
+        'FAIL' in __sap_control_register_sapstartsrv_recheck.stdout
+        or 'NIECONN_REFUSED' in __sap_control_register_sapstartsrv_recheck.stdout
+
+
+    - name: SAP Control - Wait for 10 seconds for sapstartsrv to initialize for instance - {{ __command_nr }}
+      ansible.builtin.wait_for:
+        timeout: 10
+      when:
+        - __sap_control_register_sapstartsrv_stop.changed
+          or __sap_control_register_sapstartsrv_start.changed
