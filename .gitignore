@@ -51,3 +51,6 @@ __pycache__/
 
 # VSCode
 .vscode
+
+# Ignore ansible workspace
+.ansible

@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP Firewall - Assert that TCP and UDP ports are defined as String
+  ansible.builtin.assert:
+    that:
+      - port_list_item is string
+    fail_msg: |
+      FAIL: Port '{{ port_list_item | string }}' in zone '{{ __sap_firewall_port_assert.zone }}' is not a String.
+      Data type: {{ port_list_item | type_debug }}
+    quiet: true
+  loop: "{{ (__sap_firewall_port_assert.tcp | default([])) + (__sap_firewall_port_assert.udp | default([])) }}"
+  loop_control:
+    loop_var: port_list_item
+    label: "Port: {{ port_list_item }}"
+
+- name: SAP Firewall - Assert that single TCP and UDP ports are valid
+  ansible.builtin.assert:
+    that:
+      - port_list_item is match('^([1-9][0-9]{0,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$')
+    fail_msg: |
+      FAIL: Port '{{ port_list_item }}' in zone '{{ __sap_firewall_port_assert.zone }}' is invalid.
+      Must be a single port between 1 and 65535.
+    quiet: true
+  loop: "{{ (__sap_firewall_port_assert.tcp | default([])) + (__sap_firewall_port_assert.udp | default([])) }}"
+  loop_control:
+    loop_var: port_list_item
+    label: "Port: {{ port_list_item }}"
+  when: "'-' not in port_list_item"
+
+- name: SAP Firewall - Assert that TCP and UDP port ranges are valid
+  ansible.builtin.assert:
+    that:
+      - port_list_item.split('-') | length == 2
+      - port_list_item.split('-')[0] is match('^([1-9][0-9]{0,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$')
+      - port_list_item.split('-')[1] is match('^([1-9][0-9]{0,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$')
+      - port_list_item.split('-')[0] | int <= port_list_item.split('-')[1] | int
+    fail_msg: |
+      {% if port_list_item.split('-') | length != 2 %}
+        FAIL: Port range '{{ port_list_item }}' in zone '{{ __sap_firewall_port_assert.zone }}' is not a valid range. It should contain exactly one '-'.
+      {% elif port_list_item.split('-')[0] | int > port_list_item.split('-')[1] | int %}
+        FAIL: Invalid port range '{{ port_list_item }}' in zone '{{ __sap_firewall_port_assert.zone }}'.
+        The start port cannot be greater than the end port.
+      {% else %}
+        FAIL: Invalid port range '{{ port_list_item }}' in zone '{{ __sap_firewall_port_assert.zone }}'.
+        Both start and end of range must be a valid port number between 1 and 65535.
+      {% endif %}
+    quiet: true
+  loop: "{{ (__sap_firewall_port_assert.tcp | default([])) + (__sap_firewall_port_assert.udp | default([])) }}"
+  loop_control:
+    loop_var: port_list_item
+    label: "Port: {{ port_list_item }}"
+  when: "'-' in port_list_item"
