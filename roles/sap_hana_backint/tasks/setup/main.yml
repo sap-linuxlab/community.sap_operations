@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP HANA Backint - Setup - Create temporary directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: _sap_hana_backint
+  register: __sap_hana_backint_register_tempfile
+
+- name: SAP HANA Backint - Gather facts about SAP Instances on the host
+  ansible.builtin.include_tasks:
+    file: detection/detect_instances.yml
+
+- name: SAP HANA Backint - Setup - Execute platform specific task file
+  ansible.builtin.include_tasks:
+    file: "platform_{{ sap_hana_backint_platform }}.yml"
+
+
+- name: SAP HANA Backint - Setup - Execute SYSTEMDB specific task file
+  ansible.builtin.include_tasks:
+    file: systemdb.yml
+
+
+- name: SAP HANA Backint - Gather facts about SAP Instances on the host
+  ansible.builtin.include_tasks:
+    file: ../detection/detect_tenants.yml
+  when:
+    # hdbuserstore is not ready during first setup.
+    - sap_hana_backint_target_database in ['all', 'tenant']
+
+- name: SAP HANA Backint - Setup - Execute Tenant specific task file
+  ansible.builtin.include_tasks:
+    file: tenant.yml
+  loop: "{{ __sap_hana_backint_fact_tenants | d([]) }}"
+  loop_control:
+    loop_var: tenant_item
+
+
+- name: SAP HANA Backint - Setup - Clean up temporary directory
+  ansible.builtin.file:
+    path: "{{ __sap_hana_backint_register_tempfile.path }}"
+    state: absent
+
+
+- name: SAP HANA Backint - Backup - Summary of completed action
+  ansible.builtin.debug:
+    msg: |
+      The Ansible Role was completed with following parameters:
+      Action: {{ sap_hana_backint_action }}
+      Platform: {{ sap_hana_backint_platform }}
+      SID: {{ __sap_hana_backint_sid }}
+      Target database: {{ sap_hana_backint_target_database }}
+
+      Backint script was configured with the following parameters:
+      {% if sap_hana_backint_platform in ['aws_s3', 'ibm_cos_s3', 'gcs'] %}
+      Directory:      {{ __sap_hana_backint_fact_agent_directory }}
+      Symlink:        {{ __sap_hana_backint_opt_path }}/hdbbackint
+      Configuration:  {{ __sap_hana_backint_fact_agent_directory }}/{{ __sap_hana_backint_hdbbackint_filename }}
+      {% endif %}
+      {% if sap_hana_backint_platform == 'azure_backup_rsv' %}
+      The Backint interface is now managed by the Azure Workload Backup service (via 'waagent').
+      Manual edits to local Backint parameter files are not required as the service handles configuration automatically.
+      Next Steps in the Azure Cloud Console: Discovering the database instances and enabling the Backup Policy.
+      {% endif %}

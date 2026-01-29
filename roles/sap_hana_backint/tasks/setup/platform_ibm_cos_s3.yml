@@ -1,0 +1,255 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Documentation: SAP Note 2935898 - Install and Configure SAP HANA Backint Agent for Amazon S3
+# This documentation describes both AWS and IBM COS setup as both use the same backint agent.
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Set fact for Agent directory path
+  ansible.builtin.set_fact:
+    __sap_hana_backint_fact_agent_directory: "{{ __sap_hana_backint_opt_path ~ '/ibm-s3-backint' }}"
+
+- name: Block for custom agent directory
+  when:
+    - sap_hana_backint_ibm_cos_s3_definition['agent_directory'] is defined
+    - sap_hana_backint_platform != 'azure_backup_rsv'
+  block:
+    - name: SAP HANA Backint - Setup - Check if custom agent directory exists
+      ansible.builtin.stat:
+        path: "{{ sap_hana_backint_ibm_cos_s3_definition['agent_directory'] }}"
+      become: true
+      become_user: "{{ __sap_hana_backint_sidadm_user }}"
+      register: __sap_hana_backint_register_agent_directory_stat
+
+    - name: SAP HANA Backint - Setup - Assert that custom agent directory exists
+      ansible.builtin.assert:
+        that:
+          - __sap_hana_backint_register_agent_directory_stat.stat.exists
+          - __sap_hana_backint_register_agent_directory_stat.stat.isdir
+        fail_msg: >-
+          FAIL: The Agent directory '{{ sap_hana_backint_ibm_cos_s3_definition['agent_directory'] }}'
+          defined in key 'sap_hana_backint_ibm_cos_s3_definition.agent_directory' does not exist.
+
+    - name: SAP HANA Backint - Setup - IBM COS S3 - Set fact for custom Agent directory path
+      ansible.builtin.set_fact:
+        __sap_hana_backint_fact_agent_directory: "{{ sap_hana_backint_ibm_cos_s3_definition['agent_directory'] }}"
+
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Create Agent directory path
+  ansible.builtin.file:
+    path: "{{ __sap_hana_backint_fact_agent_directory }}"
+    state: directory
+    mode: "0755"
+
+# Validate Python path for existence, not version.
+# We are gathering stat with sidadm user to check its permissions.
+- name: SAP HANA Backint - Setup - IBM COS S3 - Check Python executable path
+  ansible.builtin.stat:
+    path: "{{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }}"
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  register: __sap_hana_backint_register_python_path_stat
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Assert Python path is accessible and executable by sidadm
+  ansible.builtin.assert:
+    that:
+      - __sap_hana_backint_register_python_path_stat.stat.exists
+      - __sap_hana_backint_register_python_path_stat.stat.executable
+    success_msg: |
+      PASS: The Python executable path '{{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }}',
+      defined in 'sap_hana_backint_ibm_cos_s3_definition.python_path', does exist and it is executable.
+
+      NOTE: Python version will be validated by 'create_hdbbackint.py' script.
+    fail_msg: |
+      {% if not __sap_hana_backint_register_python_path_stat.stat.exists %}
+        FAIL: The Python executable path '{{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }}',
+        defined in 'sap_hana_backint_ibm_cos_s3_definition.python_path', does not exist.
+      {% else %}
+        FAIL: The Python executable path '{{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }}',
+        defined in 'sap_hana_backint_ibm_cos_s3_definition.python_path', is not executable by user '{{ __sap_hana_backint_sidadm_user }}'.
+      {% endif %}
+
+
+- name: Block for validating requirements for 'zstd' compression
+  when:
+    - sap_hana_backint_ibm_cos_s3_definition['backint'] is defined
+    - sap_hana_backint_ibm_cos_s3_definition['backint']['compression'] is defined
+    - sap_hana_backint_ibm_cos_s3_definition['backint']['compression'] == 'zstd'
+  block:
+    - name: SAP HANA Backint - Setup - IBM COS S3 - Check if zstandard Python library is installed
+      ansible.builtin.command:
+        cmd: "{{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }} -c \"import zstandard; print('zstandard is installed')\""
+      register: __sap_hana_backint_register_zstd_check
+      ignore_errors: true
+
+    - name: SAP HANA Backint - Setup - IBM COS S3 - Fail if zstandard Python library is not installed
+      ansible.builtin.fail:
+        msg: |
+          FAIL: The Python library 'zstandard' is required for 'zstd' compression.
+          Install its package, if available (Example for SUSE: 'python311-zstandard').
+          Optionally, you can install it using the command:
+          '{{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }} -m pip install zstandard'
+      when: __sap_hana_backint_register_zstd_check.rc != 0
+
+
+# Validate Agent path variable and find tarball, if it is directory.
+- name: SAP HANA Backint - Setup - IBM COS S3 - Check Agent path
+  ansible.builtin.stat:
+    path: "{{ sap_hana_backint_ibm_cos_s3_definition['agent_path'] }}"
+  register: __sap_hana_backint_register_agent_path_stat
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Assert that Agent path exists
+  ansible.builtin.assert:
+    that:
+      - __sap_hana_backint_register_agent_path_stat.stat.exists
+    fail_msg: >-
+      FAIL: The path '{{ sap_hana_backint_ibm_cos_s3_definition['agent_path'] }}'
+      defined in 'sap_hana_backint_ibm_cos_s3_definition.agent_path' does not exist.
+
+- name: Block for handling Agent path as a file
+  when: __sap_hana_backint_register_agent_path_stat.stat.isreg
+  block:
+    - name: SAP HANA Backint - Setup - IBM COS S3 - Assert that file is a tar.gz archive
+      ansible.builtin.assert:
+        that:
+          - "sap_hana_backint_ibm_cos_s3_definition['agent_path'].endswith('.tar.gz')"
+        fail_msg: >-
+          FAIL: The path '{{ sap_hana_backint_ibm_cos_s3_definition['agent_path'] }}'
+          points to a file, but it is not a '.tar.gz' archive.
+
+    - name: SAP HANA Backint - Setup - IBM COS S3 - Set fact for Agent tarball path
+      ansible.builtin.set_fact:
+        __sap_hana_backint_fact_agent_path: "{{ sap_hana_backint_ibm_cos_s3_definition['agent_path'] }}"
+
+- name: Block for handling Agent path as a directory
+  when: __sap_hana_backint_register_agent_path_stat.stat.isdir
+  block:
+    - name: SAP HANA Backint - Setup - IBM COS S3 - Discover Agent tarball in directory
+      ansible.builtin.find:
+        paths: "{{ sap_hana_backint_ibm_cos_s3_definition['agent_path'] }}"
+        patterns: "aws-s3-backint-*.tar.gz"
+      register: __sap_hana_backint_register_agents_found
+
+    - name: SAP HANA Backint - Setup - IBM COS S3 - Assert that Agent tarball was found
+      ansible.builtin.assert:
+        that:
+          - __sap_hana_backint_register_agents_found.matched == 1
+        fail_msg: |
+          FAIL: Could not find a unique 'aws-s3-backint-*.tar.gz' file in the directory
+          '{{ sap_hana_backint_ibm_cos_s3_definition['agent_path'] }}'.
+          Found multiple files: {{ __sap_hana_backint_register_agents_found.matched }}
+
+    - name: SAP HANA Backint - Setup - IBM COS S3 - Set fact for Agent tarball path from find
+      ansible.builtin.set_fact:
+        __sap_hana_backint_fact_agent_path: "{{ __sap_hana_backint_register_agents_found.files[0].path }}"
+
+
+# Extract tarball into temporary directory and validate if it contains expected directory
+- name: SAP HANA Backint - Setup - IBM COS S3 - Show identified Agent path
+  ansible.builtin.debug:
+    msg: "{{ __sap_hana_backint_fact_agent_path }}"
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Extract tarball into temporary directory
+  ansible.builtin.unarchive:
+    src: "{{ __sap_hana_backint_fact_agent_path }}"
+    dest: "{{ __sap_hana_backint_register_tempfile.path }}"
+    remote_src: true
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Discover extracted directory aws-s3-backint in temporary directory
+  ansible.builtin.find:
+    paths: "{{ __sap_hana_backint_register_tempfile.path }}"
+    recurse: true
+    file_type: directory
+    patterns: "aws-s3-backint"
+  register: __sap_hana_backint_register_agent_directory
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Assert that Agent directory was found
+  ansible.builtin.assert:
+    that:
+      - __sap_hana_backint_register_agent_directory.matched == 1
+    fail_msg: |
+      FAIL: Could not find a unique 'aws-s3-backint' directory after extracting the archive.
+      Verify the contents of '{{ __sap_hana_backint_fact_agent_path }}'.
+      Found {{ __sap_hana_backint_register_agent_directory.matched }} matching directories.
+
+
+# Copy Agent directory into opt directory
+# Final directory will be: "/usr/sap/{{ __sap_hana_backint_sid }}/SYS/global/hdb/opt/aws-s3-backint"
+- name: SAP HANA Backint - Setup - IBM COS S3 - Copy temp directory contents to SAP HANA Backint directory
+  ansible.builtin.copy:
+    src: "{{ __sap_hana_backint_register_agent_directory.files[0].path }}/"
+    dest: "{{ __sap_hana_backint_fact_agent_directory }}"
+    mode: "0755"
+    directory_mode: true
+    remote_src: true
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Change directory owner and permission
+  ansible.builtin.file:
+    path: "{{ __sap_hana_backint_fact_agent_directory }}"
+    state: directory
+    recurse: true
+    mode: "0755"
+    owner: "{{ __sap_hana_backint_sidadm_user }}"
+    group: sapsys
+
+
+- name: Block to catch wrong python version errors
+  block:
+    - name: SAP HANA Backint - Setup - IBM COS S3 - Execute script create_hdbbackint.py
+      ansible.builtin.shell:
+        cmd: "{{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }} create_hdbbackint.py"
+      args:
+        chdir: "{{ __sap_hana_backint_fact_agent_directory }}"
+      become: true
+      become_user: "{{ __sap_hana_backint_sidadm_user }}"
+      environment:
+        PYTHONPATH: ""
+        PYTHONHOME: ""
+
+  rescue:
+    - name: SAP HANA Backint - Setup - IBM COS S3 - Fail due to Python version error
+      ansible.builtin.fail:
+        msg: |
+          FAIL: The Python executable '{{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }}'
+          defined in 'sap_hana_backint_ibm_cos_s3_definition.python_path' is not compatible with the
+          IBM COS S3 Backint Agent requirements.
+          Ensure that the correct Python version is defined according to SAP Note 2935898.
+
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Create softlink for hdbbackint
+  ansible.builtin.file:
+    src: "{{ __sap_hana_backint_fact_agent_directory }}/hdbbackint"
+    dest: "{{ __sap_hana_backint_opt_path }}/hdbbackint"
+    owner: "{{ __sap_hana_backint_sidadm_user }}"
+    group: sapsys
+    state: link
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Create configuration file
+  ansible.builtin.template:
+    src: "hdbbackint_ibm_cos_s3.j2"
+    dest: "{{ __sap_hana_backint_fact_agent_directory }}/{{ __sap_hana_backint_hdbbackint_filename }}"
+    mode: "0644"
+    owner: "{{ __sap_hana_backint_sidadm_user }}"
+    group: sapsys
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Change directory owner and permission after creation
+  ansible.builtin.file:
+    path: "{{ __sap_hana_backint_fact_agent_directory }}"
+    state: directory
+    recurse: true
+    mode: "0755"
+    owner: "{{ __sap_hana_backint_sidadm_user }}"
+    group: sapsys
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Configure hanacleaner.py script
+  ansible.builtin.include_tasks:
+    file: "hanacleaner.yml"
+  when: sap_hana_backint_hanacleaner | d(true)
+
+- name: SAP HANA Backint - Setup - IBM COS S3 - Backint configuration details
+  ansible.builtin.debug:
+    msg: |
+      Backint script was configured with the following parameters:
+      Directory:      {{ __sap_hana_backint_fact_agent_directory }}
+      Symlink:        {{ __sap_hana_backint_opt_path }}/hdbbackint
+      Configuration:  {{ __sap_hana_backint_fact_agent_directory }}/{{ __sap_hana_backint_hdbbackint_filename }}
+      Python:         {{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }}

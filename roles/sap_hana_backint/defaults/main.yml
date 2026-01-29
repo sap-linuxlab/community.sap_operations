@@ -1,37 +1,168 @@
+# SPDX-License-Identifier: Apache-2.0
 ---
-# setup, execute, clean
-backup_function:
 
-# aws_s3, ibm_cos_s3, azure_backup_rsv, gcs
-target_platform:
+### Mandatory Variables
 
-sap_hana_sid: all
+# Sets the action to perform with this Ansible Role.
+# Options:
+# - setup - Installs and configures the SAP HANA Backint agent.
+# - backup - Performs a backup operation using the configured Backint agent.
+# - clean - Executes cleanup operation using hanacleaner.py.
+sap_hana_backint_action: ''
 
-sap_hana_backint_setup_system_passwd:
-sap_hana_backint_setup_system_tenant_passwd:
+# Sets the target platform for Backint operations.
+# Options:
+# - aws_s3 - Use Amazon Web Services S3 as the storage backend.
+# - azure_backup_rsv - Use Azure Backup Recovery Services as the storage backend.
+# - ibm_cos_s3 - Use IBM Cloud Object Storage S3 as the storage backend.
+# - gcs - Use Google Cloud Storage as the storage backend.
+sap_hana_backint_platform: ''
 
-# Variables for Setup function
-log_enable: false
-# sap_hana_backint_setup_backint_directory: "/usr/sap/hana/backint"
-sap_hana_backint_setup_hostname: "{{ ansible_hostname }}"
-system_backup_user: "HDB_SYSTEM_BACKUP_USER"
+# The SAP HANA System ID (SID).
+# 'all' was deprecated to avoid confusion, because Backint configuration is SID specific.
+sap_hana_backint_sid: ''
 
-# Variables for Clean function
-backup_retention: "4"
-backint_directory:
-# IBM Cloud Object Storage (COS) S3 details, reference to ibm_cos_s3_hdbbackint.cfg
-# sap_hana_backint_setup_provider: "ibm"
-# sap_hana_backint_setup_auth: "key"
-# sap_hana_backint_setup_bucket: "bucket-name"
-# sap_hana_backint_setup_region: "us-east"
-# sap_hana_backint_setup_api_key: "xxxxxx"
-# sap_hana_backint_setup_resource_instance_id: "crn:v1:bluemix:public:cloud-object-storage:global:a/xxxxxxxx:xxxx-xxxx-xxxx-xxxx-xxxxxxxx:bucket:xxxx"
-# sap_hana_backint_setup_endpoint_url: "https://s3.direct.us-east.cloud-object-storage.appdomain.cloud"
+# Specifies which database(s) to target for the backint action.
+# Options:
+# - all - Target both SYSTEMDB and all specified tenant databases.
+# - system - Target only the SYSTEMDB.
+# - tenant - Target only the tenant databases.
+sap_hana_backint_target_database: 'all'
 
-# AWS S3 object storage details, reference to aws_s3_hdbbackint.cfg
-# sap_hana_backint_setup_provider: "aws"
-# sap_hana_backint_setup_auth: "key"
-# sap_hana_backint_setup_bucket: "bucket-name"
-# sap_hana_backint_setup_region: "us-east-1"
-# sap_hana_backint_setup_access_key: "xxxxxx"
-# sap_hana_backint_setup_secret_access_key: "xxxxxx"
+# A list of SAP HANA Tenant SIDs to perform operations on.
+# If left empty, tenant-specific tasks will be executed on all detected tenants.
+# If listed tenant is not detected, it will be skipped.
+sap_hana_backint_tenants: []
+
+# Enable integration with hanacleaner.py script for automatic cleanup.
+# 2399996 - How-To: Configuring automatic SAP HANA Cleanup with SAP HANACleaner
+# Source: https://github.com/chriselswede/hanacleaner
+sap_hana_backint_hanacleaner: true
+
+# The name of database user for performing SYSTEM backup.
+# The default value is "HDB_SYSTEM_BACKUP_USER"
+sap_hana_backint_system_backup_user: 'HDB_SYSTEM_BACKUP_USER'
+
+# The password of database user defined in 'sap_hana_backint_system_backup_user'.
+# This is used only if existing hdbuserstore entry is not found during 'setup' action.
+sap_hana_backint_system_backup_password: ''
+
+# The name of database user for performing Tenant database backups.
+# The default value is "HDB_TENANT_{{ sap_hana_backint_sid | upper }}_BACKUP_USER"
+# NOTE: This is used for all tenants, unless you restrict them with 'sap_hana_backint_tenants' variable.
+sap_hana_backint_tenant_backup_user: 'HDB_TENANT_{{ sap_hana_backint_sid | upper }}_BACKUP_USER'
+
+# The password of database user defined in 'sap_hana_backint_tenant_backup_user'.
+# This is used only if existing hdbuserstore entry is not found during 'setup' action.
+# NOTE: This is used for all tenants, unless you restrict them with 'sap_hana_backint_tenants' variable.
+sap_hana_backint_tenant_backup_password: ''
+
+
+### Mandatory Variables - Platform specific
+
+## Amazon Web Services S3
+# Documentation: SAP Note 2935898 - Install and Configure SAP HANA Backint Agent for Amazon S3
+sap_hana_backint_aws_s3_definition:
+  auth: 'key'  # Default method of authentication. Options: key, implicit, role.
+  bucket: ''  # Name of the S3 bucket.
+  region: ''  # Region of the S3 bucket.
+
+  # Access keys are required when auth is 'key'.
+  access_key: ''  # AWS access key.
+  secret_access_key: ''  # AWS secret access key.
+  # Role is required when auth is 'role'.
+  # role_name: ''  # An IAM role that allows access to the S3 bucket.
+
+  # Traces are located in: /usr/sap/<SID>/HDB<INSTANCE_NR>/<HOSTNAME>/trace/
+  trace_default_level: 'info'  # Trace level. Options: critical, error, warning, info, debug
+  trace_sdk_level: 'warning'  # Trace level for the sdk. Options: critical, error, warning, info, debug
+
+  compression_type: 'zstd'  # Enables or disables compression. Options: zstd, none
+  compression_level: '1'  # zstd compression level. Options: 1 to 10
+
+  # Python executable path, where compatible Python 3 is already installed.
+  # This file must be executable by <sid>adm user. Example: /usr/bin/python3.11
+  python_path: ''
+
+  # Path to aws-s3-backint-<version>-<platform>.tar.gz script or its directory.
+  # Example: '/software/sap_hana_extracted/SAP_HANA_DATABASE/server/aws-s3-backint-1.2.32.tar.gz'
+  agent_path: ''
+
+  # (Optional) Path to custom backint directory, where agent will be extracted.
+  # Default: "/usr/sap/{{ sap_hana_backint_sid }}/SYS/global/hdb/opt/aws-s3-backint"
+  # agent_directory: ''
+
+
+## Azure Backup Recovery Services
+# Azure RSV does not require any platform specific variables.
+
+
+## IBM Cloud Object Storage S3
+# Documentation: SAP Note 2935898 - Install and Configure SAP HANA Backint Agent for Amazon S3
+# This documentation describes both AWS and IBM COS setup as both use the same backint agent.
+sap_hana_backint_ibm_cos_s3_definition:
+  bucket: ''  # Name of the S3 bucket.
+  region: ''  # Region of the S3 bucket.
+  api_key: ''  # IBM Cloud API key.
+
+  # Example: "crn:v1:bluemix:public:cloud-object-storage:global:a/xxxxxxxx:xxxx-xxxx-xxxx-xxxx-xxxxxxxx:bucket:xxxx"
+  resource_instance_id: ''  # IBM Cloud Resource Instance ID.
+
+  # Example: "https://s3.direct.us-east.cloud-object-storage.appdomain.cloud"
+  endpoint_url: ''  # Custom endpoint URL for IBM COS S3.
+
+  # Traces are located in: /usr/sap/<SID>/HDB<INSTANCE_NR>/<HOSTNAME>/trace/
+  trace_default_level: 'info'  # Trace level. Options: critical, error, warning, info, debug
+  trace_sdk_level: 'warning'  # Trace level for the sdk. Options: critical, error, warning, info, debug
+
+  compression_type: 'zstd'  # Enables or disables compression. Options: zstd, none
+  compression_level: '1'  # zstd compression level. Options: 1 to 10
+
+  # Python executable path, where compatible Python 3 is already installed.
+  # This file must be executable by <sid>adm user. Example: /usr/bin/python3.11
+  python_path: ''
+
+  # Path to aws-s3-backint-<version>-<platform>.tar.gz script or its directory.
+  # Example: '/software/sap_hana_extracted/SAP_HANA_DATABASE/server/aws-s3-backint-1.2.32.tar.gz'
+  agent_path: ''
+
+  # (Optional) Path to custom backint directory, where agent will be extracted.
+  # Default: "/usr/sap/{{ sap_hana_backint_sid }}/SYS/global/hdb/opt/ibm-s3-backint"
+  # agent_directory: ''
+
+
+## Google Cloud Storage
+# Documentation: https://docs.cloud.google.com/sap/docs/agent-for-sap/latest/configure-backint-backup-recovery#enable_backint
+# Agent directory: "/usr/sap/{{ sap_hana_backint_sid }}/SYS/global/hdb/opt/backint/backint-gcs"
+sap_hana_backint_gcs_definition:
+  bucket: ''  # Name of the Cloud Storage bucket.
+  compress: true  # Enables or disables compression.
+
+
+### Optional Variables
+
+# The SAP HANA Instance Number.
+# The default value is number of first instance found on the host.
+# sap_hana_backint_instance_number: ''
+
+## Variables for action 'setup'
+
+# Specifies the hostname to be used in Backint configuration during 'setup' action.
+# The default value is the Ansible fact 'ansible_hostname'.
+# sap_hana_backint_setup_hostname: '{{ ansible_hostname }}'
+
+# Enables configuration of log backup with Backint during 'setup' action.
+# This will also set 'log_mode' if 'sap_hana_backint_setup_log_mode' is defined.
+# sap_hana_backint_setup_log_backint: true
+
+# Specifies the log mode to enable during 'setup' action.
+# This is applied to both SYSTEMDB and tenant databases if applicable.
+# Options:
+# - normal: Enables normal logging mode.
+# - overwrite: Enables overwrite logging mode for non-Production systems.
+# sap_hana_backint_setup_log_mode: 'normal'
+
+## Variables for action 'clean'
+# Specifies number of backups to retain when hanacleaner.py is executed.
+# The default value is '4'.
+# sap_hana_backint_clean_retained_backups: '4'

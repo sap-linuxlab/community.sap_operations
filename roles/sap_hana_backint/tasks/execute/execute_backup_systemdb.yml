@@ -1,8 +1,0 @@
----
-- name: SAP HANA Backint - Execute - SYSTEMDB - Run backup in the background
-  ansible.builtin.shell: |
-    nohup /usr/sap/{{ passed_sap_hana_sid }}/SYS/exe/hdb/hdbsql -U {{ system_backup_user }} "BACKUP DATA FOR SYSTEMDB USING BACKINT ('COMPLETE_DATA_BACKUP');" &
-  args:
-    executable: /bin/bash
-  become: true
-  become_user: "{{ passed_sap_hana_sid | lower }}adm"

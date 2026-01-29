@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# This is task file that will execute ALTER hdbsql queries.
+# SELECT queries handle registered output, which is not included here.
+# __sap_hana_backint_hdbsql_user passed as var from include_tasks.
+# __sap_hana_backint_hdbsql_stdin passed as var from include_tasks.
+
+- name: SAP HANA Backint - Setup - Display executed hdbsql query
+  ansible.builtin.debug:
+    msg: |
+      Executing as: {{ __sap_hana_backint_sidadm_user }}
+      hdbuserstore ID: {{ __sap_hana_backint_hdbsql_user }}
+      SQL Command:
+      {{ __sap_hana_backint_hdbsql_stdin }}
+    # Only show this if you run with -v or -vv
+    verbosity: 1
+
+- name: SAP HANA Backint - Setup - Configure database parameter using hdbsql
+  ansible.builtin.command:
+    cmd: >-
+      {{ __sap_hana_backint_hdb_path }}/hdbsql
+      -U {{ __sap_hana_backint_hdbsql_user }}
+      -m
+    stdin: "{{ __sap_hana_backint_hdbsql_stdin }}"
+    stdin_add_newline: true
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+
+# No fail module is included because failed command will show usable output.
