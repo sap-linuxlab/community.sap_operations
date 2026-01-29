@@ -1,3 +1,13 @@
+> **DEPRECATED (2026-01)**: PyRFC dependency deprecated — SAP discontinued development and maintenance of the PyRFC library in 2024.<br>
+><br>
+> The PyRFC library is a critical dependency for this role; it acts as a Python wrapper for the underlying SAP NWRFC SDK (C++ libraries).<br>
+> Because SAP has archived the PyRFC project, it will no longer be updated to maintain compatibility with future security patches or version releases of the NWRFC SDK.<br>
+><br>
+> While PyRFC and the SAP NWRFC SDK are currently still available, their deprecation means they may be removed without notice.<br>
+><br>
+> Users should plan to migrate away from RFC-based automation toward supported OData/REST API integrations or SAP BTP connectors.<br>
+
+
 # sap_rfc Ansible Role
 
 The sap_rfc Ansible Role executes an SAP Remote Function Call (RFC) from a server-side host with connectivity to the SAP System host/s, and performs setup as necessary ([`PyRFC`](https://github.com/SAP/PyRFC) open source by SAP, and [`SAP NWRFC SDK`](https://support.sap.com/en/product/connectors/nwrfcsdk.html)).
