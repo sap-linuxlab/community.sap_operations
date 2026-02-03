@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: Block to catch command failures
+  block:
+    - name: SAP HANA SR Takeover - Get System Replication Status
+      ansible.builtin.shell:
+        cmd: >-
+          source {{ __sap_hana_sr_takeover_sidadm_env_file_path }} &&
+          {{ __sap_hana_sr_takeover_executable_path }}/hdbnsutil
+          -sr_state
+      become: true
+      become_user: "{{ __sap_hana_sr_takeover_sidadm_user }}"
+      register: __sap_hana_sr_takeover_register_sr_state
+      changed_when: false
+      failed_when: false
+
+    - name: SAP HANA SR Takeover - Set fact with parsed replication status
+      ansible.builtin.set_fact:
+        __sap_hana_sr_takeover_fact_online:
+          "{{ (__sap_hana_sr_takeover_register_sr_state.stdout | regex_findall('online: (\\w+)')) | first | default('unknown') }}"
+        __sap_hana_sr_takeover_fact_mode:
+          "{{ (__sap_hana_sr_takeover_register_sr_state.stdout | regex_findall('mode: (\\w+)')) | first | default('unknown') }}"
+        __sap_hana_sr_takeover_fact_site_name:
+          "{{ (__sap_hana_sr_takeover_register_sr_state.stdout | regex_findall('site name: (\\w+)')) | first | default('unknown') }}"
+        __sap_hana_sr_takeover_fact_is_primary:
+          "{{ true if 'is source system: true' in __sap_hana_sr_takeover_register_sr_state.stdout
+                or 'mode: primary' in __sap_hana_sr_takeover_register_sr_state.stdout else false }}"
+        __sap_hana_sr_takeover_fact_is_secondary:
+          "{{ true if 'is secondary/consumer system: true' in __sap_hana_sr_takeover_register_sr_state.stdout else false }}"
+        __sap_hana_sr_takeover_fact_is_sync:
+          "{{ true if 'mode: sync' in __sap_hana_sr_takeover_register_sr_state.stdout else false }}"
+
+  rescue:
+    - name: SAP HANA SR Takeover - Fail if command 'hdbnsutil -sr_state' failed
+      ansible.builtin.fail:
+        msg: |
+          FAIL: Execution of command 'hdbnsutil -sr_state' failed!
+          Command output:
+          {{ __sap_hana_sr_takeover_register_sr_state.stdout | d('') }}
