@@ -77,7 +77,9 @@
       Target database: {{ sap_hana_backint_target_database }}
 
       SAP HANA Backups were started in background and this role will not wait for their completion.
+
       Please check the SAP HANA Studio or SAP HANA Cockpit for backup status.
+
       Alternatively you can query backups with {{ __sap_hana_backint_sidadm_user }} user:
       hdbsql -U {{ sap_hana_backint_system_backup_user }} \
         "SELECT DATABASE_NAME,ENTRY_TYPE_NAME,STATE_NAME,COMMENT,UTC_START_TIME \

@@ -14,7 +14,7 @@ Actions:
 Supported Cloud platforms solutions:
 
 - Amazon Web Services S3 (`aws_s3`)
-- Azure Backup to Microsoft Azure Recovery Services Vault (`azure_backup_rsv`)
+- Azure Backup to Microsoft Azure Recovery Services Vault powered by Azure Blob Storage (`azure_backup_rsv`)
 - IBM Cloud Object Storage (COS), S3 protocol compatible (`ibm_cos_s3`)
 - Google Cloud Storage (`gcs`)
 <!-- END Description -->
@@ -45,6 +45,7 @@ Supported Cloud platforms solutions:
 
 ### Requirements for gcs
 - Cloud Storage bucket created.
+- Package `google-cloud-sap-agent` installed on host. This package is included in Google Cloud images.
 <!-- END Prerequisites -->
 
 ## Execution
@@ -210,7 +211,7 @@ Sets the action to perform with this Ansible Role.<br>
 Options:
 
 - `setup` - Installs and configures the SAP HANA Backint agent.
-- `backup` - Performs a backup operation using the configured Backint agent.
+- `backup` - Triggers a backup operation using the configured Backint agent.
 - `clean` - Executes cleanup operation using hanacleaner.py.
 
 ### sap_hana_backint_platform
