@@ -16,6 +16,7 @@
 #		- Instance Types (ASCS, PAS, ERS, etc)
 #	Input:
 #		- params (all | nw | <SID> )
+#		- restart_sapstartsrv (true | false) - default false
 #	Output:
 #		- sap_nw_sid	-	list of all SAP NW SIDs					-	access from Ansible via <register_variable>.sap_nw_sid
 #		- sap_hana_sid	-	list of all SAP HANA SIDs				-	access from Ansible via <register_variable>.sap_hana_sid
@@ -290,16 +291,20 @@ function check_sapstartsrv(){
 
 	if [[ $SAPSTARTSRV = 0 ]]; then
 		## No sapstartsrv process running - attempt to start
-		start_sapstartsrv $1 $2 $3
+		if [[ "${restart_sapstartsrv,,}" == "true" ]]; then
+			start_sapstartsrv $1 $2 $3
+		fi
 	elif [[ $SAPSTARTSRV -gt 1 ]]; then
-		# Multiple sapstartsrv processes running for a given instance number
-		# Stop all corresponding sapstartsrv processes
-		for i in $SAPSTARTSRV
-		do
-			su - $1 -c "sapcontrol -nr $3 -function StopService $2"
-		done
-		# Start sapstartsrv
-		start_sapstartsrv $1 $2 $3
+		if [[ "${restart_sapstartsrv,,}" == "true" ]]; then
+			# Multiple sapstartsrv processes running for a given instance number
+			# Stop all corresponding sapstartsrv processes
+			for i in $SAPSTARTSRV
+			do
+				su - $1 -c "sapcontrol -nr $3 -function StopService $2"
+			done
+			# Start sapstartsrv
+			start_sapstartsrv $1 $2 $3
+		fi
 	else
 		# sapstartsrv is ok
 		:
