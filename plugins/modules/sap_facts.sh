@@ -15,7 +15,7 @@
 #		- Instance Numbers (can be more than one per SID)
 #		- Instance Types (ASCS, PAS, ERS, etc)
 #	Input:
-#		- params (all | nw | <SID> )
+#		- param (all | nw | hana | <SID> )
 #		- restart_sapstartsrv (true | false) - default false
 #	Output:
 #		- sap_nw_sid	-	list of all SAP NW SIDs					-	access from Ansible via <register_variable>.sap_nw_sid
