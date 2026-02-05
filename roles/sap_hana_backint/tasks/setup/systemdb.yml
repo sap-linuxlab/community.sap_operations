@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP HANA Backint - Setup - SYSTEMDB - Configure hdbuserstore
+  ansible.builtin.include_tasks:
+    file: "hdbuserstore.yml"
+  vars:
+    __sap_hana_backint_hdbuserstore_user: "{{ sap_hana_backint_system_backup_user }}"
+    __sap_hana_backint_hdbuserstore_password: "{{ sap_hana_backint_system_backup_password }}"
+
+
+- name: Block to set log parameters for SYSTEMDB
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  when:
+    - sap_hana_backint_setup_log_backint is defined
+    - sap_hana_backint_setup_log_backint
+  block:
+    - name: SAP HANA Backint - Setup - SYSTEMDB - Set log_mode
+      ansible.builtin.include_tasks:
+        file: hdbsql_alter.yml
+      vars:
+        __sap_hana_backint_hdbsql_user: "{{ sap_hana_backint_system_backup_user }}"
+        __sap_hana_backint_hdbsql_stdin: |
+          ALTER SYSTEM ALTER CONFIGURATION ('global.ini', 'SYSTEM')
+          SET ('persistence','log_mode') = '{{ sap_hana_backint_setup_log_mode }}' WITH RECONFIGURE;
+          ALTER SYSTEM ALTER CONFIGURATION ('global.ini','HOST','{{ __sap_hana_backint_setup_hostname }}')
+          SET ('persistence','log_mode') = '{{ sap_hana_backint_setup_log_mode }}' WITH RECONFIGURE;
+      when: sap_hana_backint_setup_log_mode is defined
+
+    - name: SAP HANA Backint - Setup - SYSTEMDB - Set log_backup_parameter_file
+      ansible.builtin.include_tasks:
+        file: hdbsql_alter.yml
+      vars:
+        __sap_hana_backint_hdbsql_user: "{{ sap_hana_backint_system_backup_user }}"
+        __sap_hana_backint_hdbsql_stdin: |
+          ALTER SYSTEM ALTER CONFIGURATION ('global.ini', 'SYSTEM')
+          SET ('backup', 'log_backup_parameter_file') = '{{ __sap_hana_backint_fact_agent_directory }}/{{ __sap_hana_backint_hdbbackint_filename }}'
+          WITH RECONFIGURE;
+      # Azure RSV does not use 'log_backup_parameter_file', only 'log_backup_using_backint'.
+      when: sap_hana_backint_platform != 'azure_backup_rsv'
+
+    - name: SAP HANA Backint - Setup - SYSTEMDB - Set log_backup_using_backint
+      ansible.builtin.include_tasks:
+        file: hdbsql_alter.yml
+      vars:
+        __sap_hana_backint_hdbsql_user: "{{ sap_hana_backint_system_backup_user }}"
+        __sap_hana_backint_hdbsql_stdin: |
+          ALTER SYSTEM ALTER CONFIGURATION ('global.ini', 'SYSTEM')
+          SET ('backup', 'log_backup_using_backint') = 'true'
+          WITH RECONFIGURE;
+
+
+- name: SAP HANA Backint - Setup - SYSTEMDB - Set catalog_backup_parameter_file
+  ansible.builtin.include_tasks:
+    file: hdbsql_alter.yml
+  vars:
+    __sap_hana_backint_hdbsql_user: "{{ sap_hana_backint_system_backup_user }}"
+    __sap_hana_backint_hdbsql_stdin: |
+      ALTER SYSTEM ALTER CONFIGURATION ('global.ini', 'SYSTEM')
+      SET ('backup', 'catalog_backup_parameter_file') = '{{ __sap_hana_backint_fact_agent_directory }}/{{ __sap_hana_backint_hdbbackint_filename }}'
+      WITH RECONFIGURE;
+  # Azure RSV does not use 'log_backup_parameter_file', only 'log_backup_using_backint'.
+  when: sap_hana_backint_platform != 'azure_backup_rsv'
+
+- name: SAP HANA Backint - Setup - SYSTEMDB - Set data_backup_parameter_file
+  ansible.builtin.include_tasks:
+    file: hdbsql_alter.yml
+  vars:
+    __sap_hana_backint_hdbsql_user: "{{ sap_hana_backint_system_backup_user }}"
+    __sap_hana_backint_hdbsql_stdin: |
+      ALTER SYSTEM ALTER CONFIGURATION ('global.ini', 'SYSTEM')
+      SET ('backup', 'data_backup_parameter_file') = '{{ __sap_hana_backint_fact_agent_directory }}/{{ __sap_hana_backint_hdbbackint_filename }}'
+      WITH RECONFIGURE;
+  # Azure RSV does not use 'log_backup_parameter_file', only 'log_backup_using_backint'.
+  when: sap_hana_backint_platform != 'azure_backup_rsv'
+
+- name: SAP HANA Backint - Setup - SYSTEMDB - Set catalog_backup_using_backint
+  ansible.builtin.include_tasks:
+    file: hdbsql_alter.yml
+  vars:
+    __sap_hana_backint_hdbsql_user: "{{ sap_hana_backint_system_backup_user }}"
+    __sap_hana_backint_hdbsql_stdin: |
+      ALTER SYSTEM ALTER CONFIGURATION ('global.ini', 'SYSTEM')
+      SET ('backup', 'catalog_backup_using_backint') = 'true'
+      WITH RECONFIGURE;

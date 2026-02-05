@@ -1,0 +1,24 @@
+# See SAP Note for all possible options:
+# 2935898 - Install and Configure SAP HANA Backint Agent for Amazon S3
+
+[cloud_storage]
+provider = ibm
+auth = key
+bucket = {{ sap_hana_backint_ibm_cos_s3_definition['bucket'] }}
+region = {{ sap_hana_backint_ibm_cos_s3_definition['region'] }}
+# Mandatory 3 parameters for IBM COS, endpoint is dependant on bucket location
+api_key = {{ sap_hana_backint_ibm_cos_s3_definition['api_key'] }}
+resource_instance_id = {{ sap_hana_backint_ibm_cos_s3_definition['resource_instance_id'] }}
+endpoint_url = {{ sap_hana_backint_ibm_cos_s3_definition['endpoint_url'] }}
+
+[trace]
+default = {{ sap_hana_backint_ibm_cos_s3_definition['trace_default_level'] | d('info') }}
+cloudsdk = {{ sap_hana_backint_ibm_cos_s3_definition['trace_sdk_level'] | d('warning') }}
+destination = tracedirectory
+tracedirectory = /usr/sap/{{ __sap_hana_backint_sid }}/HDB{{ __sap_hana_backint_instance_number }}/{{ __sap_hana_backint_setup_hostname }}/trace/
+
+[backint]
+compression = {{ sap_hana_backint_ibm_cos_s3_definition['compression_type'] | d('zstd') }}
+compression_level = {{ sap_hana_backint_ibm_cos_s3_definition['compression_level'] | d('1') }}
+remove_key_prefix = /usr/sap/{{ __sap_hana_backint_sid }}/SYS/global/hdb/backint/
+additional_key_prefix = {{ __sap_hana_backint_setup_hostname }}/{{ __sap_hana_backint_sid }}/

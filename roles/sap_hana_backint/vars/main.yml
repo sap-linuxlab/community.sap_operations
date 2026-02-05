@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# The SAP HANA System ID (SID).
+__sap_hana_backint_sid: "{{ sap_hana_backint_sid | upper }}"
+
+# The OS user for SAP HANA instance administration.
+__sap_hana_backint_sidadm_user: "{{ sap_hana_backint_sid | lower }}adm"
+
+# Hostname used during setup configuration.
+__sap_hana_backint_setup_hostname: "{{ ansible_facts['hostname'] }}"
+
+# Path to SAP HANA executables (e.g. hdbsql).
+# __sap_hana_backint_hdb_path/hdbsql
+__sap_hana_backint_hdb_path:
+  "/usr/sap/{{ __sap_hana_backint_sid }}/SYS/exe/hdb"
+
+# Path to SAP HANA global options directory.
+# __sap_hana_backint_opt_path/hdbbackint
+__sap_hana_backint_opt_path:
+  "/usr/sap/{{ __sap_hana_backint_sid }}/SYS/global/hdb/opt"
+
+# Standard configuration filename for Backint.
+__sap_hana_backint_hdbbackint_filename: "hdbbackint.cfg"
+
+# URL to download hanacleaner.py script mentioned in SAP Note 2399996.
+__sap_hana_backint_hanacleaner_url: "https://github.com/chriselswede/hanacleaner/archive/refs/heads/master.zip"
+
+# URL for the Azure permissions script for SAP HANA.
+__sap_hana_backint_azure_script_url: "https://aka.ms/scriptforpermsonhana"

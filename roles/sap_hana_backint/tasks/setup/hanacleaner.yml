@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP HANA Backint - hanacleaner - Download python script
+  ansible.builtin.get_url:
+    url: "{{ __sap_hana_backint_hanacleaner_url }}"
+    dest: "{{ __sap_hana_backint_register_tempfile.path }}/hanacleaner.zip"
+    mode: '0440'
+
+- name: SAP HANA Backint - hanacleaner - Unpack downloaded python script
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "{{ __sap_hana_backint_register_tempfile.path }}/hanacleaner.zip"
+    dest: "{{ __sap_hana_backint_register_tempfile.path }}"
+
+# Script source is github and it contains branch name, therefore we have to use 'hanacleaner-master'.
+- name: SAP HANA Backint - hanacleaner - Copy hanacleaner.py to SAP HANA backint directory
+  ansible.builtin.copy:
+    src: "{{ __sap_hana_backint_register_tempfile.path }}/hanacleaner-master/hanacleaner.py"
+    dest: "{{ __sap_hana_backint_opt_path }}/hanacleaner.py"
+    mode: "0755"
+    remote_src: true

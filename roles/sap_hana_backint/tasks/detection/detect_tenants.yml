@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP HANA Backint - Detect Tenants - Check if hdbuserstore exists
+  ansible.builtin.command:
+    cmd: >-
+      {{ __sap_hana_backint_hdb_path }}/hdbuserstore
+      LIST {{ sap_hana_backint_system_backup_user }}
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  register: __sap_hana_backint_register_hdbuserstore_detect_list
+  failed_when: false
+  changed_when: false
+
+- name: SAP HANA Backint - Detect Tenants - Fail if hdbuserstore command failed
+  ansible.builtin.fail:
+    msg: |
+      FAIL: The user {{ sap_hana_backint_system_backup_user }},
+      defined in the variable 'sap_hana_backint_system_backup_user', was not found in hdbuserstore.
+
+      Execute this Ansible Role with 'sap_hana_backint_action' set to 'setup'
+      or create entry manually before executing the playbook again.
+
+      Command output:
+      {{ __sap_hana_backint_register_hdbuserstore_detect_list.stdout }}
+  when:
+    - __sap_hana_backint_register_hdbuserstore_detect_list.rc is defined
+    - __sap_hana_backint_register_hdbuserstore_detect_list.rc != 0
+
+
+- name: SAP HANA Backint - Detect Tenants - Get tenant database names
+  ansible.builtin.command:
+    cmd: >-
+      {{ __sap_hana_backint_hdb_path }}/hdbsql
+      -x -a
+      -U {{ sap_hana_backint_system_backup_user }}
+      "SELECT DATABASE_NAME FROM SYS.M_DATABASES WHERE DATABASE_NAME != 'SYSTEMDB'"
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  register: __sap_hana_backint_register_hana_tenants
+  changed_when: false
+
+- name: SAP HANA Backint - Detect Tenants - Prepare list of detected tenants
+  ansible.builtin.set_fact:
+    __sap_hana_backint_fact_detected_tenants:
+      "{{ __sap_hana_backint_register_hana_tenants.stdout_lines | d([])
+        | map('regex_replace', '^\"|\"$', '')
+        | list }}"
+
+- name: SAP HANA Backint - Detect Tenants - Validate user defined list of tenants
+  ansible.builtin.set_fact:
+    __sap_hana_backint_fact_tenants:
+      "{{ sap_hana_backint_tenants | intersect(__sap_hana_backint_fact_detected_tenants)
+        if sap_hana_backint_tenants | length > 0
+        else __sap_hana_backint_fact_detected_tenants }}"
+
+- name: SAP HANA Backint - Detect Tenants - Inform about skipped user defined tenants
+  ansible.builtin.debug:
+    msg: |
+      WARN: The following Tenants were skipped because they were not detected in the database.
+      Skipped tenants: {{ __tenant_diff | join(', ') }}
+
+      Defined tenants: {{ sap_hana_backint_tenants | join(', ') }}
+      Detected tenants: {{ __sap_hana_backint_fact_detected_tenants | join(', ') }}
+  when:
+    - sap_hana_backint_tenants | length > 0
+    - __tenant_diff | length > 0
+  vars:
+    __tenant_diff: "{{ sap_hana_backint_tenants | difference(__sap_hana_backint_fact_tenants) }}"
+
+- name: SAP HANA Backint - Detect Tenants - Fail if no defined tenants were detected
+  ansible.builtin.fail:
+    msg: |
+      FAIL: No valid user defined tenants were detected in the database.
+      Update tenants defined in the variable 'sap_hana_backint_tenants', before re-executing the playbook.
+
+      Defined tenants: {{ sap_hana_backint_tenants | join(', ') }}
+      Detected tenants: {{ __sap_hana_backint_fact_detected_tenants | join(', ') }}
+  when:
+    - sap_hana_backint_tenants | length > 0
+    - __sap_hana_backint_fact_tenants | length == 0

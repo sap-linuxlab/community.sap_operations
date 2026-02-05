@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP HANA Backint - Setup - Check if hdbuserstore exists
+  ansible.builtin.command:
+    cmd: >-
+      {{ __sap_hana_backint_hdb_path }}/hdbuserstore
+      LIST {{ __sap_hana_backint_hdbuserstore_user }}
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  register: __sap_hana_backint_register_hdbuserstore_list
+  failed_when: false
+  changed_when: false
+
+- name: SAP HANA Backint - Setup - Create and Store Connection Info in hdbuserstore
+  ansible.builtin.command:
+    cmd: >-
+      {{ __sap_hana_backint_hdb_path }}/hdbuserstore
+      SET {{ __sap_hana_backint_hdbuserstore_user }}
+      {{ __sap_hana_backint_setup_hostname }}:3{{ __sap_hana_backint_instance_number }}13
+      SYSTEM '{{ __sap_hana_backint_hdbuserstore_password }}'
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  register: __sap_hana_backint_register_hdbuserstore_update
+  when: __sap_hana_backint_register_hdbuserstore_list.rc != '0'
+  changed_when: true
+
+- name: SAP HANA Backint - Setup - Fail if hdbuserstore command failed
+  ansible.builtin.fail:
+    msg: |
+      FAIL: Updating hdbuserstore entry for {{ __sap_hana_backint_hdbuserstore_user }} has failed.
+      Command output:
+      {{ __sap_hana_backint_register_hdbuserstore_update.stdout }}
+  when:
+    - __sap_hana_backint_register_hdbuserstore_update is defined
+    - __sap_hana_backint_register_hdbuserstore_update.rc != 0

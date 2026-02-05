@@ -1,33 +1,22 @@
-# Set facts
-- name: SAP HANA Backint - Set fact for Ansible Role actions
-  ansible.builtin.set_fact:
-    sap_control_function: "{{ backup_function | lower }}"
-    python_version: "3.7.9"
-    python_build_path: "/usr/sap/python_env_build"
-    python_altinstall_path: "/usr/sap/python_env"
+# SPDX-License-Identifier: Apache-2.0
+---
 
-- name: SAP HANA Backint - Set fact if sap_hana_sid is provided
-  ansible.builtin.set_fact:
-    backint_directory: "/usr/sap/{{ sap_hana_sid }}/SYS/global/hdb/opt"
-  # tenant_backup_user: "HDB_TENANT_{{ passed_sap_hana_tenant }}_BACKUP_USER"
-  when: sap_hana_sid != "all"
+- name: SAP HANA Backint - Prepare and validate variables
+  ansible.builtin.include_tasks:
+    file: validation/main.yml
 
-# List is stored in sap_hana_sid_all
-- name: SAP HANA Backint - Get all SAP HANA System IDs (SIDs)
-  ansible.builtin.include_tasks: get_all_sap_hana_sid.yml
+- name: SAP HANA Backint - Gather facts about SAP Systems on the host
+  ansible.builtin.include_tasks:
+    file: detection/detect_sids.yml
 
-# List is stored in sap_hana_tenant
-- name: SAP HANA Backint - Get all SAP HANA Tenants of {{ sap_hana_sid }}
-  ansible.builtin.include_tasks: get_all_sap_hana_tenant.yml
+- name: SAP HANA Backint - Gather facts about SAP Instances on the host
+  ansible.builtin.include_tasks:
+    file: detection/detect_tenants.yml
+  when:
+    # hdbuserstore is not ready during first setup.
+    - sap_hana_backint_action != 'setup'
+    - sap_hana_backint_target_database in ['all', 'tenant']
 
-# List is stored in sap_hana_instance_nr_one
-- name: SAP HANA Backint - Get SAP HANA instance number
-  ansible.builtin.include_tasks: get_sap_hana_instance_nr.yml
-
-# Install Python 3.7
-- name: SAP HANA Backint - Python 3.7
-  ansible.builtin.include_tasks: "python37.yml"
-  when: (backup_function == 'setup' and target_platform == 'aws_s3') or (backup_function == 'setup' and target_platform == 'ibm_cos_s3')
-
-- name: SAP HANA Backint - {{ backup_function }}
-  ansible.builtin.include_tasks: "{{ backup_function }}/{{ backup_function }}.yml"
+- name: SAP HANA Backint - Execute action - {{ sap_hana_backint_action | d('') }}
+  ansible.builtin.include_tasks:
+    file: "{{ sap_hana_backint_action }}/main.yml"

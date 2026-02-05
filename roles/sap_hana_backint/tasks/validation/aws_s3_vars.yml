@@ -1,0 +1,142 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Mandatory keys
+
+- name: SAP HANA Backint - Assert that the definition is defined as non-empty dictionary
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_aws_s3_definition is defined
+      - sap_hana_backint_aws_s3_definition is mapping
+      - sap_hana_backint_aws_s3_definition | length > 0
+    fail_msg: |
+      {% if sap_hana_backint_aws_s3_definition is not defined %}
+        FAIL: The 'sap_hana_backint_aws_s3_definition' variable must be defined as non-empty dictionary.
+      {% elif sap_hana_backint_aws_s3_definition is not mapping %}
+        FAIL: The 'sap_hana_backint_aws_s3_definition' variable must be a dictionary,
+        but it is of type '{{ sap_hana_backint_aws_s3_definition | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_backint_aws_s3_definition' variable must not be empty.
+      {% endif %}
+
+- name: SAP HANA Backint - Assert that the definition contains non-empty mandatory keys
+  ansible.builtin.assert:
+    that:
+      # auth
+      - sap_hana_backint_aws_s3_definition['auth'] is defined
+      - sap_hana_backint_aws_s3_definition['auth'] is string
+      - sap_hana_backint_aws_s3_definition['auth'] in ['key', 'implicit', 'role']
+
+      # bucket
+      - sap_hana_backint_aws_s3_definition['bucket'] is defined
+      - sap_hana_backint_aws_s3_definition['bucket'] is string
+      - sap_hana_backint_aws_s3_definition['bucket'] | length > 0
+
+      # region
+      - sap_hana_backint_aws_s3_definition['region'] is defined
+      - sap_hana_backint_aws_s3_definition['region'] is string
+      - sap_hana_backint_aws_s3_definition['region'] | length > 0
+
+      # python_path
+      - sap_hana_backint_aws_s3_definition['python_path'] is defined
+      - sap_hana_backint_aws_s3_definition['python_path'] is string
+      - sap_hana_backint_aws_s3_definition['python_path'] | length > 0
+
+      # agent_path
+      - sap_hana_backint_aws_s3_definition['agent_path'] is defined
+      - sap_hana_backint_aws_s3_definition['agent_path'] is string
+      - sap_hana_backint_aws_s3_definition['agent_path'] | length > 0
+    fail_msg: |
+      FAIL: The 'sap_hana_backint_aws_s3_definition' variable must contain valid mandatory keys.
+      - 'auth': Default method of authentication. Options: key, implicit, role
+      - 'bucket': Name of the S3 bucket.
+      - 'region': Region of the S3 bucket.
+      - 'python_path': Python executable path, where compatible Python 3 is already installed.
+      - 'agent_path': Full path to aws-s3-backint-<version>-<platform>.tar.gz archive or its directory.
+
+- name: SAP HANA Backint - Assert that the definition contains mandatory keys for key authentication
+  ansible.builtin.assert:
+    that:
+      # access_key
+      - sap_hana_backint_aws_s3_definition['access_key'] is defined
+      - sap_hana_backint_aws_s3_definition['access_key'] is string
+      - sap_hana_backint_aws_s3_definition['access_key'] | length > 0
+
+      # secret_access_key
+      - sap_hana_backint_aws_s3_definition['secret_access_key'] is defined
+      - sap_hana_backint_aws_s3_definition['secret_access_key'] is string
+      - sap_hana_backint_aws_s3_definition['secret_access_key'] | length > 0
+    fail_msg: |
+      FAIL: The 'sap_hana_backint_aws_s3_definition' variable must contain valid mandatory keys for 'key' authentication.
+      - 'access_key': AWS access key.
+      - 'secret_access_key':AWS secret access key.
+  when: sap_hana_backint_aws_s3_definition['auth'] == 'key'
+
+- name: SAP HANA Backint - Assert that the definition contains mandatory keys for role authentication
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_aws_s3_definition['role_name'] is defined
+      - sap_hana_backint_aws_s3_definition['role_name'] is string
+      - sap_hana_backint_aws_s3_definition['role_name'] | length > 0
+    fail_msg: |
+      FAIL: The 'sap_hana_backint_aws_s3_definition' variable must contain valid mandatory keys for 'role' authentication.
+      - 'role_name': An IAM role that allows access to the S3 bucket.
+  when: sap_hana_backint_aws_s3_definition['auth'] == 'role'
+
+
+# Optional keys
+
+- name: SAP HANA Backint - Assert that the definition contains trace_default_level defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_aws_s3_definition['trace_default_level'] is string
+      - sap_hana_backint_aws_s3_definition['trace_default_level'] | length > 0
+      - sap_hana_backint_aws_s3_definition['trace_default_level'] in ['critical', 'error', 'warning', 'info', 'debug']
+    fail_msg: |
+      FAIL: The key 'trace_default_level' in 'sap_hana_backint_aws_s3_definition' variable must defined as a non-empty string.
+      Available options: critical, error, warning, info, debug
+  when: sap_hana_backint_aws_s3_definition['trace_default_level'] is defined
+
+- name: SAP HANA Backint - Assert that the definition contains trace_sdk_level defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_aws_s3_definition['trace_sdk_level'] is string
+      - sap_hana_backint_aws_s3_definition['trace_sdk_level'] | length > 0
+      - sap_hana_backint_aws_s3_definition['trace_sdk_level'] in ['critical', 'error', 'warning', 'info', 'debug']
+    fail_msg: |
+      FAIL: The key 'trace_sdk_level' in 'sap_hana_backint_aws_s3_definition' variable must defined as a non-empty string.
+      Available options: critical, error, warning, info, debug
+  when: sap_hana_backint_aws_s3_definition['trace_sdk_level'] is defined
+
+- name: SAP HANA Backint - Assert that the definition contains compression_type defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_aws_s3_definition['compression_type'] is string
+      - sap_hana_backint_aws_s3_definition['compression_type'] | length > 0
+      - sap_hana_backint_aws_s3_definition['compression_type'] in ['zstd', 'none']
+    fail_msg: |
+      FAIL: The key 'compression_type' in 'sap_hana_backint_aws_s3_definition' variable must defined as a non-empty string.
+      Available options: zstd, none
+  when: sap_hana_backint_aws_s3_definition['compression_type'] is defined
+
+- name: SAP HANA Backint - Assert that the definition contains compression_level defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_aws_s3_definition['compression_level'] is string
+      - sap_hana_backint_aws_s3_definition['compression_level'] | length > 0
+      - sap_hana_backint_aws_s3_definition['compression_level'] | regex_search('^[0-9]+$')"
+      - sap_hana_backint_aws_s3_definition['compression_level'] | int >= 1
+      - sap_hana_backint_aws_s3_definition['compression_level'] | int <= 10
+    fail_msg: |
+      FAIL: The key 'compression_level' in 'sap_hana_backint_aws_s3_definition' variable must defined as a non-empty string.
+      Available options: 1 to 10
+  when: sap_hana_backint_aws_s3_definition['compression_level'] is defined
+
+- name: SAP HANA Backint - Assert that the definition contains agent_directory defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_aws_s3_definition['agent_directory'] is string
+      - sap_hana_backint_aws_s3_definition['agent_directory'] | length > 0
+    fail_msg: |
+      FAIL: The key 'agent_directory' in 'sap_hana_backint_aws_s3_definition' variable must defined as a non-empty string.
+  when: sap_hana_backint_aws_s3_definition['agent_directory'] is defined

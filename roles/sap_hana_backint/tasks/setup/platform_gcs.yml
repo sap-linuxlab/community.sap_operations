@@ -1,0 +1,97 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Documentation: https://docs.cloud.google.com/sap/docs/agent-for-sap/latest/configure-backint-backup-recovery#enable_backint
+
+# Agent directory is created by google_cloud_sap_agent and we do not manage it.
+- name: SAP HANA Backint - Setup - GSC - Set facts for Agent directory path and hdbconfig filename
+  ansible.builtin.set_fact:
+    __sap_hana_backint_fact_agent_directory: "{{ __sap_hana_backint_opt_path }}/backint/backint-gcs"
+    __sap_hana_backint_hdbbackint_filename: "parameters.json"
+
+
+- name: Block to ensure that google_cloud_sap_agent is present
+  block:
+    - name: SAP HANA Backint - Setup - GCS - Ensure google_cloud_sap_agent is installed
+      ansible.builtin.package:
+        name: google-cloud-sap-agent
+        state: present
+      become: true
+
+  rescue:
+    - name: SAP HANA Backint - Setup - GCS - Fail if google_cloud_sap_agent is not installed
+      ansible.builtin.fail:
+        msg: |
+          FAIL: Package 'google-cloud-sap-agent' is required but could not be installed.
+          Ensure that this is server in Google Cloud and that the appropriate repositories are configured.
+
+
+- name: SAP HANA Backint - Setup - GCS - Check if '/usr/bin/google_cloud_sap_agent' exists
+  ansible.builtin.stat:
+    path: "/usr/bin/google_cloud_sap_agent"
+  register: __sap_hana_backint_register_agent_stat
+
+- name: SAP HANA Backint - Setup - GCS - Fail if '/usr/bin/google_cloud_sap_agent' does not exist
+  ansible.builtin.fail:
+    msg: |
+      FAIL: Required executable '/usr/bin/google_cloud_sap_agent' is missing.
+      Ensure valid package 'google-cloud-sap-agent' is installed.
+  when: not __sap_hana_backint_register_agent_stat.stat.exists
+
+
+- name: SAP HANA Backint - Setup - GCS - Execute google_cloud_sap_agent with 'installbackint'
+  ansible.builtin.shell:
+    cmd: >-
+      /usr/bin/google_cloud_sap_agent installbackint
+      -sid={{ __sap_hana_backint_sid }}
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  register: __sap_hana_backint_register_installbackint
+
+
+# Alternative symlink: {{ __sap_hana_backint_opt_path }}/hdbconfig/parameters.json
+- name: SAP HANA Backint - Setup - GCS - Check if hdbconfig exists
+  ansible.builtin.stat:
+    path: "{{ __sap_hana_backint_fact_agent_directory }}/{{ __sap_hana_backint_hdbbackint_filename }}"
+  register: __sap_hana_backint_register_hdbconfig_stat
+
+- name: SAP HANA Backint - Setup - GCS - Fail if hdbconfig does not exist
+  ansible.builtin.fail:
+    msg: |
+      FAIL: Expected hdbconfig file was not found.
+      Ensure that the installation of the backint agent was successful.
+      Path: {{ __sap_hana_backint_fact_agent_directory }}/{{ __sap_hana_backint_hdbbackint_filename }}
+
+      Output from installbackint:
+      {{ __sap_hana_backint_register_installbackint.stdout }}
+  when: not __sap_hana_backint_register_hdbconfig_stat.stat.exists
+
+
+- name: SAP HANA Backint - Setup - GCS - Execute google_cloud_sap_agent with 'configurebackint'
+  ansible.builtin.shell:
+    cmd: >-
+      /usr/bin/google_cloud_sap_agent configurebackint
+      -f={{ __sap_hana_backint_fact_agent_directory }}/{{ __sap_hana_backint_hdbbackint_filename }}
+      -bucket={{ sap_hana_backint_gcs_definition['bucket'] }}
+      -compress={{ sap_hana_backint_gcs_definition['compress'] | d('true') }}
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  register: __sap_hana_backint_register_configurebackint
+
+
+- name: SAP HANA Backint - Setup - GCS - Configure hanacleaner.py script
+  ansible.builtin.include_tasks:
+    file: "hanacleaner.yml"
+  when: sap_hana_backint_hanacleaner | d(true)
+
+- name: SAP HANA Backint - Setup - GCS - Backint configuration details
+  ansible.builtin.debug:
+    msg: |
+      Backint script was configured with the following parameters:
+      Directory:      {{ __sap_hana_backint_fact_agent_directory }}
+      Symlink:        {{ __sap_hana_backint_opt_path }}/hdbbackint
+      Configuration:  {{ __sap_hana_backint_fact_agent_directory }}/{{ __sap_hana_backint_hdbbackint_filename }}
