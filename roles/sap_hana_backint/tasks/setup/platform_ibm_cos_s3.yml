@@ -80,6 +80,7 @@
         cmd: "{{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }} -c \"import zstandard; print('zstandard is installed')\""
       register: __sap_hana_backint_register_zstd_check
       ignore_errors: true
+      changed_when: false
 
     - name: SAP HANA Backint - Setup - IBM COS S3 - Fail if zstandard Python library is not installed
       ansible.builtin.fail:
@@ -194,7 +195,7 @@
 
 - name: Block to catch wrong python version errors
   block:
-    - name: SAP HANA Backint - Setup - IBM COS S3 - Execute script create_hdbbackint.py
+    - name: SAP HANA Backint - Setup - IBM COS S3 - Execute script create_hdbbackint.py  # noqa command-instead-of-shell
       ansible.builtin.shell:
         cmd: "{{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }} create_hdbbackint.py"
       args:
@@ -204,6 +205,7 @@
       environment:
         PYTHONPATH: ""
         PYTHONHOME: ""
+      changed_when: true
 
   rescue:
     - name: SAP HANA Backint - Setup - IBM COS S3 - Fail due to Python version error

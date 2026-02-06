@@ -18,6 +18,7 @@ exclude_paths:
   # sap_rfc role is excluded because it is no longer supported.
   - roles/sap_rfc
 
+
 skip_list:
   # We don't want to enforce new Ansible versions for Galaxy:
   - meta-runtime[unsupported-version]
@@ -29,15 +30,3 @@ skip_list:
   - schema
   # Allow templating inside name because it creates more detailed output:
   - name[template]
-
-  # TODO: Review and remove after all roles are reworked and cleaned up!
-  - empty-string-compare
-  - indentation
-  - line-length
-  - command-instead-of-module  # Using command rather than module
-  - command-instead-of-shell  # Use shell only when shell functionality is required
-  - experimental  # all rules tagged as experimental
-  - no-changed-when  # Commands should not change things if nothing needs doing
-  - no-handler  # Tasks that run when changed should likely be handlers
-  - risky-shell-pipe  # Shells that use pipes should set the pipefail option
-  - unnamed-task  # All tasks should be named

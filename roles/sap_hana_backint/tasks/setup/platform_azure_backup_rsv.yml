@@ -33,6 +33,7 @@
       # Script requires root user.
       become: true
       register: __sap_hana_backint_register_azure_script
+      changed_when: true
 
   rescue:
     - name: SAP HANA Backint - Setup - Azure RSV - Fail if pre-registration script failed

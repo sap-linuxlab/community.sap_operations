@@ -39,6 +39,7 @@
       become: true
       become_user: "{{ __sap_hana_sr_takeover_sidadm_user }}"
       register: __sap_hana_sr_takeover_register_sr_takeover
+      changed_when: true
 
   rescue:
     - name: SAP HANA SR Takeover - Fail if takeover command has failed
@@ -82,6 +83,7 @@
       register: __sap_hana_sr_takeover_register_stop_hana
       when:
         - __sap_hana_sr_takeover_fact_is_running
+      changed_when: true
 
     - name: SAP HANA SR Takeover - Register source primary node to target primary node
       ansible.builtin.shell:
@@ -92,6 +94,7 @@
       become_user: "{{ __sap_hana_sr_takeover_sidadm_user }}"
       register: __sap_hana_sr_takeover_register_sr_register
       failed_when: false
+      changed_when: true
 
     - name: SAP HANA SR Takeover - Fail if registration command has failed
       ansible.builtin.fail:

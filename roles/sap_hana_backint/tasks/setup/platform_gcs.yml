@@ -49,6 +49,7 @@
   become: true
   become_user: "{{ __sap_hana_backint_sidadm_user }}"
   register: __sap_hana_backint_register_installbackint
+  changed_when: true
 
 
 # Alternative symlink: {{ __sap_hana_backint_opt_path }}/hdbconfig/parameters.json
@@ -81,6 +82,7 @@
   become: true
   become_user: "{{ __sap_hana_backint_sidadm_user }}"
   register: __sap_hana_backint_register_configurebackint
+  changed_when: true
 
 
 - name: SAP HANA Backint - Setup - GCS - Configure hanacleaner.py script

@@ -46,6 +46,7 @@
       become: true
       become_user: "{{ __sap_hana_backint_sidadm_user }}"
       register: __sap_hana_backint_register_systemdb_clean
+      changed_when: true
 
     - name: SAP HANA Backint - Clean - Fail if SYSTEMDB cleanup script failed
       ansible.builtin.fail:
