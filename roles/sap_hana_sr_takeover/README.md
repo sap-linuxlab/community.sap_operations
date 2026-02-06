@@ -1,64 +1,110 @@
-sap_hana_sr_takeover
-=====================
+<!-- BEGIN Title -->
+# sap_hana_sr_takeover Ansible Role
+<!-- END Title -->
 
-This role can be used to ensure, control and change SAP HANA System Replication
+## Description
+<!-- BEGIN Description -->
+The Ansible role `sap_hana_sr_takeover` executes Takeover operation on SAP HANA System with configured SAP HANA System Replication (HSR).
+<!-- END Description -->
 
-Requirements
-------------
+<!-- BEGIN Dependencies -->
+<!-- END Dependencies -->
 
-This role requires SAP HANA System Replication configure, e.g. using the community.sap_install.sap_ha_install_hana_hsr role
+## Prerequisites
+<!-- BEGIN Prerequisites -->
+HSR must be configured correctly and `ACTIVE` when executing this Ansible Role.
 
-Role Variables
---------------
+- HSR can be configured using `community.sap_install.sap_ha_install_hana_hsr` role.
 
-The follwoing variables are mandatory for running this role unless a default value is specified
+**NOTE:** This role will fail gracefully when invalid replication is detected, but it might not catch all irregularities.
+<!-- END Prerequisites -->
 
-| Variable Name                       | Description 		                                  |
-|-------------------------------------|-----------------------------------------------------------|
-| sap_hana_sr_takeover_primary        | Server to become the primary server                       |
-| sap_hana_sr_takeover_secondary      | Server to register as secondary. The role can be run twice if more than one secondary is needed by looping over this variable |
-| sap_hana_sr_takeover_sitename       | Name of the site being registered as secondary i          |
-| sap_hana_sr_takeover_rep_mode       | HANA replication mode (defaults to sync if not set)       |
-| sap_hana_sr_takeover_hsr_oper_mode  | HANA replication operation mpode (defaults to logreplay ) |
-| sap_hana_sid                        | HANA SID                                                  |
-| sap_hana_instance_number            | HANA instance number
+## Execution
+<!-- BEGIN Execution -->
+<!-- END Execution -->
 
+### Execution Flow
+<!-- BEGIN Execution Flow -->
+1. Assert and validate all variables.
+2. Detect if SAP HANA System is running. 
+3. Detect existing replication and validate results
+4. Execute Takeover operation on target Primary node.
+5. Stop SAP HANA on the source Primary node, if it is running.
+6. Register the source Primary as a new Secondary Node.
+7. Start SAP HANA on the new Secondary Node and show summary.
+<!-- END Execution Flow -->
 
-Dependencies
-------------
-
-`sap_hana_sid` and `sap_hana_instance_number` may already be set or used in other roles
-
-Example Playbook
-----------------
-
-If you have `hana1` and `hana2` configured for SAP HSR with SID RHE and instance 00 the following playbook
-ensures that `hana1` is the primary and `hana2` is the secondary
-
-The role will fail if `hana1` is not configured for system replication (mode: none in `hdbnsutil -sr_state`).
-`hana1` needs to be primary or secondary in sync
-
-The role will do nothing if `hana1` is the primary and `hana2` is the secondary.
-
-It also ensures that the secondary HANA DB is started
+### Example
+<!-- BEGIN Execution Example -->
+Example of takeover operation from `h02hana0` in `hana_primary` group to `h02hana1` in `hana_secondary` group.
 
 ```yaml
-- name: Ensure hana1 is primary
-  hosts: hanas
+- name: Ansible Play for SAP HANA SR Takeover
+  hosts: hana_primary, hana_secondary
   become: true
+  any_errors_fatal: true
   tasks:
-    - name: Switch to hana1
+
+    - name: Execute Ansible Role sap_hana_sr_takeover
       ansible.builtin.include_role:
         name: community.sap_operations.sap_hana_sr_takeover
       vars:
-        sap_hana_sr_takeover_primary: hana2
-        sap_hana_sr_takeover_secondary: hana1
-        sap_hana_sr_takeover_sitename: DC01
-        sap_hana_sid: "RHE"
-        sap_hana_instance_number: "00"
+        sap_hana_sr_takeover_primary: 'h02hana1'
+        sap_hana_sr_takeover_sid: 'H02'
+        sap_hana_sr_takeover_instance_number: '90'
 ```
+<!-- END Execution Example -->
 
+## Testing
+This Ansible Role has been tested in following scenarios.
+Operating systems:
 
-License
--------
-Apache-2.0
+ - SUSE Linux Enterprise Server for SAP applications 16 (SLE4SAP)
+
+SAP Products:
+
+- SAP HANA 2.0 SP08
+
+**NOTE:** SAP has introduced a new parameter in HANA 2.0 SPS07, that can fail takeover when replication is not ACTIVE.<br>
+See SAP Note 3484530 - Takeover Fails With Error Message: not all volumes are replicated initially, cannot proceed.
+
+## License
+<!-- BEGIN License -->
+Apache 2.0
+<!-- END License -->
+
+## Maintainers
+<!-- BEGIN Maintainers -->
+- [Marcel Mamula](https://github.com/marcelmamula)
+<!-- END Maintainers -->
+
+## Role Variables
+<!-- BEGIN Role Variables -->
+### sap_hana_sr_takeover_primary
+- _Type:_ `string`
+
+Name of existing Secondary Node that will Takeover current Primary Node.<br>
+This name must exist in playbook hosts.
+
+### sap_hana_sr_takeover_sid
+- _Type:_ `string`
+
+SAP HANA Database System ID (SID) in capital letters.
+
+### sap_hana_sr_takeover_instance_number
+- _Type:_ `string`
+
+SAP HANA Database Instance Number.
+
+### sap_hana_sr_takeover_replication_mode
+- _Type:_ `string`
+
+SAP HANA System Replication mode that will be applied during registration.<br>
+Available values: `sync`, `syncmem`, `async`
+
+### sap_hana_sr_takeover_operation_mode
+- _Type:_ `string`
+
+SAP HANA System Replication Operation mode that will be applied during registration.<br>
+Available values: `delta_datashipping`, `logreplay`, `logreplay_readaccess`
+<!-- END Role Variables -->

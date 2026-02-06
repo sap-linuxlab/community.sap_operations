@@ -1,0 +1,189 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# This role does not support operating clustered SAP HANA due to complexity and importance.
+- name: SAP HANA SR Takeover - Detect if cluster services are enabled and active
+  ansible.builtin.command:
+    cmd: "systemctl {{ service_item.cmd }} {{ service_item.service }}"
+  loop:
+    - { cmd: 'is-active', service: 'pacemaker' }
+    - { cmd: 'is-active', service: 'corosync' }
+    - { cmd: 'is-enabled', service: 'pacemaker' }
+    - { cmd: 'is-enabled', service: 'corosync' }
+  loop_control:
+    loop_var: service_item
+  register: __sap_hana_sr_takeover_register_service_status
+  failed_when: false
+  changed_when: false
+
+- name: SAP HANA SR Takeover - Fail if cluster services were detected
+  ansible.builtin.fail:
+    msg: |
+      FAIL: This Ansible Role is not designed to run in environments with cluster services.
+
+      The following cluster indicators were detected on host: {{ inventory_hostname }}:
+      {% for item in __sap_hana_sr_takeover_register_service_status.results | selectattr('rc', 'equalto', 0) -%}
+      - {{ item.service_item.service }} is {{ item.service_item.cmd.split('-')[-1] }}
+      {% endfor %}
+
+      Takeover in a cluster environment must be planned and executed using cluster commands (e.g., crm or pcs).
+      If you are sure you want to proceed manually, stop and disable these services first.
+  when: "0 in (__sap_hana_sr_takeover_register_service_status.results | map(attribute='rc') | list)"
+
+
+# Check if expected paths exist to indicate that SAP HANA is present.
+- name: SAP HANA SR Takeover - Check existence of hdbnsutil executable
+  ansible.builtin.stat:
+    path: "{{ __sap_hana_sr_takeover_executable_path }}/hdbnsutil"
+  register: __sap_hana_sr_takeover_register_hdbnsutil_stat
+
+- name: SAP HANA SR Takeover - Fail if hdbnsutil executable is missing
+  ansible.builtin.fail:
+    msg: |
+      FAIL: The executable 'hdbnsutil' does not exist.
+      Expected path: {{ __sap_hana_sr_takeover_executable_path }}/hdbnsutil
+      Please check that the SAP HANA installation path is correct and that SAP HANA is installed properly.
+  when: not __sap_hana_sr_takeover_register_hdbnsutil_stat.stat.exists
+
+- name: SAP HANA SR Takeover - Check existence of shell environment file for the sidadm user
+  ansible.builtin.stat:
+    path: "{{ __sap_hana_sr_takeover_sidadm_env_file_path }}"
+  register: __sap_hana_sr_takeover_register_sidadm_env_stat
+
+- name: SAP HANA SR Takeover - Fail if shell environment file for the sidadm user is missing
+  ansible.builtin.fail:
+    msg: |
+      FAIL: The shell environment file for the sidadm user does not exist.
+      Expected path: {{ __sap_hana_sr_takeover_sidadm_env_file_path }}
+      Please check that the SAP HANA installation path is correct and that SAP HANA is installed properly.
+      {% if sap_hana_sr_takeover_sidadm_env_file_path | d('') | string | length == 0 %}
+      This path can be customized with the variable 'sap_hana_sr_takeover_sidadm_env_file_path'.
+      {% endif %}
+  when: not __sap_hana_sr_takeover_register_sidadm_env_stat.stat.exists
+
+
+- name: SAP HANA SR Takeover - Get current status of HDB processes
+  ansible.builtin.include_tasks:
+    file: getprocesslist.yml
+
+# Check if replication is configured and fail when not detected.
+# This works even on system that is stopped and we can use it to verify what to start.
+- name: SAP HANA SR Takeover - Get System Replication Status before takeover
+  ansible.builtin.include_tasks:
+    file: sr_state.yml
+
+- name: SAP HANA SR Takeover - Fail if replication is not found or is invalid
+  ansible.builtin.fail:
+    msg: |
+      FAIL: Existing System Replication on this host was not found or is invalid!
+
+      Output from command 'hdbnsutil -sr_state':
+      {{ __sap_hana_sr_takeover_register_sr_state.stdout | d('') }}
+  when:
+    - __sap_hana_sr_takeover_fact_online == 'unknown'
+    - not __sap_hana_sr_takeover_fact_is_primary
+    - not __sap_hana_sr_takeover_fact_is_secondary
+
+- name: SAP HANA SR Takeover - Assert that exactly one primary exists
+  ansible.builtin.assert:
+    that:
+      - (__primary_list | length) == 1
+    fail_msg: |
+      FAIL: Found {{ __primary_list | length }} primary systems.
+      Expected exactly 1 primary system.
+      This can indicate wrongly configured replication or more than one SAP HANA Systems in Ansible Play.
+      Primary Nodes detected:
+      {% for host in ansible_play_hosts if hostvars[host]['__sap_hana_sr_takeover_fact_is_primary'] | bool -%}
+      - {{ host }}
+      {% endfor %}
+  run_once: true
+  vars:
+    __primary_list: "{{ ansible_play_hosts | map('extract', hostvars, '__sap_hana_sr_takeover_fact_is_primary') | map('bool') | select | list }}"
+
+
+# We have check if primary is already set and set flag to skip rest of tasks gracefully.
+# This is playbook wide task to ensure that end_role is executed on all hosts, not just primary.
+- name: Block to check if primary is already taken over
+  when:
+    - hostvars[sap_hana_sr_takeover_primary]['__sap_hana_sr_takeover_fact_is_primary']
+      or hostvars[sap_hana_sr_takeover_primary]['__sap_hana_sr_takeover_fact_mode'] == 'primary'
+  block:
+    - name: SAP HANA SR Takeover - Notification of early role exit
+      ansible.builtin.debug:
+        msg: |
+          Node {{ sap_hana_sr_takeover_primary }} is already 'primary'. Skipping takeover tasks."
+
+          Current host and availability:
+          Host:       {{ inventory_hostname }}
+          Available:  {{ __sap_hana_sr_takeover_fact_is_running }} (RC: {{ __sap_hana_sr_takeover_register_getprocesslist.rc }})
+
+          Replication status of current node:
+          Online:     {{ __sap_hana_sr_takeover_fact_online }}
+          Mode:       {{ __sap_hana_sr_takeover_fact_mode }}
+          Site Name:  {{ __sap_hana_sr_takeover_fact_site_name }}
+
+    - name: SAP HANA SR Takeover - End Role Gracefully
+      ansible.builtin.meta: end_role
+
+
+- name: SAP HANA SR Takeover - Fail if takeover node is invalid
+  ansible.builtin.fail:
+    msg: |
+      FAIL: This node is neither 'primary' nor a valid 'secondary'.
+      Takeover cannot proceed because the node is in an unknown or uninitialized state.
+
+      Current Mode: {{ __sap_hana_sr_takeover_fact_mode }}
+      Is Secondary: {{ __sap_hana_sr_takeover_fact_is_secondary }}
+
+      Output from command 'hdbnsutil -sr_state':
+      {{ __sap_hana_sr_takeover_register_sr_state.stdout | d('') }}
+  when:
+    - sap_hana_sr_takeover_primary in [ansible_facts['hostname'], inventory_hostname, inventory_hostname_short]
+    - not __sap_hana_sr_takeover_fact_is_secondary
+
+
+- name: SAP HANA SR Takeover - Show parsed output from replication status
+  ansible.builtin.debug:
+    msg: |
+      Current host and availability:
+      Host:       {{ inventory_hostname }}
+      Available:  {{ __sap_hana_sr_takeover_fact_is_running }} (RC: {{ __sap_hana_sr_takeover_register_getprocesslist.rc }})
+
+      Replication status of current node:
+      Online:     {{ __sap_hana_sr_takeover_fact_online }}
+      Mode:       {{ __sap_hana_sr_takeover_fact_mode }}
+      Site Name:  {{ __sap_hana_sr_takeover_fact_site_name }}
+      Primary:    {{ __sap_hana_sr_takeover_fact_is_primary }}
+      Secondary:  {{ __sap_hana_sr_takeover_fact_is_secondary }}
+
+
+# There are multiple combinations we have to cover:
+# primary: UP, secondary: UP - Online takeover.
+# primary: DOWN, secondary: UP - Offline takeover.
+# primary: DOWN, secondary: DOWN - Start secondary and offline takeover.
+# primary: UP, secondary: DOWN - FAIL, we cannot ensure replication before takeover.
+- name: SAP HANA SR Takeover - Fail if data integrity is at risk
+  ansible.builtin.fail:
+    msg: |
+      FAIL: Data Integrity Risk!
+      The takeover host '{{ sap_hana_sr_takeover_primary }}' is not in a Running 'GREEN (RC: 3)' state.
+      However, the other host '{{ host_item }}' is fully Running 'GREEN (RC: 3)'.
+
+      {% set rc = hostvars[sap_hana_sr_takeover_primary]['__sap_hana_sr_takeover_register_getprocesslist']['rc'] %}
+      {% if rc == 4 %}
+      Takeover Host Status: STOPPED (RC: 4)
+      {% elif rc == 0 %}
+      Takeover Host Status: STARTING/STOPPING (RC: 0)
+      {% else %}
+      Takeover Host Status: UNKNOWN/ERROR (RC: {{ rc }})
+      {% endif %}
+
+      A takeover cannot be safely coordinated unless the intended takeover host is fully Running 'GREEN (RC: 3)'.
+  loop: "{{ ansible_play_hosts }}"
+  loop_control:
+    loop_var: host_item
+  when:
+    - host_item != sap_hana_sr_takeover_primary
+    - not hostvars[sap_hana_sr_takeover_primary]['__sap_hana_sr_takeover_fact_is_running']
+    - hostvars[host_item]['__sap_hana_sr_takeover_fact_is_running']
+  run_once: true

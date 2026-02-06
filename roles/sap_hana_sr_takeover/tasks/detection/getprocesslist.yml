@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Block rescue is not needed because we accept only RC 3 on target primary node.
+
+- name: SAP HANA SR Takeover - Get status of HDB processes
+  ansible.builtin.command:
+    cmd: >-
+      {{ __sap_hana_sr_takeover_executable_path }}/sapcontrol
+      -nr {{ sap_hana_sr_takeover_instance_number }}
+      -function GetProcessList
+  become: true
+  become_user: "{{ __sap_hana_sr_takeover_sidadm_user }}"
+  register: __sap_hana_sr_takeover_register_getprocesslist
+  # sapcontrol GetProcessList returns codes:
+  # 0 if some processes are starting or stopping (YELLOW)
+  # 3 if all processes are running (GREEN).
+  # 4 if all processes are stopped (GRAY).
+  changed_when: false
+  failed_when: false  # command module will fail with non-zero return code
+
+- name: SAP HANA SR Takeover - Set fact with system availability
+  ansible.builtin.set_fact:
+    __sap_hana_sr_takeover_fact_is_running:
+      "{{ true if __sap_hana_sr_takeover_register_getprocesslist.rc == 3 else false }}"

@@ -1,18 +1,25 @@
+# SPDX-License-Identifier: Apache-2.0
 ---
-# defaults file for hana_sr_takeover
-#
-# Define the new primary
-sap_hana_sr_takeover_primary:
 
-# Machine to be the primary (can be run twice if more than one secondary)
-sap_hana_sr_takeover_secondary:
-# Name of the site being registered
-sap_hana_sr_takeover_sitename:
+# Name of existing Secondary Node that will Takeover current Primary Node (String).
+# This name must exist in playbook hosts.
+sap_hana_sr_takeover_primary: ''
 
-# Default replication method
-sap_hana_sr_takeover_rep_mode: sync
-sap_hana_sr_takeover_hsr_oper_mode: logreplay
+# SAP HANA Database System ID (SID) in capital letters (String).
+sap_hana_sr_takeover_sid: ''
 
-# Common HANA Database parameter
-sap_hana_sid:
-sap_hana_instance_number:
+# SAP HANA Database Instance Number (String).
+sap_hana_sr_takeover_instance_number: ''
+
+# SAP HANA System Replication mode that will be applied during registration (String).
+# Available values: sync, syncmem, async
+sap_hana_sr_takeover_replication_mode: sync
+
+# SAP HANA System Replication Operation mode that will be applied during registration (String).
+# Available values: delta_datashipping, logreplay, logreplay_readaccess
+sap_hana_sr_takeover_operation_mode: logreplay
+
+# The path to the shell environment file for the <sid>adm user (String).
+# Used to source environment variables before executing SAP-specific commands.
+# If not set, it defaults to: '/usr/sap/{{ sap_hana_sr_takeover_sid | lower }}/home/.profile'
+# sap_hana_sr_takeover_sidadm_env_file_path: ''

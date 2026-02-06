@@ -1,0 +1,97 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Mandatory Variables
+
+- name: SAP HANA SR Takeover - Assert that the variable 'sap_hana_sr_takeover_primary' is defined as non empty String
+  ansible.builtin.assert:
+    that:
+      - sap_hana_sr_takeover_primary is defined
+      - sap_hana_sr_takeover_primary is string
+      - sap_hana_sr_takeover_primary | trim | length > 0
+    fail_msg: |
+      {% if sap_hana_sr_takeover_primary is not string %}
+        FAIL: The variable 'sap_hana_sr_takeover_primary' is not String.
+      {% else %}
+        FAIL: The variable 'sap_hana_sr_takeover_primary' is undefined or empty.
+      {% endif %}
+
+# We need to ensure that requested primary host is part of playbook hosts.
+- name: SAP HANA SR Takeover - Assert that the variable 'sap_hana_sr_takeover_primary' is part of playbook hosts
+  ansible.builtin.assert:
+    that:
+      - sap_hana_sr_takeover_primary in ansible_play_hosts_all
+    fail_msg: |
+      FAIL: The 'ansible_play_hosts_all' variable is not part of hosts in this playbook.
+      Expected host: '{{ sap_hana_sr_takeover_primary }}'
+      Available hosts: {{ ansible_play_hosts_all | join(', ') }}
+
+- name: SAP HANA SR Takeover - Assert that the variable 'sap_hana_sr_takeover_sid' is defined as 3 letter string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_sr_takeover_sid is defined
+      - sap_hana_sr_takeover_sid is string
+      - sap_hana_sr_takeover_sid | length == 3
+    fail_msg: |
+      {% if sap_hana_sr_takeover_sid is not defined %}
+        FAIL: The 'sap_hana_sr_takeover_sid' variable must be defined as non-empty string.
+      {% elif sap_hana_sr_takeover_sid is not string %}
+        FAIL: The 'sap_hana_sr_takeover_sid' variable must be a string,
+        but it is of type '{{ sap_hana_sr_takeover_sid | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_sr_takeover_sid' variable must be 3 letter string.
+      {% endif %}
+
+- name: SAP HANA SR Takeover - Assert that the variable 'sap_hana_sr_takeover_instance_number' is defined as String consisting of 2 digits
+  ansible.builtin.assert:
+    that:
+      - sap_hana_sr_takeover_instance_number is defined
+      - sap_hana_sr_takeover_instance_number is string
+      - sap_hana_sr_takeover_instance_number | trim | length == 2
+      - sap_hana_sr_takeover_instance_number is match('^[0-9]{2}$')
+    fail_msg: |
+      {% if sap_hana_sr_takeover_instance_number is not string %}
+        FAIL: The variable 'sap_hana_sr_takeover_instance_number' is not String.
+      {% elif sap_hana_sr_takeover_instance_number | length == 0 %}
+        FAIL: The variable 'sap_hana_sr_takeover_instance_number' is empty.
+      {% else %}
+        FAIL: The SAP HANA Instance Number '{{ sap_hana_sr_takeover_instance_number }}' is not 2 digits!
+      {% endif %}
+
+- name: SAP HANA SR Takeover - Assert that the variable 'sap_hana_sr_takeover_replication_mode' is defined with valid value
+  ansible.builtin.assert:
+    that:
+      - sap_hana_sr_takeover_replication_mode is defined
+      - sap_hana_sr_takeover_replication_mode is string
+      - sap_hana_sr_takeover_replication_mode | trim | length > 0
+      - sap_hana_sr_takeover_replication_mode in ['sync', 'syncmem', 'async']
+    success_msg: |
+      PASS: The variable 'sap_hana_sr_takeover_replication_mode' is defined with valid value.
+    fail_msg: |
+      {% if sap_hana_sr_takeover_replication_mode is not string %}
+        FAIL: The variable 'sap_hana_sr_takeover_replication_mode' is not String.
+      {% elif sap_hana_sr_takeover_replication_mode | length == 0 %}
+        FAIL: The variable 'sap_hana_sr_takeover_replication_mode' is empty.
+      {% else %}
+        FAIL: The variable 'sap_hana_sr_takeover_replication_mode' is not one of valid values.
+        Available values: sync, syncmem, async
+      {% endif %}
+
+- name: SAP HANA SR Takeover - Assert that the variable 'sap_hana_sr_takeover_operation_mode' is defined with valid value
+  ansible.builtin.assert:
+    that:
+      - sap_hana_sr_takeover_operation_mode is defined
+      - sap_hana_sr_takeover_operation_mode is string
+      - sap_hana_sr_takeover_operation_mode | trim | length > 0
+      - sap_hana_sr_takeover_operation_mode in ['delta_datashipping', 'logreplay', 'logreplay_readaccess']
+    success_msg: |
+      PASS: The variable 'sap_hana_sr_takeover_operation_mode' is defined with valid value.
+    fail_msg: |
+      {% if sap_hana_sr_takeover_operation_mode is not string %}
+        FAIL: The variable 'sap_hana_sr_takeover_operation_mode' is not String.
+      {% elif sap_hana_sr_takeover_operation_mode | length == 0 %}
+        FAIL: The variable 'sap_hana_sr_takeover_operation_mode' is empty.
+      {% else %}
+        FAIL: The variable 'sap_hana_sr_takeover_operation_mode' is not one of valid values.
+        Available values: delta_datashipping, logreplay, logreplay_readaccess
+      {% endif %}

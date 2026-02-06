@@ -1,111 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
 ---
-# tasks file for sap_hana_sr_takeover
-#
 
-- name: Get hdb online state
-  ansible.builtin.shell: |
-    set -o pipefail
-    source /usr/sap/{{ sap_hana_sid | upper }}/home/.sapenv.sh && \
-    /usr/sap/{{ sap_hana_sid | upper }}/HDB{{ sap_hana_instance_number }}/exe/hdbnsutil \
-    -sr_state | awk '($1 == "online:") {print $2}'
-  args:
-    executable: /bin/bash
-  become: true
-  become_user: "{{ sap_hana_sid | lower }}adm"
-  changed_when: false
-  register: register_sap_hana_sr_takeover_online
+- name: SAP HANA SR Takeover - Assert variables
+  ansible.builtin.include_tasks:
+    file: prepare_variables.yml
 
-# returns: none, primary or replication method (on secondary)
-- name: get mode of system
-  ansible.builtin.shell: |
-    set -o pipefail
-    source /usr/sap/{{ sap_hana_sid | upper }}/home/.sapenv.sh && \
-    /usr/sap/{{ sap_hana_sid | upper }}/HDB{{ sap_hana_instance_number }}/exe/hdbnsutil \
-    -sr_state | awk '($1 == "mode:") {print $2}'
-  args:
-    executable: /bin/bash
-  become: true
-  become_user: "{{ sap_hana_sid | lower }}adm"
-  changed_when: false
-  register: register_sap_hana_sr_takeover_mode
+- name: SAP HANA SR Takeover - Detect SAP HANA landscape
+  ansible.builtin.include_tasks:
+    file: detection/main.yml
 
-##
-# enable the right primary
-#
-- name: Fail, when planned primary cannot take over (no hsr configured)
-  ansible.builtin.fail:
-    msg: "This system is not part of HANA SR."
-  when:
-    - ansible_hostname == sap_hana_sr_takeover_primary
-    - register_sap_hana_sr_takeover_mode.stdout == "none"
+- name: SAP HANA SR Takeover - Execute Takeover action
+  ansible.builtin.include_tasks:
+    file: takeover.yml
 
-- name: make 'sap_hana_sr_takeover_primary' the new primary
-  ansible.builtin.shell: |
-    source /usr/sap/{{ sap_hana_sid | upper }}/home/.sapenv.sh && \
-    /usr/sap/{{ sap_hana_sid | upper }}/HDB{{ sap_hana_instance_number }}/exe/hdbnsutil \
-    -sr_takeover
-  args:
-    executable: /bin/bash
-  become: true
-  become_user: "{{ sap_hana_sid | lower }}adm"
-  when:
-    - ansible_hostname == sap_hana_sr_takeover_primary
-    - register_sap_hana_sr_takeover_mode.stdout != "primary"
+- name: SAP HANA SR Takeover - Get System Replication Status after takeover
+  ansible.builtin.include_tasks:
+    file: detection/sr_state.yml
 
+- name: SAP HANA SR Takeover - Get current status of HDB processes
+  ansible.builtin.include_tasks:
+    file: detection/getprocesslist.yml
 
-###
-# register the secondary
-#
-- name: register 'sap_hana_sr_takeover_secondary' to the new primary
-  become: true
-  become_user: "{{ sap_hana_sid | lower }}adm"
-  when:
-    - ansible_hostname == sap_hana_sr_takeover_secondary
-    - register_sap_hana_sr_takeover_mode.stdout != sap_hana_sr_takeover_rep_mode
-  block:
-    - name: Ensure HDB on 'sap_hana_sr_takeover_secondary' is stopped
-      ansible.builtin.shell: |
-        source /usr/sap/{{ sap_hana_sid | upper }}/home/.sapenv.sh && \
-        /usr/sap/{{ sap_hana_sid | upper }}/HDB{{ sap_hana_instance_number }}/HDB stop
-      args:
-        executable: /bin/bash
-      when:
-        - register_sap_hana_sr_takeover_online.stdout == 'true'
+- name: SAP HANA SR Takeover - Show System Replication Status after takeover
+  ansible.builtin.debug:
+    msg: |
+      Current host and availability:
+      Host:       {{ inventory_hostname }}
+      Available:  {{ __sap_hana_sr_takeover_fact_is_running }} (RC: {{ __sap_hana_sr_takeover_register_getprocesslist.rc }})
 
-    - name: Register 'sap_hana_sr_takeover_secondary' to the primary
-      ansible.builtin.shell: |
-        source /usr/sap/{{ sap_hana_sid | upper }}/home/.sapenv.sh && \
-        /usr/sap/{{ sap_hana_sid | upper }}/HDB{{ sap_hana_instance_number }}/exe/hdbnsutil \
-        -sr_register \
-        --name="{{ sap_hana_sr_takeover_sitename }}" \
-        --remoteHost={{ sap_hana_sr_takeover_primary }} \
-        --remoteInstance={{ sap_hana_instance_number }} \
-        --replicationMode={{ sap_hana_sr_takeover_rep_mode }} \
-        --operationMode={{ sap_hana_sr_takeover_hsr_oper_mode }}
-      args:
-        executable: /bin/bash
-
-## Check Online state and start HDB
-- name: Get hdb online state
-  ansible.builtin.shell: |
-    set -o pipefail
-    source /usr/sap/{{ sap_hana_sid | upper }}/home/.sapenv.sh && \
-    /usr/sap/{{ sap_hana_sid | upper }}/HDB{{ sap_hana_instance_number }}/exe/hdbnsutil \
-    -sr_state | awk '($1 == "online:") {print $2}'
-  args:
-    executable: /bin/bash
-  become: true
-  become_user: "{{ sap_hana_sid | lower }}adm"
-  changed_when: false
-  register: register_sap_hana_sr_takeover_online
-
-- name: Ensure HDB is running
-  ansible.builtin.shell: |
-    source /usr/sap/{{ sap_hana_sid | upper }}/home/.sapenv.sh && \
-    /usr/sap/{{ sap_hana_sid | upper }}/HDB{{ sap_hana_instance_number }}/HDB start
-  args:
-    executable: /bin/bash
-  become: true
-  become_user: "{{ sap_hana_sid | lower }}adm"
-  when:
-    - register_sap_hana_sr_takeover_online.stdout == 'false'
+      Replication status of current node:
+      Online:     {{ __sap_hana_sr_takeover_fact_online }}
+      Mode:       {{ __sap_hana_sr_takeover_fact_mode }}
+      Site Name:  {{ __sap_hana_sr_takeover_fact_site_name }}
+      Primary:    {{ __sap_hana_sr_takeover_fact_is_primary }}
+      Secondary:  {{ __sap_hana_sr_takeover_fact_is_secondary }}
