@@ -307,5 +307,5 @@ __sap_control_type_dict:
   "W": "WebDisp"  # W## -> WebDispatcher
   "J": "Java"     # J## (J##, JEM##) -> Java Application Server
   "S": "SCS"      # SCS## -> SCS (Java Central Services)
-  "E": "ERS"      # ERS## -> ERS (Enque Replication Server)
+  "E": "ERS"      # ERS## -> ERS (Enqueue Replication Server)
   "H": "HDB"      # HDB## (for HANA DB) - Added for completeness

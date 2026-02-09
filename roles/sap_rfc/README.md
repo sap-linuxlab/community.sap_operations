@@ -28,11 +28,11 @@ The Ansible Task variables define the RFC actions to be executed. Examples are g
 
 ### Dependencies on other Ansible Roles
 
-To execute successfully, this Ansible Role is dependant on the Ansible Collections:
+To execute successfully, this Ansible Role is dependent on the Ansible Collections:
 - `community.sap_launchpad` on first run
 - `community.sap_libs` for every run
 
-The first run will setup Python `altinstall`, subsequent runs on the same host will re-use the Python `altinstall` where PyRFC enabled. This is to protect the System default Python installation from additional or altered versions of Python Packages.
+The first run will setup Python `altinstall`, subsequent runs on the same host will reuse the Python `altinstall` where PyRFC enabled. This is to protect the System default Python installation from additional or altered versions of Python Packages.
 
 ### Operating System
 

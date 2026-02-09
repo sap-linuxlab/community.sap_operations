@@ -63,9 +63,9 @@ function get_all_hana_sid(){
 				:
 			fi
 		done < <(ls -1 /hana/shared)
-		## process substitution otherwise the variable values wont appear outside loop
+		## process substitution otherwise the variable values won't appear outside loop
 	else
-		# /hana/shared directory doesnt exist
+		# /hana/shared directory doesn't exist
 		unset HANA_SID_ARRAY
 	fi
 
@@ -105,9 +105,9 @@ function get_all_nw_sid(){
 				fi
 			fi
 		done < <(ls -1 /sapmnt)
-		## process substitution otherwise the variable values wont appear outside loop
+		## process substitution otherwise the variable values won't appear outside loop
 	else
-		# /sapmnt directory doesnt exist
+		# /sapmnt directory doesn't exist
 		unset NW_SID_ARRAY
 	fi
 

@@ -16,7 +16,7 @@ RFC parameters _(IMPORTING, EXPORTING, CHANGING)_ can accept the following data 
 RFC parameters (TABLE) is deprecated and used for backwards compatibility, this can only accept one data type:
 - ABAP Table
 
-For futher information, refer to [ABAP Programming Language - Built-In Data Types - SAP NetWeaver AS ABAP 7.56](https://help.sap.com/doc/abapdocu_756_index_htm/7.56/en-us/abenbuilt_in_types_complete.htm).
+For further information, refer to [ABAP Programming Language - Built-In Data Types - SAP NetWeaver AS ABAP 7.56](https://help.sap.com/doc/abapdocu_756_index_htm/7.56/en-us/abenbuilt_in_types_complete.htm).
 
 ## Context of SAP NWRFC SDK and PyRFC
 

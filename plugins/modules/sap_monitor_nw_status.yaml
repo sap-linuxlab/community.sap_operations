@@ -1,0 +1,43 @@
+# This companion documentation file is required for non-python modules.
+
+DOCUMENTATION:
+  module: sap_monitor_nw_status
+  short_description: Check status of SAP Netweaver System
+  description:
+    - This is a legacy shell-based module for checking status of SAP Netweaver System.
+  version_added: "1.0.0"
+  author:
+    - Jason Masipiquena
+  options:
+    nw_sid:
+      description: SAP Netweaver System ID.
+      type: str
+      required: true
+    nw_instance_number:
+      description: SAP Netweaver Instance Number.
+      type: str
+      required: true
+    nw_instance_type:
+      description: Instance type for filtering results.
+      type: str
+      required: true
+      choices: ["ASCS", "SCS", "ERS", "PAS", "WebDisp", "Java"]
+
+EXAMPLES: |
+  - name: Check SAP Netweaver status
+    community.sap_operations.sap_monitor_nw_status:
+      nw_sid: B01
+      nw_instance_number: '01'
+      nw_instance_type: PAS
+
+RETURN:
+  msg:
+    description: Status message.
+    returned: always
+    type: str
+    sample: "SAP Check Successful"
+  sap_status:
+    description: Status determined by sapcontrol.
+    returned: always
+    type: str
+    sample: "GREEN"
