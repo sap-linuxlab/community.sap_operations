@@ -1,108 +1,122 @@
-# community.sap_operations Ansible Collection ![Ansible Lint](https://github.com/sap-linuxlab/community.sap_operations/actions/workflows/ansible-lint.yml/badge.svg?branch=main)
+# community.sap_operations Ansible Collection
 
-This Ansible Collection executes various SAP Systems operational tasks, which can be used day-to-day individually or combined for more complex regular maintainance automation
+![Ansible Lint](https://github.com/sap-linuxlab/community.sap_operations/actions/workflows/ansible-lint.yml/badge.svg?branch=main)
 
-## Functionality
+## Description
 
 This Ansible Collection executes various SAP Systems operational tasks, including:
 
-- **OS configuration Post-install of SAP Software**
-  - Create ansible user for managing systems
-  - Update /etc/hosts file
-  - Update SSH authorized known hosts file
-  - Update fapolicy entries based on SAP System instance numbers
-  - Update firewall port entries based on SAP System instance numbers
-  - License registration and refresh for RHEL subscription manager
-- **SAP administration tasks**
-  - Start/Stop of SAP HANA and SAP NetWeaver (in any configuration)
-  - Update SAP profile files
-  - Execute SAP RFCs
+- Start, Stop and Restart of SAP Systems consisting of SAP Netweaver and SAP HANA.
+- Configuration of firewall with predefined ports for SAP products.
+- Configuration of SAP HANA Backint backups and their execution and cleanup.
+- Manages parameters in SAP profile files.
+- Execution of SAP HANA Replication takeover action in replicated environment.
 
-## Contents
+## Requirements
 
-An Ansible Playbook can call either an Ansible Role, or the individual Ansible Modules:
-- **Ansible Roles** (runs multiple Ansible Modules)
-- **Ansible Modules** (and adjoining Python/Bash Functions)
-
-For further information regarding the development, code structure and execution workflow please read the [Development documentation](./docs/DEVELOPMENT.md).
-
-Within this Ansible Collection, there are various Ansible Roles and Ansible Modules.
-
-#### Ansible Roles
-
-| Name &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; | Summary |
-| :-- | :-- |
-| [sap_control](/roles/sap_control) | starting and stopping SAP systems |
-| [sap_firewall](/roles/sap_firewall) | update service `firewalld` for generic / sap nw / sap hana related ports |
-| [sap_hana_backint](/roles/sap_hana_backint) | |
-| [sap_hana_sr_takeover](/roles/sap_hana_sr_takeover) | |
-| [sap_profile_update](/roles/sap_profile_update) | update default and instance profiles |
-| [sap_rfc](/roles/sap_rfc) | executes SAP RFCs |
-
-**Deprecated Roles**  
-Following Ansible Roles were deprecated:
-- os_ansible_user
-- os_etchosts
-- os_knownhosts
-- sap_fapolicy - Alternative role is available in [Linux System Roles](https://github.com/linux-system-roles/fapolicyd).
-- sap_rhsm - Alternative role is available in [Linux System Roles](https://github.com/linux-system-roles/rhc).
-
-#### Ansible Modules
-
-| Name &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; | Summary |
-| :-- | :-- |
-| [sap_operations.sap_facts](/docs/module_sap_facts.md) | gather SAP facts in a host (e.g. SAP System IDs and SAP System Instance Numbers of either SAP HANA database server or SAP NetWeaver application server) |
-| [sap_operations.sap_monitor_hana_status](/docs/module_sap_monitor.md) | check status of running SAP HANA database server |
-| [sap_operations.sap_monitor_nw_status](/docs/module_sap_monitor.md) | check status of running SAP NetWeaver application server |
-| [sap_operations.sap_monitor_nw_perf](/docs/module_sap_monitor.md) | check host performance metrics from SAP NetWeaver Primary Application Server (PAS) instance |
-| [sap_operations.sap_monitor_nw_response](/docs/module_sap_monitor.md) | check system response time metrics from SAP NetWeaver Primary Application Server (PAS) instance |
-
-## Execution examples
-
-There are various methods to execute the Ansible Collection, dependant on the use case. For more information, see [Execution examples with code samples](./docs/EXEC_EXAMPLES.md) and the summary below:
-
-| Execution Scenario | Use Case | Target |
+| Component | Control Node | Managed Node |
 | --- | --- | --- |
-| Ansible Playbook <br/>-> source Ansible Collection <br/>-> execute Ansible Task <br/>--> run Ansible Module <br/>---> run Python/Bash Functions | Simple executions with a few activities | Localhost or Remote |
-| Ansible Playbook <br/>-> source Ansible Collection <br/>-> execute Ansible Task <br/>--> run Ansible Role <br/>---> run Ansible Module <br/>----> run Python/Bash Functions <br/>--> run Ansible Role<br/>---> ... | Complex executions with various interlinked activities;<br/> run in parallel or sequentially | Localhost or Remote |
-| Python/Bash Functions | Simple testing or non-Ansible use cases | Localhost |
+| Operating System | Any OS | Red Hat Enterprise Linux for SAP Solutions 8.x, 9.x and 10.x<br>SUSE Linux Enterprise Server for SAP applications 15 SP5, 15 SP6, 15 SP7 and 16.0 |
+| Python | 3.11 or higher | 3.9 or higher |
+| Ansible-Core | 2.18 or higher | N/A |
+| Ansible | 12 or higher | N/A |
 
-## Requirements, Dependencies and Testing
+> **Managed Node Registration**<br>
+> Operating system needs to have access to required package repositories either directly or via subscription registration.
 
-### Operating System requirements
+**Additional notes:**
 
-Designed for Linux operating systems, e.g. RHEL and SLES.
+- **Version Compatibility:** For a detailed mapping of supported Python versions and Ansible-Core life cycles, refer to the official [Ansible-Core Support Matrix](https://docs.ansible.com/projects/ansible/latest/reference_appendices/release_and_maintenance.html#ansible-core-support-matrix).
+- **Control Node Permissions:** Ensure the user executing the playbooks has the necessary SSH keys and sudo privileges configured for the target environment.
 
-This role has not been tested and amended for SAP NetWeaver Application Server instantiations on IBM AIX or Windows Server.
+## Installation Instructions
 
-Assumptions for executing this role include:
-- Registered OS License and OS Package repositories are available (from the relevant content delivery network of the OS vendor)
+### Installation
+Install this collection with Ansible Galaxy command:
+```console
+ansible-galaxy collection install community.sap_operations
+```
 
-### Python requirements
+### Upgrade
+Installed Ansible Collection will not be upgraded automatically when Ansible package is upgraded.
 
-Python 3 from the execution/controller host.
+To upgrade the collection to the latest available version, run the following command:
+```console
+ansible-galaxy collection install community.sap_operations --upgrade
+```
 
-### Testing on execution/controller host
+You can also install a specific version of the collection, when you encounter issues with latest version. Please report these issues in affected Role repository if that happens.
+Example of downgrading collection to version 1.0.0:
+```
+ansible-galaxy collection install community.sap_operations:==1.0.0
+```
 
-**Tests with Ansible Core release versions:**
-- Ansible Core 2.11.5 community edition
+See [Installing collections](https://docs.ansible.com/ansible/latest/collections_guide/collections_installing.html) for more details on installation methods.
 
-**Tests with Python release versions:**
-- Python 3.9.7 (i.e. CPython distribution)
+## Use Cases
 
-**Tests with Operating System release versions:**
-- RHEL 8.4
-- macOS 11.6 (Big Sur), with Homebrew used for Python 3.x via PyEnv
+### Ansible Roles
+| Name | Summary |
+| --- | --- |
+| [sap_control](https://github.com/sap-linuxlab/community.sap_operations/tree/main/roles/sap_control) | Executes predefined sapcontrol operations |
+| [sap_firewall](https://github.com/sap-linuxlab/community.sap_operations/tree/main/roles/sap_firewall) | Configures firewall with recommended rules for SAP Systems or custom ports |
+| [sap_hana_backint](https://github.com/sap-linuxlab/community.sap_operations/tree/main/roles/sap_hana_backint) | Executes range of actions to operate SAP HANA Backint Agents across different Cloud platforms |
+| [sap_hana_sr_takeover](https://github.com/sap-linuxlab/community.sap_operations/tree/main/roles/sap_hana_sr_takeover) | Executes Takeover operation on SAP HANA System with configured SAP HANA System Replication (HSR) |
+| [sap_profile_update](https://github.com/sap-linuxlab/community.sap_operations/tree/main/roles/sap_profile_update) | Manages parameters in SAP profile files |
 
-### Testing on target/remote host
+#### Deprecated Roles
+| Name | Summary |
+| --- | --- |
+| os_ansible_user | Removed in favor of built in Ansible Module `ansible.builtin.user` |
+| os_etchosts | Removed in favor of Ansible Role [community.sap_install.sap_maintain_etc_hosts](https://github.com/sap-linuxlab/community.sap_install/tree/main/roles/sap_maintain_etc_hosts) |
+| os_knownhosts | Removed in favor of built in Ansible Module `ansible.builtin.known_hosts` |
+| sap_fapolicy | Removed in favor of Ansible Role [linux_system_roles.fapolicyd](https://github.com/linux-system-roles/fapolicyd) |
+| sap_rfc | Deprecated because of SAP discontinued development and maintenance of the PyRFC library in 2024 |
+| sap_rhsm | Removed in favor of Ansible Role [linux_system_roles.rhc](https://github.com/linux-system-roles/rhc) |
 
-**Tests with Operating System release versions:**
-- RHEL 8.2 for SAP
+### Ansible Modules
 
-## License
+> **NOTE: All included modules are currently not maintained or tested.**<br>
+> They should be used with caution.<br>
 
-- [Apache 2.0](./LICENSE)
+| Name | Summary |
+| --- | --- |
+| [sap_operations.sap_facts](/docs/module_sap_facts.md) | Gather facts about SAP Systems on host |
+| [sap_operations.sap_monitor_hana_status](/docs/module_sap_monitor_hana_status.md) | Checks status of running SAP HANA databases on host |
+| [sap_operations.sap_monitor_nw_status](/docs/module_sap_monitor_nw_status.md) | Check status of running SAP NetWeaver applications on host |
+| [sap_operations.sap_monitor_nw_perf](/docs/module_sap_monitor_nw_perf.md) | Checks host performance metrics from SAP NetWeaver Primary Application Server (PAS) instance |
+| [sap_operations.sap_monitor_nw_response](/docs/module_sap_monitor_nw_response.md) | Checks system response time metrics from SAP NetWeaver Primary Application Server (PAS) instance |
+
+## Testing
+This Ansible Collection was tested across different Operating Systems, SAP products and scenarios. You can find examples of some of them below.
+
+Operating systems:
+
+- Red Hat Enterprise Linux for SAP Solutions 8.x, 9.x and 10.x
+- SUSE Linux Enterprise Server for SAP applications 15 SP7 and 16.0
+
+SAP Products:
+
+- SAP S/4HANA AnyPremise 2023
+- SAP BW/4HANA 2023
+- SAP HANA 2.0 SPS08
+
+## Contributing
+For information on how to contribute, please see our [contribution guidelines](https://sap-linuxlab.github.io/initiative_contributions/).
 
 ## Contributors
+We welcome contributions to this collection. For a list of all contributors and information on how you can get involved, please see our [CONTRIBUTORS document](./CONTRIBUTORS.md).
 
-Contributors to the Ansible Roles within this Ansible Collection, are shown within [/docs/contributors](./docs/CONTRIBUTORS.md).
+## Support
+You can report any issues using [Issues](https://github.com/sap-linuxlab/community.sap_operations/issues) section.
+
+## Release Notes and Roadmap
+You can find the release notes of this collection in [Changelog file](https://github.com/sap-linuxlab/community.sap_operations/blob/main/CHANGELOG.rst)
+
+## Further Information
+
+### Variable Precedence Rules
+Please follow [Ansible Precedence guidelines](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable) on how to pass variables when using this collection.
+
+## License
+[Apache 2.0](https://github.com/sap-linuxlab/community.sap_install/blob/main/LICENSE) 
