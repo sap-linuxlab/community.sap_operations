@@ -19,8 +19,8 @@ For specific role maintainers, see the `README.md` file in the corresponding rol
 
 | Name | Commits | Lines Changed | Last Commit |
 | ---- | ------- | ------------- | ----------- |
+| [Marcel Mamula](https://github.com/marcelmamula) | 27 | 13114 | 2026-02-09 |
 | [Rainer Leber](https://github.com/rainerleber) | 27 | 1558 | 2022-05-16 |
-| [Marcel Mamula](https://github.com/marcelmamula) | 23 | 12087 | 2026-02-09 |
 | [Sean Freeman](https://github.com/sean-freeman) | 13 | 941 | 2024-01-10 |
 | Nicolas Bettembourg | 7 | 207 | 2025-07-23 |
 | rickgcv | 5 | 26 | 2023-01-23 |
@@ -49,7 +49,7 @@ For specific role maintainers, see the `README.md` file in the corresponding rol
 
 | Name | Commits | Lines Changed | Last Commit |
 | ---- | ------- | ------------- | ----------- |
-| [Marcel Mamula](https://github.com/marcelmamula) | 8 | 2295 | 2026-01-27 |
+| [Marcel Mamula](https://github.com/marcelmamula) | 9 | 2297 | 2026-02-09 |
 | Nicolas Bettembourg | 5 | 201 | 2025-07-23 |
 | CRW | 3 | 36 | 2025-09-08 |
 | rickgcv | 3 | 18 | 2023-01-23 |
@@ -74,7 +74,7 @@ For specific role maintainers, see the `README.md` file in the corresponding rol
 | Name | Commits | Lines Changed | Last Commit |
 | ---- | ------- | ------------- | ----------- |
 | [Sean Freeman](https://github.com/sean-freeman) | 6 | 650 | 2024-01-10 |
-| [Marcel Mamula](https://github.com/marcelmamula) | 2 | 53 | 2026-02-09 |
+| [Marcel Mamula](https://github.com/marcelmamula) | 3 | 59 | 2026-02-09 |
 | [Markus Koch](https://github.com/rhmk) | 1 | 12 | 2022-09-07 |
 
 ### Role: sap_hana_backint
@@ -82,7 +82,7 @@ For specific role maintainers, see the `README.md` file in the corresponding rol
 | Name | Commits | Lines Changed | Last Commit |
 | ---- | ------- | ------------- | ----------- |
 | [Rainer Leber](https://github.com/rainerleber) | 7 | 764 | 2022-05-03 |
-| [Marcel Mamula](https://github.com/marcelmamula) | 3 | 4020 | 2026-02-06 |
+| [Marcel Mamula](https://github.com/marcelmamula) | 4 | 4022 | 2026-02-09 |
 | [Sean Freeman](https://github.com/sean-freeman) | 3 | 90 | 2023-08-22 |
 | [Bernd Finger](https://github.com/berndfinger) | 1 | 1232 | 2022-01-25 |
 

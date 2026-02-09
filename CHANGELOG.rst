@@ -16,6 +16,7 @@ Minor Changes
 -------------
 
 - collection - Remove non-SAP roles and obsolete roles (https://github.com/sap-linuxlab/community.sap_operations/pull/43)
+- collection - Prepare for release 2.0.0 and housekeeping (https://github.com/sap-linuxlab/community.sap_operations/pull/55)
 - sap_profile_update - Complete redesign and rework (https://github.com/sap-linuxlab/community.sap_operations/pull/47)
 - sap_control - Complete redesign and rework (https://github.com/sap-linuxlab/community.sap_operations/pull/48)
 - sap_hana_backint - Complete redesign and rework (https://github.com/sap-linuxlab/community.sap_operations/pull/50)

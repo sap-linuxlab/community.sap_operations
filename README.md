@@ -76,16 +76,7 @@ See [Installing collections](https://docs.ansible.com/ansible/latest/collections
 
 ### Ansible Modules
 
-> **NOTE: All included modules are currently not maintained or tested.**<br>
-> They should be used with caution.<br>
-
-| Name | Summary |
-| --- | --- |
-| [sap_operations.sap_facts](/docs/module_sap_facts.md) | Gather facts about SAP Systems on host |
-| [sap_operations.sap_monitor_hana_status](/docs/module_sap_monitor_hana_status.md) | Checks status of running SAP HANA databases on host |
-| [sap_operations.sap_monitor_nw_status](/docs/module_sap_monitor_nw_status.md) | Check status of running SAP NetWeaver applications on host |
-| [sap_operations.sap_monitor_nw_perf](/docs/module_sap_monitor_nw_perf.md) | Checks host performance metrics from SAP NetWeaver Primary Application Server (PAS) instance |
-| [sap_operations.sap_monitor_nw_response](/docs/module_sap_monitor_nw_response.md) | Checks system response time metrics from SAP NetWeaver Primary Application Server (PAS) instance |
+> **NOTE: All included modules were deprecated in 2.0.0 release.**<br>
 
 ## Testing
 This Ansible Collection was tested across different Operating Systems, SAP products and scenarios. You can find examples of some of them below.
