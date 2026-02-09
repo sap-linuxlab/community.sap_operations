@@ -1,22 +1,20 @@
-# Following ignore rules are set to ignore old shell modules.
-
-# Ignore: expected module extension "" or ".py" or ".ps1" but found: .sh
 plugins/modules/sap_facts.sh shebang
 plugins/modules/sap_monitor_hana_status.sh shebang
 plugins/modules/sap_monitor_nw_perf.sh shebang
 plugins/modules/sap_monitor_nw_response.sh shebang
 plugins/modules/sap_monitor_nw_status.sh shebang
-
-# Ignore shell linting
-plugins/modules/sap_facts.sh shellcheck
-plugins/modules/sap_monitor_hana_status.sh shellcheck
-plugins/modules/sap_monitor_nw_perf.sh shellcheck
-plugins/modules/sap_monitor_nw_response.sh shellcheck
-plugins/modules/sap_monitor_nw_status.sh shellcheck
-
-# Ignore missing-gplv3-license and invalid-extension
-plugins/modules/sap_facts.sh validate-modules
-plugins/modules/sap_monitor_hana_status.sh validate-modules
-plugins/modules/sap_monitor_nw_perf.sh validate-modules
-plugins/modules/sap_monitor_nw_response.sh validate-modules
-plugins/modules/sap_monitor_nw_status.sh validate-modules
+plugins/modules/sap_facts.sh shellcheck:all
+plugins/modules/sap_monitor_hana_status.sh shellcheck:all
+plugins/modules/sap_monitor_nw_perf.sh shellcheck:all
+plugins/modules/sap_monitor_nw_response.sh shellcheck:all
+plugins/modules/sap_monitor_nw_status.sh shellcheck:all
+plugins/modules/sap_facts.sh validate-modules:invalid-extension
+plugins/modules/sap_monitor_hana_status.sh validate-modules:invalid-extension
+plugins/modules/sap_monitor_nw_perf.sh validate-modules:invalid-extension
+plugins/modules/sap_monitor_nw_response.sh validate-modules:invalid-extension
+plugins/modules/sap_monitor_nw_status.sh validate-modules:invalid-extension
+plugins/modules/sap_facts.sh validate-modules:missing-gplv3-license
+plugins/modules/sap_monitor_hana_status.sh validate-modules:missing-gplv3-license
+plugins/modules/sap_monitor_nw_perf.sh validate-modules:missing-gplv3-license
+plugins/modules/sap_monitor_nw_response.sh validate-modules:missing-gplv3-license
+plugins/modules/sap_monitor_nw_status.sh validate-modules:missing-gplv3-license
