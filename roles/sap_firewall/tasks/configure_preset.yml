@@ -69,7 +69,7 @@
       register: __sap_firewall_register_copy_service
       changed_when: __sap_firewall_register_copy_service.changed
 
-    # Handler cannot be used here, because reload has to be done now, not at end of role execution.
+    # Reason for noqa: Handler cannot be used here, because reload has to be done now, not at end of role execution.
     # Configuration step will fail if firewalld is not aware of new service file.
     - name: SAP Firewall - Reload firewalld after applying new service file - {{ __sap_firewall_preset.preset }}  # noqa no-handler
       ansible.builtin.command:

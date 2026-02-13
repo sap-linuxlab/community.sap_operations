@@ -195,6 +195,7 @@
 
 - name: Block to catch wrong python version errors
   block:
+    # Reason for noqa: Command is executed as shell to ensure correct environment, because Python ENV is unset and overridden.
     - name: SAP HANA Backint - Setup - IBM COS S3 - Execute script create_hdbbackint.py  # noqa command-instead-of-shell
       ansible.builtin.shell:
         cmd: "{{ sap_hana_backint_ibm_cos_s3_definition['python_path'] }} create_hdbbackint.py"
