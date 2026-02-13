@@ -1,0 +1,87 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP HANA Backint - Backup - Check if hdbbackint exists
+  ansible.builtin.stat:
+    path: "{{ __sap_hana_backint_opt_path }}/hdbbackint"
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  register: __sap_hana_backint_register_backup_hdbbackint_stat
+
+- name: SAP HANA Backint - Backup - Assert that hdbbackint exists
+  ansible.builtin.assert:
+    that:
+      - __sap_hana_backint_register_backup_hdbbackint_stat.stat.exists
+      - not __sap_hana_backint_register_backup_hdbbackint_stat.stat.isdir
+    fail_msg: |
+      FAIL: The Backint file '{{ __sap_hana_backint_opt_path }}/hdbbackint' was not found.
+      Execute this Ansible Role with 'sap_hana_backint_action' set to 'setup' before executing the playbook again.
+
+
+- name: SAP HANA Backint - Backup - Show summary before execution
+  ansible.builtin.debug:
+    msg: |
+      The SAP HANA Backup will be executed for:
+      SID: {{ __sap_hana_backint_sid }}
+      {% if sap_hana_backint_target_database == 'all' %}
+      Databases: SYSTEMDB, {{ __sap_hana_backint_fact_tenants | d([]) | join(', ') }}
+      {% elif sap_hana_backint_target_database == 'tenant' %}
+      Databases: {{ __sap_hana_backint_fact_tenants | d([]) | join(', ') }}
+      {% else %}
+      Database: SYSTEMDB
+      {% endif %}
+
+
+- name: Block for SYSTEMDB backup
+  when: sap_hana_backint_target_database in ['all', 'system']
+  block:
+    - name: SAP HANA Backint - Backup - Start SYSTEMDB backup in the background
+      ansible.builtin.shell:
+        cmd: >-
+          nohup {{ __sap_hana_backint_hdb_path }}/hdbsql
+          -U {{ sap_hana_backint_system_backup_user }}
+          "BACKUP DATA FOR SYSTEMDB USING BACKINT ('COMPLETE_DATA_BACKUP');"
+          > /dev/null 2>&1 &
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: "{{ __sap_hana_backint_sidadm_user }}"
+      register: __sap_hana_backint_register_systemdb_backup
+      changed_when: true
+
+    - name: SAP HANA Backint - Backup - Fail if SYSTEMDB backup command failed
+      ansible.builtin.fail:
+        msg: |
+          FAIL: Start of backup command for SYSTEMDB database has failed.
+          Command output:
+          {{ __sap_hana_backint_register_systemdb_backup.stdout | d('') }}
+      when: __sap_hana_backint_register_systemdb_backup.rc != 0
+
+
+- name: SAP HANA Backint - Backup - Start Tenant backup task
+  ansible.builtin.include_tasks:
+    file: backup_tenant.yml
+  loop: "{{ __sap_hana_backint_fact_tenants | d([]) }}"
+  loop_control:
+    loop_var: tenant_item
+  when: sap_hana_backint_target_database in ['all', 'tenant']
+
+
+- name: SAP HANA Backint - Backup - Summary of completed action
+  ansible.builtin.debug:
+    msg: |
+      The Ansible Role was completed with following parameters:
+      Action: {{ sap_hana_backint_action }}
+      Platform: {{ sap_hana_backint_platform }}
+      SID: {{ __sap_hana_backint_sid }}
+      Target database: {{ sap_hana_backint_target_database }}
+
+      SAP HANA Backups were started in background and this role will not wait for their completion.
+
+      Please check the SAP HANA Studio or SAP HANA Cockpit for backup status.
+
+      Alternatively you can query backups with {{ __sap_hana_backint_sidadm_user }} user:
+      hdbsql -U {{ sap_hana_backint_system_backup_user }} \
+        "SELECT DATABASE_NAME,ENTRY_TYPE_NAME,STATE_NAME,COMMENT,UTC_START_TIME \
+        FROM SYS_DATABASES.M_BACKUP_CATALOG \
+        ORDER BY UTC_START_TIME DESC"

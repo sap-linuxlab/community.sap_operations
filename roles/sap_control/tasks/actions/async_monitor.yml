@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: Block to wait for status to change if using restart or update
+  when:
+    - sap_control_function is match('restart|update')
+  block:
+    - name: SAP Control - Get initial system state for instance - {{ command_item['nr'] }}
+      ansible.builtin.shell:
+        cmd: >-
+          source ~/.profile &&
+          sapcontrol
+          -nr {{ command_item['nr'] }}
+          -function {{ command_item['async']['test_function'] | d('GetSystemInstanceList') }}
+      become: true
+      become_user: "{{ command_item['user'] }}"
+      register: __sap_control_register_async_update_before
+      changed_when: false
+
+    - name: SAP Control - Wait for initial state change for instance - {{ command_item['nr'] }}
+      ansible.builtin.shell:
+        cmd: >-
+          source ~/.profile &&
+          sapcontrol
+          -nr {{ command_item['nr'] }}
+          -function {{ command_item['async']['test_function'] | d('GetSystemInstanceList') }}
+      become: true
+      become_user: "{{ command_item['user'] }}"
+      register: __sap_control_register_async_update_after
+      changed_when: false
+      retries: "{{ sap_control_async_retries | d(command_item['async']['retries']) | d(0) | int }}"
+      delay: "{{ sap_control_async_delay | d(command_item['async']['delay']) | d(0) | int }}"
+      until: >
+        (__sap_control_register_async_update_after.stdout
+          | regex_findall('GREEN|YELLOW|GRAY|RED', multiline=True)  | sort | join(','))
+        != (__sap_control_register_async_update_before.stdout
+          | regex_findall('GREEN|YELLOW|GRAY|RED', multiline=True)  | sort | join(','))
+
+
+# This is hardcoded 20 second wait as safety measure so we give SAP time to process our commands.
+- name: SAP Control - Wait for 20 Seconds to before checking state for instance - {{ command_item['nr'] }}
+  ansible.builtin.wait_for:
+    timeout: 20
+
+- name: SAP Control - Poll for final system state for instance - {{ command_item['nr'] }}
+  ansible.builtin.shell:
+    cmd: >-
+      source ~/.profile &&
+      sapcontrol
+      -nr {{ command_item['nr'] }}
+      -function {{ command_item['async']['test_function'] | d('GetSystemInstanceList') }}
+  become: true
+  become_user: "{{ command_item['user'] }}"
+  register: __sap_control_register_async_command_output
+  changed_when: false
+  retries: "{{ sap_control_async_retries | d(command_item['async']['retries']) | d(0) | int }}"
+  delay: "{{ sap_control_async_delay | d(command_item['async']['delay']) | d(0) | int }}"
+  until: >
+    ( command_item['async']['until_false'] is not defined
+      or __sap_control_register_async_command_output.stdout
+        | regex_search(command_item['async']['until_false'], multiline=True) is none)
+    and
+    (command_item['async']['until_true'] is not defined
+      or __sap_control_register_async_command_output.stdout
+        | regex_search(command_item['async']['until_true'], multiline=True) is not none)

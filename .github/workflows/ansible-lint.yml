@@ -1,17 +1,24 @@
-name: Ansible Lint
+---
+name: Ansible Lint - Collection
 
-on: [push, pull_request]
+on:
+  schedule:
+    # This is 03:05 UTC, which is 5:05 AM in Prague/CEST.
+    - cron: '5 3 * * 1'
+
+  workflow_dispatch:
 
 jobs:
   ansible-lint:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v3
-    - run: |
-        pip3 install ansible-lint
-        ansible-lint -p roles/ -c .github/workflows/ansible-lint-config
+      - uses: actions/checkout@v5
 
-# Static: use Ansible Community Edition 4.8.0, with lowest compatible Ansible Core 2.11.6 and use Ansible-lint 5.2.1
+        # Use @v25 to automatically track the latest release from the year 2025.
+        # ansible-lint uses Calendar Versioning (e.g., v25.9.0 -> YYYY.MM.PATCH).
+        # Avoid using @main, which can introduce breaking changes unexpectedly.
+      - uses: ansible/ansible-lint@v25
+        with:
+          # Use the shared requirements file from the collection root for dependency context.
+          requirements_file: ./requirements.yml

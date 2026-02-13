@@ -1,0 +1,94 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Detection follows default SAP directories:
+# /hana/shared - Contains HANA SIDs, but they must be present in /usr/sap.
+
+- name: SAP HANA Backint - Detect SID - Find directories in '/usr/sap'
+  ansible.builtin.find:
+    paths: "/usr/sap"
+    file_type: directory
+    patterns: '*'
+    depth: 1
+  register: __sap_hana_backint_register_usr_sap_dirs
+  ignore_errors: true
+
+- name: SAP HANA Backint - Detect SID - Find directories in '/hana/shared'
+  ansible.builtin.find:
+    paths: "/hana/shared"
+    file_type: directory
+    patterns: '*'
+    depth: 1
+  register: __sap_hana_backint_register_hana_shared_dirs
+  ignore_errors: true
+
+- name: SAP HANA Backint - Detect SID - Determine SIDs in /usr/sap
+  ansible.builtin.set_fact:
+    __sap_hana_backint_fact_usr_sap_sids: >-
+      {{ __sap_hana_backint_register_usr_sap_dirs.files | d([])
+        | map(attribute='path') |map('basename')
+        | select('match', '^[A-Z][A-Z0-9][A-Z0-9]$')
+        | list }}
+
+
+# Get list of all operating system users.
+# This is required before checking existence of .profile.
+- name: SAP HANA Backint - Detect SID - Get list of available OS users
+  ansible.builtin.getent:
+    database: passwd
+
+- name: SAP HANA Backint - Detect SID - Validate SID by checking for .profile file
+  ansible.builtin.stat:
+    path: "~/.profile"
+  become: true
+  become_user: "{{ sid_item | lower }}adm"
+  register: __sap_hana_backint_register_sid_profile_stat
+  loop: "{{ __sap_hana_backint_fact_usr_sap_sids }}"
+  loop_control:
+    loop_var: sid_item
+  when: "(sid_item | lower ~ 'adm') in ansible_facts['getent_passwd']"
+
+- name: SAP HANA Backint - Detect SID - Determine valid SIDs in /usr/sap
+  ansible.builtin.set_fact:
+    __sap_hana_backint_fact_usr_sap_sids_valid: >-
+      {{ __sap_hana_backint_register_sid_profile_stat.results
+         | selectattr('stat.exists', 'defined')
+         | selectattr('stat.exists', 'equalto', true)
+         | map(attribute='sid_item')
+         | list }}
+
+- name: SAP HANA Backint - Detect SID - Inform about skipped SIDs
+  ansible.builtin.debug:
+    msg: |
+      WARN: The following SIDs were skipped because either:
+      - OS user '<sid>adm' is missing
+      - Profile file '~/.profile' is missing
+      SIDs: {{ __diff | join(', ') }}
+  when:
+    - __diff | length > 0
+  vars:
+    __diff: "{{ __sap_hana_backint_fact_usr_sap_sids | difference(__sap_hana_backint_fact_usr_sap_sids_valid) }}"
+
+
+- name: SAP HANA Backint - Detect SID - Determine SAP SIDs in /hana/shared
+  ansible.builtin.set_fact:
+    __sap_hana_backint_fact_hana_sids:
+      "{{ __sap_hana_backint_fact_usr_sap_sids_valid | intersect(__hana_sids) }}"
+  vars:
+    # List of SIDs that need to be validated against /usr/sap using intersect
+    __hana_sids: >-
+      {{ __sap_hana_backint_register_hana_shared_dirs.files | d([])
+        | map(attribute='path') |map('basename')
+        | select('match', '^[A-Z][A-Z0-9][A-Z0-9]$')
+        | list }}
+
+
+# Validate user defined SID against list of detected SIDs.
+- name: SAP HANA Backint - Detect SID - Assert that the SID is detected
+  ansible.builtin.assert:
+    that:
+      - __sap_hana_backint_sid in (__sap_hana_backint_fact_hana_sids | map('upper') | list)
+    fail_msg: |
+        FAIL: The SID defined in the variable 'sap_hana_backint_sid' was not detected.
+        Defined SID: '{{ __sap_hana_backint_sid }}'
+        Detected SIDs: '{{ __sap_hana_backint_fact_hana_sids | join(', ') }}'

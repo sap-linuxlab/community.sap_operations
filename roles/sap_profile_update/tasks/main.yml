@@ -1,38 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
 ---
-# Get instance profile path using sapcontrol
-- name: SAP Profile Update - Get Instance Profile
-  ansible.builtin.shell: |
-    set -o pipefail
-    source ~/.profile ; sapcontrol -nr {{ sap_update_profile_instance_nr }} -function ParameterValue SAPPROFILE | grep profile
-  args:
-    executable: /bin/bash
-  become: true
-  become_user: "{{ sap_update_profile_sid | lower }}adm"
-  register: get_instance_profile
 
-- name: SAP Profile Update - Setup facts
-  ansible.builtin.set_fact:
-    sap_update_profile_default_profile_file_path: "/sapmnt/{{ sap_update_profile_sid }}/profile/DEFAULT.PFL"
-    sap_update_profile_instance_profile_file_path: "{{ get_instance_profile.stdout }}"
+# Main variable 'sap_profile_update_definitions' is complex and requires special handling.
+# This is achieved by dedicated task files for each level inside of list.
+# 1. Systems - Keys: sid, profiles
+# 2. Profiles - Keys: type, instance_number, path, parameters
+# 3. Parameters - Keys: name, value, state
 
-# Update default profile
-- name: SAP Profile Update - Updating DEFAULT.PFL
-  ansible.builtin.include_tasks: update_parameter.yml
-  vars:
-    passed_parameter_path: "{{ sap_update_profile_default_profile_file_path }}"
-  loop: "{{ sap_update_profile_default_profile_params }}"
+# 1. Validate through 'sap_profile_update_definitions'
+# and check against host to ensure we catch failure before doing changes.
+- name: SAP Profile Update - Validate variables
+  ansible.builtin.include_tasks:
+    file: validation/validate_variables.yml
+
+# 2. Loop through all top level System items to update profiles
+# We need one less task file as loop is done in main, instead of validate_variables.yml.
+- name: SAP Profile Update - Update parameters
+  ansible.builtin.include_tasks:
+    file: update/update_system.yml
+  loop: "{{ sap_profile_update_definitions }}"
   loop_control:
-    loop_var: passed_parameter
-  when:
-    - sap_update_profile_default_profile_params is defined
-
-# Update instance profile
-- name: SAP Profile Update - Updating instance profile
-  ansible.builtin.include_tasks: update_parameter.yml
-  vars:
-    passed_parameter_path: "{{ sap_update_profile_instance_profile_file_path }}"
-  loop: "{{ sap_update_profile_instance_profile_params }}"
-  loop_control:
-    loop_var: passed_parameter
-  when:
-    - sap_update_profile_instance_profile_params is defined
+    loop_var: __sap_profile_update_system
+    label: "SID: {{ __sap_profile_update_system.sid }}"

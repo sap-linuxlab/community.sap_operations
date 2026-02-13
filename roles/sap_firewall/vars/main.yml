@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# SAP ports are defined directly in jinja2 templates located in the 'templates' directory.
+
+# List of required packages.
+__sap_firewall_packages:
+  - firewalld
+
+# List of additional packages like python bindings.
+__sap_firewall_extra_packages: []
+
+# Predefined SAP Firewall service names based on type and instance number.
+__sap_firewall_service_name_hana: "sap-hana-{{ sap_firewall_instance_number }}"
+__sap_firewall_service_name_netweaver: "sap-netweaver-{{ sap_firewall_instance_number }}"
+__sap_firewall_service_name_ha: "sap-ha-{{ sap_firewall_instance_number }}"
+
+# Path to the firewall service files.
+__sap_firewall_service_path: "/etc/firewalld/services"

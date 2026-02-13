@@ -1,6 +1,0 @@
----
-- name: SAP Faplocy - Service fapolicy state - start & enable
-  ansible.builtin.systemd:
-    state: started
-    name: fapolicyd
-    enabled: true

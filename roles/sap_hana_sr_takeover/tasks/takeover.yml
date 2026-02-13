@@ -1,0 +1,140 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Set helper variables to simplify tasks.
+- name: SAP HANA SR Takeover - Set fact with target primary host name
+  ansible.builtin.set_fact:
+    __sap_hana_sr_takeover_target_node: "{{ sap_hana_sr_takeover_primary }}"
+
+- name: SAP HANA SR Takeover - Set fact with source primary host name
+  ansible.builtin.set_fact:
+    __sap_hana_sr_takeover_source_node: "{{ host_item }}"
+  loop: "{{ ansible_play_hosts }}"
+  loop_control:
+    loop_var: host_item
+  when:
+    - host_item != __sap_hana_sr_takeover_target_node
+    - hostvars[host_item]['__sap_hana_sr_takeover_fact_is_primary']
+
+# Takeover steps on target primary node
+# --suspendPrimary is executed only if primary node is already running.
+- name: Block for source primary node
+  when:
+    - __sap_hana_sr_takeover_target_node in [ansible_facts['hostname'], inventory_hostname, inventory_hostname_short]
+    - __sap_hana_sr_takeover_fact_is_secondary
+  vars:
+    __takeover_command: >-
+      source {{ __sap_hana_sr_takeover_sidadm_env_file_path }} &&
+      {{ __sap_hana_sr_takeover_executable_path }}/hdbnsutil
+      -sr_takeover
+      {% if hostvars[__sap_hana_sr_takeover_source_node]['__sap_hana_sr_takeover_fact_is_running'] %}
+      --suspendPrimary
+      {% endif %}
+  block:
+    - name: SAP HANA SR Takeover - Execute takeover on the target primary node
+      ansible.builtin.shell:
+        cmd: "{{ __takeover_command }}"
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: "{{ __sap_hana_sr_takeover_sidadm_user }}"
+      register: __sap_hana_sr_takeover_register_sr_takeover
+      changed_when: true
+
+  rescue:
+    - name: SAP HANA SR Takeover - Fail if takeover command has failed
+      ansible.builtin.fail:
+        msg: |
+          FAIL: Execution of takeover command has failed!
+          Command: {{ __takeover_command }}
+
+          List of known issues, when takeover can fail:
+          - Connectivity between primary and secondary: Replication ports must be open in firewall.
+          - Replication is not in ACTIVE state: Replication must be established before executing this role. See SAP Note 3484530.
+
+          Command output:
+          {{ __sap_hana_sr_takeover_register_sr_takeover.stdout | d('') }}
+
+
+# Registration steps on source primary node
+- name: Block for source primary node
+  when:
+    - __sap_hana_sr_takeover_source_node in [ansible_facts['hostname'], inventory_hostname, inventory_hostname_short]
+    - __sap_hana_sr_takeover_fact_is_primary
+  vars:
+    __registration_command: >-
+      source {{ __sap_hana_sr_takeover_sidadm_env_file_path }} &&
+      {{ __sap_hana_sr_takeover_executable_path }}/hdbnsutil
+      -sr_register
+      --name="{{ __sap_hana_sr_takeover_fact_site_name }}"
+      --remoteHost="{{ sap_hana_sr_takeover_primary }}"
+      --remoteInstance="{{ sap_hana_sr_takeover_instance_number }}"
+      --replicationMode="{{ sap_hana_sr_takeover_replication_mode }}"
+      --operationMode="{{ sap_hana_sr_takeover_operation_mode }}"
+  block:
+    - name: SAP HANA SR Takeover - Stop SAP HANA instance on source primary node
+      ansible.builtin.command:
+        cmd: >-
+          {{ __sap_hana_sr_takeover_executable_path }}/sapcontrol
+          -nr {{ sap_hana_sr_takeover_instance_number }}
+          -function StopSystem
+      become: true
+      become_user: "{{ __sap_hana_sr_takeover_sidadm_user }}"
+      register: __sap_hana_sr_takeover_register_stop_hana
+      when:
+        - __sap_hana_sr_takeover_fact_is_running
+      changed_when: true
+
+    - name: SAP HANA SR Takeover - Register source primary node to target primary node
+      ansible.builtin.shell:
+        cmd: "{{ __registration_command }}"
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: "{{ __sap_hana_sr_takeover_sidadm_user }}"
+      register: __sap_hana_sr_takeover_register_sr_register
+      failed_when: false
+      changed_when: true
+
+    - name: SAP HANA SR Takeover - Fail if registration command has failed
+      ansible.builtin.fail:
+        msg: |
+          FAIL: Execution of registration command has failed!
+          Command: {{ __registration_command }}
+
+          List of known issues, when registration can fail:
+          - Connectivity between primary and secondary: Replication ports must be open in firewall.
+
+          Command output:
+          {{ __sap_hana_sr_takeover_register_sr_register.stdout | d('') }}
+      when: __sap_hana_sr_takeover_register_sr_register.rc != 0
+
+    - name: SAP HANA SR Takeover - Start SAP HANA instance on source primary node
+      ansible.builtin.command:
+        cmd: >-
+          {{ __sap_hana_sr_takeover_executable_path }}/sapcontrol
+          -nr {{ sap_hana_sr_takeover_instance_number }}
+          -function StartSystem
+      become: true
+      become_user: "{{ __sap_hana_sr_takeover_sidadm_user }}"
+      register: __sap_hana_sr_takeover_register_start_hana
+      changed_when: "'StartSystem OK' in __sap_hana_sr_takeover_register_start_hana.stdout"
+
+    - name: SAP HANA SR Takeover - Wait for instance to be fully started on source primary node
+      ansible.builtin.command:
+        cmd: >-
+          {{ __sap_hana_sr_takeover_executable_path }}/sapcontrol
+          -nr {{ sap_hana_sr_takeover_instance_number }}
+          -function GetProcessList
+      become: true
+      become_user: "{{ __sap_hana_sr_takeover_sidadm_user }}"
+      register: __sap_hana_sr_takeover_register_getprocesslist_source
+      # sapcontrol GetProcessList returns codes:
+      # 0 if some processes are starting or stopping (YELLOW)
+      # 3 if all processes are running (GREEN).
+      # 4 if all processes are stopped (GRAY).
+      until: __sap_hana_sr_takeover_register_getprocesslist_source.rc == 3
+      retries: 60  # wait for 10 minutes
+      delay: 10
+      changed_when: false
+      failed_when: false  # command module will fail with non-zero return code

@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP HANA Backint - Assert that the definition is defined as non-empty dictionary
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_gcs_definition is defined
+      - sap_hana_backint_gcs_definition is mapping
+      - sap_hana_backint_gcs_definition | length > 0
+    fail_msg: |
+      {% if sap_hana_backint_gcs_definition is not defined %}
+        FAIL: The 'sap_hana_backint_gcs_definition' variable must be defined as non-empty dictionary.
+      {% elif sap_hana_backint_gcs_definition is not mapping %}
+        FAIL: The 'sap_hana_backint_gcs_definition' variable must be a dictionary,
+        but it is of type '{{ sap_hana_backint_gcs_definition | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_backint_gcs_definition' variable must not be empty.
+      {% endif %}
+
+- name: SAP HANA Backint - Assert that the definition contains non-empty mandatory keys
+  ansible.builtin.assert:
+    that:
+      # bucket
+      - sap_hana_backint_gcs_definition['bucket'] is defined
+      - sap_hana_backint_gcs_definition['bucket'] is string
+      - sap_hana_backint_gcs_definition['bucket'] | length > 0
+    fail_msg: |
+      FAIL: The 'sap_hana_backint_gcs_definition' variable must contain valid mandatory keys.
+      - 'bucket': Name of the S3 bucket.
+
+- name: SAP HANA Backint - Assert that the definition contains compress defined as a boolean
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_gcs_definition['compress'] is boolean
+    fail_msg: |
+      FAIL: The key 'compress' in 'sap_hana_backint_gcs_definition' variable must defined as a boolean.
+  when: sap_hana_backint_gcs_definition['compress'] is defined

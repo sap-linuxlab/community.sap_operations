@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# This role mimics detection of SAP Instances done by 'community.sap_libs.sap_system_facts'.
+# By replicating these steps into native Ansible code, dependency on 'sap_libs' is removed.
+
+- name: Block for built in detection
+  when: not sap_control_use_sap_system_facts | d(false)
+  block:
+    - name: SAP Control - Gather SAP SIDs on host
+      ansible.builtin.include_tasks:
+        file: detection/detect_sids.yml
+
+    - name: SAP Control - Gather SAP Netweaver Instances on host
+      ansible.builtin.include_tasks:
+        file: detection/detect_instances.yml
+      loop: "{{ __sap_control_fact_nw_sids }}"
+      loop_control:
+        loop_var: sid_item
+      vars:
+        __sap_control_detect_instance_type: 'NW'
+        __sap_control_detect_dir: '/usr/sap'
+
+    - name: SAP Control - Gather SAP HANA Instances on host
+      ansible.builtin.include_tasks:
+        file: detection/detect_instances.yml
+      loop: "{{ __sap_control_fact_hana_sids }}"
+      loop_control:
+        loop_var: sid_item
+      vars:
+        __sap_control_detect_instance_type: 'HANA'
+        __sap_control_detect_dir: '/hana/shared'
+
+- name: SAP Control - Gather SAP facts using 'sap_system_facts' module
+  community.sap_libs.sap_system_facts:
+  when:
+    - sap_control_use_sap_system_facts | d(false)
+
+- name: SAP Control - Set fact with final list of instances
+  ansible.builtin.set_fact:
+    __sap_control_fact_instances: >-
+      {{ __sap_control_fact_detected_instances
+        if not sap_control_use_sap_system_facts | d(false)
+        else ansible_facts['sap'] }}

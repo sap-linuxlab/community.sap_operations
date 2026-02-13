@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Internal variable for the SAP HANA System ID with upper templating.
+__sap_hana_sr_takeover_sid: "{{ sap_hana_sr_takeover_sid | upper }}"
+
+# Internal variable for the SAP HANA System ID.
+__sap_hana_sr_takeover_sidadm_user: "{{ sap_hana_sr_takeover_sid | lower }}adm"
+
+# Default path to executable files in SAP HANA.
+__sap_hana_sr_takeover_executable_path:
+  "/usr/sap/{{ __sap_hana_sr_takeover_sid }}/HDB{{ sap_hana_sr_takeover_instance_number }}/exe"
+
+# Default path to ENV file, unless user defined is provided.
+__sap_hana_sr_takeover_sidadm_env_file_path:
+  "{{ '/usr/sap/' ~ __sap_hana_sr_takeover_sid ~ '/home/.profile'
+    if sap_hana_sr_takeover_sidadm_env_file_path | d('') | string | length == 0
+    else sap_hana_sr_takeover_sidadm_env_file_path }}"
+
+# Detection variable to skip takeover steps if primary is already set.
+__sap_hana_sr_takeover_fact_skip_takeover: false

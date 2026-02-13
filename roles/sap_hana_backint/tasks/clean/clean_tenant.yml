@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP HANA Backint - Clean - Start hanacleaner.py script for Tenant
+  ansible.builtin.shell:
+    cmd: >-
+      source ~/.profile &&
+      python3 {{ __sap_hana_backint_opt_path }}/hanacleaner.py
+      -k {{ sap_hana_backint_tenant_backup_user }}
+      -dbs {{ tenant_item }}
+      -be {{ sap_hana_backint_clean_retained_backups | d('4') }}
+      -bb true
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  register: __sap_hana_backint_register_tenant_clean
+  changed_when: true
+
+- name: SAP HANA Backint - Clean - Fail if Tenant cleanup script failed
+  ansible.builtin.fail:
+    msg: |
+      FAIL: Cleanup script for Tenant {{ tenant_item }} database has failed.
+
+      For more information about script errors, please check following sources:
+      - 2399996 - How-To: Configuring automatic SAP HANA Cleanup with SAP HANACleaner
+      - https://github.com/chriselswede/hanacleaner
+
+      Command output:
+      {{ __sap_hana_backint_register_tenant_clean.stdout }}
+  when: __sap_hana_backint_register_tenant_clean.rc != 0

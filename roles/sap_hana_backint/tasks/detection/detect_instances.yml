@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# '/hana/shared/' is used instead of '/usr/sap/', because of symlinks.
+# Find module has `follow: true` to follow symlinks, but it does not work correctly.
+- name: SAP HANA Backint - Detect Instance - Find SAP Instance directories
+  ansible.builtin.find:
+    paths: "/hana/shared/{{ __sap_hana_backint_sid }}"
+    file_type: directory
+    patterns: '*'
+    depth: 1
+  register: __sap_hana_backint_register_instance_dirs
+  ignore_errors: true
+
+# Filter to include only directories matching SAP instance name structure ('HDB' + 2 Digits)
+- name: SAP HANA Backint - Detect Instance - Determine valid SAP Instances directories
+  ansible.builtin.set_fact:
+    __sap_hana_backint_fact_potential_instance_dirs: >-
+      {{ __sap_hana_backint_register_instance_dirs.files | d([])
+          | map(attribute='path') | map('basename')
+          | select('match', '^HDB\d{2}$')
+          | list }}
+
+- name: SAP HANA Backint - Detect Instance - Fail when no instances were found
+  ansible.builtin.fail:
+    msg: |
+      FAIL: No valid SAP HANA instances found for SID {{ __sap_hana_backint_sid }}.
+      Directories found: {{ __sap_hana_backint_register_instance_dirs.files | d([]) | map(attribute='path') | map('basename') | join(', ') }}
+      Expected instance name pattern: 'HDB' followed by 2 digits, e.g., HDB00, HDB01, etc.
+  when: __sap_hana_backint_fact_potential_instance_dirs | length == 0
+
+- name: SAP HANA Backint - Detect Instance - Fail if user defined instance number is not found
+  ansible.builtin.fail:
+    msg: |
+      FAIL: Specified Instance Number was not found.
+      SID: {{ __sap_hana_backint_sid }}
+      Instance Number: {{ sap_hana_backint_instance_number }}
+      Available Instances: {{ __sap_hana_backint_fact_potential_instance_dirs | join(', ') }}
+  when:
+    - sap_hana_backint_instance_number is defined
+    - ('HDB' ~ sap_hana_backint_instance_number) not in __sap_hana_backint_fact_potential_instance_dirs
+
+- name: SAP HANA Backint - Detect Instance - Warning when multiple instances were found
+  ansible.builtin.debug:
+    msg: |
+      WARN: Multiple SAP HANA instances found for SID {{ __sap_hana_backint_sid }}.
+      Instances: {{ __sap_hana_backint_fact_potential_instance_dirs | join(', ') }}
+      The first instance will be used for Backint setup.
+  when:
+    - sap_hana_backint_instance_number is not defined
+    - __sap_hana_backint_fact_potential_instance_dirs | length > 1
+
+- name: SAP HANA Backint - Detect Instance - Set fact with instance number
+  ansible.builtin.set_fact:
+    __sap_hana_backint_instance_number: >-
+      {{ sap_hana_backint_instance_number
+         if sap_hana_backint_instance_number is defined
+         else (__sap_hana_backint_fact_potential_instance_dirs[0] | regex_replace('^HDB', '')) }}

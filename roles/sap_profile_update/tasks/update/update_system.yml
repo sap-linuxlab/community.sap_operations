@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# 1. Loop through all Profile items again to update their parameters.
+- name: SAP Profile Update - Loop through each profile to update parameters
+  ansible.builtin.include_tasks:
+    file: update/update_profile.yml
+  vars:
+    __sap_profile_update_profile_dict: >
+      {{
+        __sap_profile_update_fact_profile_dict
+        [__sap_profile_update_system.sid]
+        [__sap_profile_update_profile.instance_number | d('default')]
+      }}
+    # Timestamp format: 2025-12-09 09:58:34
+    __sap_profile_update_parameter_timestamp: >-
+      {{ ansible_facts['date_time']['date'] }} {{ ansible_facts['date_time']['time'] }}
+  loop: "{{ __sap_profile_update_system.profiles }}"
+  loop_control:
+    loop_var: __sap_profile_update_profile
+    label: >-
+      SID: {{ __sap_profile_update_system.sid }} |
+      Type: {{ __sap_profile_update_profile.type }} |
+      Inst: {{ __sap_profile_update_profile.instance_number | d('N/A') }}

@@ -1,0 +1,126 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Mandatory keys
+
+- name: SAP HANA Backint - Assert that the definition is defined as non-empty dictionary
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_ibm_cos_s3_definition is defined
+      - sap_hana_backint_ibm_cos_s3_definition is mapping
+      - sap_hana_backint_ibm_cos_s3_definition | length > 0
+    fail_msg: |
+      {% if sap_hana_backint_ibm_cos_s3_definition is not defined %}
+        FAIL: The 'sap_hana_backint_ibm_cos_s3_definition' variable must be defined as non-empty dictionary.
+      {% elif sap_hana_backint_ibm_cos_s3_definition is not mapping %}
+        FAIL: The 'sap_hana_backint_ibm_cos_s3_definition' variable must be a dictionary,
+        but it is of type '{{ sap_hana_backint_ibm_cos_s3_definition | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_backint_ibm_cos_s3_definition' variable must not be empty.
+      {% endif %}
+
+- name: SAP HANA Backint - Assert that the definition contains non-empty mandatory keys
+  ansible.builtin.assert:
+    that:
+      # auth is set as key by default
+      # bucket
+      - sap_hana_backint_ibm_cos_s3_definition['bucket'] is defined
+      - sap_hana_backint_ibm_cos_s3_definition['bucket'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['bucket'] | length > 0
+
+      # region
+      - sap_hana_backint_ibm_cos_s3_definition['region'] is defined
+      - sap_hana_backint_ibm_cos_s3_definition['region'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['region'] | length > 0
+
+      # api_key
+      - sap_hana_backint_ibm_cos_s3_definition['api_key'] is defined
+      - sap_hana_backint_ibm_cos_s3_definition['api_key'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['api_key'] | length > 0
+
+      # resource_instance_id
+      - sap_hana_backint_ibm_cos_s3_definition['resource_instance_id'] is defined
+      - sap_hana_backint_ibm_cos_s3_definition['resource_instance_id'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['resource_instance_id'] | length > 0
+
+      # endpoint_url
+      - sap_hana_backint_ibm_cos_s3_definition['endpoint_url'] is defined
+      - sap_hana_backint_ibm_cos_s3_definition['endpoint_url'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['endpoint_url'] | length > 0
+
+      # python_path
+      - sap_hana_backint_ibm_cos_s3_definition['python_path'] is defined
+      - sap_hana_backint_ibm_cos_s3_definition['python_path'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['python_path'] | length > 0
+
+      # agent_path
+      - sap_hana_backint_ibm_cos_s3_definition['agent_path'] is defined
+      - sap_hana_backint_ibm_cos_s3_definition['agent_path'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['agent_path'] | length > 0
+    fail_msg: |
+      FAIL: The 'sap_hana_backint_ibm_cos_s3_definition' variable must contain valid mandatory keys.
+      - 'bucket': Name of the S3 bucket.
+      - 'region': Region of the S3 bucket.
+      - 'api_key': API key for IBM Cloud.
+      - 'resource_instance_id': Resource Instance ID for IBM Cloud.
+      - 'endpoint_url': Endpoint URL for IBM COS S3.
+      - 'python_path': Python executable path, where compatible Python 3 is already installed.
+      - 'agent_path': Full path to aws-s3-backint-<version>-<platform>.tar.gz archive or its directory.
+
+
+# Optional keys
+
+- name: SAP HANA Backint - Assert that the definition contains trace_default_level defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_ibm_cos_s3_definition['trace_default_level'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['trace_default_level'] | length > 0
+      - sap_hana_backint_ibm_cos_s3_definition['trace_default_level'] in ['critical', 'error', 'warning', 'info', 'debug']
+    fail_msg: |
+      FAIL: The key 'trace_default_level' in 'sap_hana_backint_ibm_cos_s3_definition' variable must defined as a non-empty string.
+      Available options: critical, error, warning, info, debug
+  when: sap_hana_backint_ibm_cos_s3_definition['trace_default_level'] is defined
+
+- name: SAP HANA Backint - Assert that the definition contains trace_sdk_level defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_ibm_cos_s3_definition['trace_sdk_level'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['trace_sdk_level'] | length > 0
+      - sap_hana_backint_ibm_cos_s3_definition['trace_sdk_level'] in ['critical', 'error', 'warning', 'info', 'debug']
+    fail_msg: |
+      FAIL: The key 'trace_sdk_level' in 'sap_hana_backint_ibm_cos_s3_definition' variable must defined as a non-empty string.
+      Available options: critical, error, warning, info, debug
+  when: sap_hana_backint_ibm_cos_s3_definition['trace_sdk_level'] is defined
+
+- name: SAP HANA Backint - Assert that the definition contains compression_type defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_ibm_cos_s3_definition['compression_type'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['compression_type'] | length > 0
+      - sap_hana_backint_ibm_cos_s3_definition['compression_type'] in ['zstd', 'none']
+    fail_msg: |
+      FAIL: The key 'compression_type' in 'sap_hana_backint_ibm_cos_s3_definition' variable must defined as a non-empty string.
+      Available options: zstd, none
+  when: sap_hana_backint_ibm_cos_s3_definition['compression_type'] is defined
+
+- name: SAP HANA Backint - Assert that the definition contains compression_level defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_ibm_cos_s3_definition['compression_level'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['compression_level'] | length > 0
+      - sap_hana_backint_ibm_cos_s3_definition['compression_level'] | regex_search('^[0-9]+$')"
+      - sap_hana_backint_ibm_cos_s3_definition['compression_level'] | int >= 1
+      - sap_hana_backint_ibm_cos_s3_definition['compression_level'] | int <= 10
+    fail_msg: |
+      FAIL: The key 'compression_level' in 'sap_hana_backint_ibm_cos_s3_definition' variable must defined as a non-empty string.
+      Available options: 1 to 10
+  when: sap_hana_backint_ibm_cos_s3_definition['compression_level'] is defined
+
+- name: SAP HANA Backint - Assert that the definition contains agent_directory defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_ibm_cos_s3_definition['agent_directory'] is string
+      - sap_hana_backint_ibm_cos_s3_definition['agent_directory'] | length > 0
+    fail_msg: |
+      FAIL: The key 'agent_directory' in 'sap_hana_backint_ibm_cos_s3_definition' variable must defined as a non-empty string.
+  when: sap_hana_backint_ibm_cos_s3_definition['agent_directory'] is defined

@@ -1,0 +1,88 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+# Gather firewalld zones and services for validation
+- name: SAP Firewall - Get list of configured zones from firewalld
+  ansible.builtin.command:
+    cmd: firewall-cmd --get-zones
+  register: __sap_firewall_register_zones
+  changed_when: false
+
+- name: SAP Firewall - Get list of configured services from firewalld
+  ansible.builtin.command:
+    cmd: firewall-cmd --get-services
+  register: __sap_firewall_register_services
+  changed_when: false
+
+
+# Validate zone for presets
+- name: SAP Firewall - Assert that the Preset Zone is available
+  ansible.builtin.assert:
+    that:
+      - preset_item.zone | string in __sap_firewall_register_zones.stdout
+    success_msg: |
+      PASS: The zone '{{ preset_item.zone }}' is present in firewalld.
+    fail_msg: |
+      FAIL: The zone '{{ preset_item.zone }}' is not preset in firewalld.
+      Available zones: {{ __sap_firewall_register_zones.stdout }}
+    quiet: true
+  loop: "{{ sap_firewall_presets }}"
+  loop_control:
+    loop_var: preset_item
+    label: "Zone: {{ preset_item.zone }}"
+  when:
+    - preset_item.zone is defined
+    - preset_item.zone | length > 0
+    - preset_item.zone != 'public'
+
+
+# Validate zone for ports
+- name: SAP Firewall - Assert that the Ports Zone is available
+  ansible.builtin.assert:
+    that:
+      - port_item.zone | string in __sap_firewall_register_zones.stdout
+    success_msg: |
+      PASS: The zone '{{ port_item.zone }}' is present in firewalld.
+    fail_msg: |
+      FAIL: The zone '{{ port_item.zone }}' is not preset in firewalld.
+      Available zones: {{ __sap_firewall_register_zones.stdout }}
+    quiet: true
+  loop: "{{ sap_firewall_ports }}"
+  loop_control:
+    loop_var: port_item
+    label: "Zone: {{ port_item.zone }}"
+  when:
+    - sap_firewall_ports is defined
+    - sap_firewall_ports | length > 0
+
+
+# Validate service for ports
+- name: Block for services
+  when:
+    - sap_firewall_ports is defined
+    - sap_firewall_ports | length > 0
+  block:
+    # Flatten list of all services into one list for assert
+    - name: SAP Firewall - Get list of all services defined in 'sap_firewall_ports'
+      ansible.builtin.set_fact:
+        __sap_firewall_fact_port_services: >-
+          {{
+            sap_firewall_ports
+            | selectattr('service', 'defined')
+            | map(attribute='service')
+            | flatten
+          }}
+
+    - name: SAP Firewall - Assert that the service is present in firewalld
+      ansible.builtin.assert:
+        that:
+          - service_item | string in __sap_firewall_register_services.stdout
+        success_msg: |
+          PASS: The service '{{ service_item }}' is present in firewalld.
+        fail_msg: |
+          FAIL: The service '{{ service_item }}' is not preset in firewalld.
+          Available services: {{ __sap_firewall_register_services.stdout }}
+        quiet: true
+      loop: "{{ __sap_firewall_fact_port_services }}"
+      loop_control:
+        loop_var: service_item
+        label: "Service: {{ service_item }}"

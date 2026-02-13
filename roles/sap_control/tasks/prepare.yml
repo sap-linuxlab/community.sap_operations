@@ -1,21 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
 ---
 
-- name: Prepare - Set function control facts
-  ansible.builtin.set_fact:
-    sap_type: "{{ function_list.sap_control_function_current.split('_')[0] | lower }}"
-    funct_type: "{{ function_list.sap_control_function_current.split('_')[1] | lower }}"
+- name: SAP Control - Fail if 'sap_control_sid' is not present on host
+  ansible.builtin.fail:
+    msg: |
+      FAIL: The variable 'sap_control_sid' is defined with '{{ sap_control_sid }}',
+      but this SID is not present on this host.
 
-- name: Prepare - Set header
-  ansible.builtin.set_fact:
-    sap_control_name_header: "{{ sap_type | upper }} {{ funct_type | capitalize }}"
-
-- name: SAP Control
-  vars:
-    sap_control_execute_sid: "{{ item.SID }}"
-    sap_control_execute_type: "{{ item.Type }}"
-    sap_control_execute_instance_nr: "{{ item.NR }}"
-    sap_control_execute_instance_type: "{{ item.InstanceType }}"
-  ansible.builtin.include_tasks: "sapcontrol.yml"
-  loop: "{{ sap_facts_register.ansible_facts.sap }}"
+      Detected SIDs: {{ __sap_control_fact_instances | map(attribute='SID') | list | unique | join(', ') }}
   when:
-    - "item.InstanceType | lower == sap_type | lower"
+    - __sap_control_function['target'] == 'sid'
+    - __sap_control_fact_instances | selectattr('SID', 'eq', sap_control_sid | upper)| list | length == 0
+
+- name: SAP Control - Prepare instance list filtered by SID
+  ansible.builtin.set_fact:
+    __sap_control_fact_instances: >-
+      {{ __sap_control_fact_instances
+        | selectattr('SID', 'eq', sap_control_sid | upper)
+        | list }}
+  when: __sap_control_function['target'] == 'sid'
+
+- name: SAP Control - Prepare commands to be executed
+  ansible.builtin.include_tasks:
+    file: prepare_commands.yml
+  loop: "{{ __sap_control_function['steps'] }}"
+  loop_control:
+    loop_var: command_step_item

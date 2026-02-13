@@ -1,0 +1,297 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Mandatory Variables
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_action' is defined with valid value
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_action is defined
+      - sap_hana_backint_action is string
+      - sap_hana_backint_action | trim | length > 0
+      - sap_hana_backint_action in ['setup', 'backup', 'clean']
+    success_msg: |
+      PASS: The 'sap_hana_backint_action' variable is defined with a valid value.
+    fail_msg: |
+      {% if sap_hana_backint_action is not defined %}
+        FAIL: The 'sap_hana_backint_action' variable must be defined as non-empty string.
+      {% elif sap_hana_backint_action is not string %}
+        FAIL: The 'sap_hana_backint_action' variable must be a string,
+        but it is of type '{{ sap_hana_backint_action | type_debug }}'.
+      {% elif sap_hana_backint_action | trim | length == 0 %}
+        FAIL: The 'sap_hana_backint_action' variable cannot be an empty string.
+      {% else %}
+        FAIL: The value '{{ sap_hana_backint_action }}' is not valid for 'sap_hana_backint_action'.
+      {% endif %}
+        Available options:
+        - 'setup': Installs and configures the SAP HANA Backint agent.
+        - 'backup': Performs a backup operation using the configured Backint agent.
+        - 'clean': Executes cleanup operation using hanacleaner.py.
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_platform' is defined with valid value
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_platform is defined
+      - sap_hana_backint_platform is string
+      - sap_hana_backint_platform | trim | length > 0
+      - sap_hana_backint_platform in ['aws_s3', 'azure_backup_rsv', 'ibm_cos_s3', 'gcs']
+    success_msg: |
+      PASS: The 'sap_hana_backint_platform' variable is defined with a valid value.
+    fail_msg: |
+      {% if sap_hana_backint_platform is not defined %}
+        FAIL: The 'sap_hana_backint_platform' variable must be defined as non-empty string.
+      {% elif sap_hana_backint_platform is not string %}
+        FAIL: The 'sap_hana_backint_platform' variable must be a string,
+        but it is of type '{{ sap_hana_backint_platform | type_debug }}'.
+      {% elif sap_hana_backint_platform | trim | length == 0 %}
+        FAIL: The 'sap_hana_backint_platform' variable cannot be an empty string.
+      {% else %}
+        FAIL: The value '{{ sap_hana_backint_platform }}' is not valid for 'sap_hana_backint_platform'.
+      {% endif %}
+        Available values are 'aws_s3', 'azure_backup_rsv', 'ibm_cos_s3' or 'gcs'.
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_sid' is defined as 3 letter string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_sid is defined
+      - sap_hana_backint_sid is string
+      - sap_hana_backint_sid | length == 3
+    fail_msg: |
+      {% if sap_hana_backint_sid is not defined %}
+        FAIL: The 'sap_hana_backint_sid' variable must be defined as non-empty string.
+      {% elif sap_hana_backint_sid is not string %}
+        FAIL: The 'sap_hana_backint_sid' variable must be a string,
+        but it is of type '{{ sap_hana_backint_sid | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_backint_sid' variable must be 3 letter string.
+      {% endif %}
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_target_database' is defined with valid value
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_target_database is defined
+      - sap_hana_backint_target_database is string
+      - sap_hana_backint_target_database | trim | length > 0
+      - sap_hana_backint_target_database in ['all', 'tenant', 'system']
+    success_msg: |
+      PASS: The 'sap_hana_backint_target_database' variable is defined with a valid value.
+    fail_msg: |
+      {% if sap_hana_backint_target_database is not defined %}
+        FAIL: The 'sap_hana_backint_target_database' variable must be defined as non-empty string.
+      {% elif sap_hana_backint_target_database is not string %}
+        FAIL: The 'sap_hana_backint_target_database' variable must be a string,
+        but it is of type '{{ sap_hana_backint_target_database | type_debug }}'.
+      {% elif sap_hana_backint_target_database | trim | length == 0 %}
+        FAIL: The 'sap_hana_backint_target_database' variable cannot be an empty string.
+      {% else %}
+        FAIL: The value '{{ sap_hana_backint_target_database }}' is not valid for 'sap_hana_backint_target_database'.
+        Available options:
+         - 'all': Target both SYSTEMDB and all specified tenant databases.
+         - 'system': Target only the SYSTEMDB.
+         - 'tenant': Target only the tenant databases.
+      {% endif %}
+
+- name: SAP Control - Assert that the variable 'sap_hana_backint_tenants' is defined as a list
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_tenants is defined
+      - sap_hana_backint_tenants | type_debug == 'list'
+    fail_msg: |
+      {% if sap_hana_backint_tenants is not defined %}
+        FAIL: The 'sap_hana_backint_tenants' variable must be defined as a list.
+      {% else %}
+        FAIL: The 'sap_hana_backint_tenants' variable must be a list,
+        but it is of type '{{ sap_hana_backint_tenants | type_debug }}'.
+      {% endif %}
+
+- name: SAP Control - Assert that the variable 'sap_hana_backint_hanacleaner' is boolean
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_hanacleaner is defined
+      - sap_hana_backint_hanacleaner is boolean
+    fail_msg: |
+      {% if sap_hana_backint_hanacleaner is not defined %}
+        FAIL: The 'sap_hana_backint_hanacleaner' variable must be defined as a boolean.
+      {% else %}
+        FAIL: The 'sap_hana_backint_hanacleaner' variable must be a boolean,
+        but it is of type '{{ sap_hana_backint_hanacleaner | type_debug }}'.
+      {% endif %}
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_system_backup_user' is defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_system_backup_user is defined
+      - sap_hana_backint_system_backup_user is string
+      - sap_hana_backint_system_backup_user | length > 0
+    fail_msg: |
+      {% if sap_hana_backint_system_backup_user is not defined %}
+        FAIL: The 'sap_hana_backint_system_backup_user' variable must be defined as non-empty string.
+      {% elif sap_hana_backint_system_backup_user is not string %}
+        FAIL: The 'sap_hana_backint_system_backup_user' variable must be a string,
+        but it is of type '{{ sap_hana_backint_system_backup_user | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_backint_system_backup_user' variable cannot be an empty string.
+      {% endif %}
+  when: sap_hana_backint_target_database in ['all', 'system']
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_system_backup_password' is defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_system_backup_password is defined
+      - sap_hana_backint_system_backup_password is string
+      - sap_hana_backint_system_backup_password | length > 0
+    fail_msg: |
+      {% if sap_hana_backint_system_backup_password is not defined %}
+        FAIL: The 'sap_hana_backint_system_backup_password' variable must be defined as non-empty string.
+      {% elif sap_hana_backint_system_backup_password is not string %}
+        FAIL: The 'sap_hana_backint_system_backup_password' variable must be a string,
+        but it is of type '{{ sap_hana_backint_system_backup_password | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_backint_system_backup_password' variable cannot be an empty string.
+      {% endif %}
+  when: sap_hana_backint_target_database in ['all', 'system']
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_tenant_backup_user' is defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_tenant_backup_user is defined
+      - sap_hana_backint_tenant_backup_user is string
+      - sap_hana_backint_tenant_backup_user | length > 0
+    fail_msg: |
+      {% if sap_hana_backint_tenant_backup_user is not defined %}
+        FAIL: The 'sap_hana_backint_tenant_backup_user' variable must be defined as non-empty string.
+      {% elif sap_hana_backint_tenant_backup_user is not string %}
+        FAIL: The 'sap_hana_backint_tenant_backup_user' variable must be a string,
+        but it is of type '{{ sap_hana_backint_tenant_backup_user | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_backint_tenant_backup_user' variable cannot be an empty string.
+      {% endif %}
+  when: sap_hana_backint_target_database in ['all', 'tenant']
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_tenant_backup_password' is defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_tenant_backup_password is defined
+      - sap_hana_backint_tenant_backup_password is string
+      - sap_hana_backint_tenant_backup_password | length > 0
+    fail_msg: |
+      {% if sap_hana_backint_tenant_backup_password is not defined %}
+        FAIL: The 'sap_hana_backint_tenant_backup_password' variable must be defined as non-empty string.
+      {% elif sap_hana_backint_tenant_backup_password is not string %}
+        FAIL: The 'sap_hana_backint_tenant_backup_password' variable must be a string,
+        but it is of type '{{ sap_hana_backint_tenant_backup_password | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_backint_tenant_backup_password' variable cannot be an empty string.
+      {% endif %}
+  when: sap_hana_backint_target_database in ['all', 'tenant']
+
+
+# Optional variables
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_instance_number' is defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_instance_number is string
+      - sap_hana_backint_instance_number | length > 0
+    fail_msg: |
+      {% if sap_hana_backint_instance_number is not string %}
+        FAIL: The 'sap_hana_backint_instance_number' variable must be a string,
+        but it is of type '{{ sap_hana_backint_instance_number | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_backint_instance_number' variable must be defined as non-empty string.
+      {% endif %}
+  when: sap_hana_backint_instance_number is defined
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_agent_directory' is defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_agent_directory is string
+      - sap_hana_backint_agent_directory | length > 0
+    fail_msg: |
+      {% if sap_hana_backint_agent_directory is not string %}
+        FAIL: The 'sap_hana_backint_agent_directory' variable must be a string,
+        but it is of type '{{ sap_hana_backint_agent_directory | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_backint_agent_directory' variable must be defined as non-empty string.
+      {% endif %}
+  when: sap_hana_backint_agent_directory is defined
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_clean_retained_backups' is defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_clean_retained_backups is string
+      - sap_hana_backint_clean_retained_backups | trim | length > 0
+      - sap_hana_backint_clean_retained_backups | match('^[0-9]+$')
+    fail_msg: |
+      {% if sap_hana_backint_clean_retained_backups is not string %}
+        FAIL: The 'sap_hana_backint_clean_retained_backups' variable must be a string,
+        but it is of type '{{ sap_hana_backint_clean_retained_backups | type_debug }}'.
+      {% elif sap_hana_backint_clean_retained_backups | length == 0 %}
+        FAIL: The 'sap_hana_backint_clean_retained_backups' variable must be defined as non-empty string.
+      {% else %}
+        FAIL: The 'sap_hana_backint_clean_retained_backups' variable must contain only numerical characters.
+        Current value: '{{ sap_hana_backint_clean_retained_backups }}'
+      {% endif %}
+  when:
+    - sap_hana_backint_clean_retained_backups is defined
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_setup_hostname' is defined as a string
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_setup_hostname is string
+      - sap_hana_backint_setup_hostname | length > 0
+    fail_msg: |
+      {% if sap_hana_backint_setup_hostname is not string %}
+        FAIL: The 'sap_hana_backint_setup_hostname' variable must be a string,
+        but it is of type '{{ sap_hana_backint_setup_hostname | type_debug }}'.
+      {% else %}
+        FAIL: The 'sap_hana_backint_setup_hostname' variable must be defined as non-empty string.
+      {% endif %}
+  when: sap_hana_backint_setup_hostname is defined
+
+- name: SAP Control - Assert that the variable 'sap_hana_backint_setup_log_backint' is boolean
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_setup_log_backint is defined
+      - sap_hana_backint_setup_log_backint is boolean
+    fail_msg: |
+      {% if sap_hana_backint_setup_log_backint is not defined %}
+        FAIL: The 'sap_hana_backint_setup_log_backint' variable must be defined as a boolean.
+      {% else %}
+        FAIL: The 'sap_hana_backint_setup_log_backint' variable must be a boolean,
+        but it is of type '{{ sap_hana_backint_setup_log_backint | type_debug }}'.
+      {% endif %}
+  when: sap_hana_backint_setup_log_backint is defined
+
+
+- name: SAP HANA Backint - Assert that the variable 'sap_hana_backint_setup_log_mode' is defined with valid value
+  ansible.builtin.assert:
+    that:
+      - sap_hana_backint_setup_log_mode is string
+      - sap_hana_backint_setup_log_mode | length > 0
+      - sap_hana_backint_setup_log_mode in ['normal', 'overwrite']
+    fail_msg: |
+      {% if sap_hana_backint_setup_log_mode is not string %}
+        FAIL: The 'sap_hana_backint_setup_log_mode' variable must be a string,
+        but it is of type '{{ sap_hana_backint_setup_log_mode | type_debug }}'.
+      {% if sap_hana_backint_setup_log_mode | length == 0 %}
+        FAIL: The 'sap_hana_backint_setup_log_mode' variable must be defined as non-empty string.
+      {% else %}
+        FAIL: The value '{{ sap_hana_backint_setup_log_mode }}' is not valid for 'sap_hana_backint_setup_log_mode'.
+        Available options:
+         - 'normal': Enables normal logging mode.
+         - 'overwrite': Enables overwrite logging mode for non-Production systems.
+      {% endif %}
+      {% endif %}
+  when: sap_hana_backint_setup_log_mode is defined
+
+
+# Override variables with user defined
+- name: SAP HANA Backint - Set fact for setup hostname
+  ansible.builtin.set_fact:
+    __sap_hana_backint_setup_hostname: "{{ sap_hana_backint_setup_hostname }}"
+  when: sap_hana_backint_setup_hostname is defined
+
+- name: SAP HANA Backint - Prepare and validate variables for selected platform
+  ansible.builtin.include_tasks:
+    file: "{{ sap_hana_backint_platform }}_vars.yml"

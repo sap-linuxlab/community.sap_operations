@@ -1,0 +1,83 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP HANA Backint - Clean - Check if hanacleaner.py is present
+  ansible.builtin.stat:
+    path: "{{ __sap_hana_backint_opt_path }}/hanacleaner.py"
+  register: __sap_hana_backint_register_hanacleaner_stat
+
+- name: SAP HANA Backint - Clean - Fail if hanacleaner.py is not present
+  ansible.builtin.fail:
+    msg: |
+      FAIL: {{ __sap_hana_backint_opt_path }}/hanacleaner.py is not present.
+      Please check if the hanacleaner.py script is installed correctly.
+      Script is deployed when 'sap_hana_backint_action' is set to 'setup'
+      and 'sap_hana_backint_hanacleaner' is 'true'.
+  when: not __sap_hana_backint_register_hanacleaner_stat.stat.exists
+
+- name: SAP HANA Backint - Clean - Show summary before cleanup
+  ansible.builtin.debug:
+    msg: |
+      The SAP HANA cleanup will be executed for:
+      SID: {{ __sap_hana_backint_sid }}
+      {% if sap_hana_backint_target_database == 'all' %}
+      Databases: SYSTEMDB, {{ __sap_hana_backint_fact_tenants | d([]) | join(', ') }}
+      {% elif sap_hana_backint_target_database == 'tenant' %}
+      Databases: {{ __sap_hana_backint_fact_tenants | d([]) | join(', ') }}
+      {% else %}
+      Database: SYSTEMDB
+      {% endif %}
+
+
+- name: Block for SYSTEMDB cleanup
+  when: sap_hana_backint_target_database in ['all', 'system']
+  block:
+    - name: SAP HANA Backint - Clean - Start hanacleaner.py script for SYSTEMDB
+      ansible.builtin.shell:
+        cmd: >-
+          source ~/.profile &&
+          python3 {{ __sap_hana_backint_opt_path }}/hanacleaner.py
+          -k {{ sap_hana_backint_system_backup_user }}
+          -dbs SYSTEMDB
+          -be {{ sap_hana_backint_clean_retained_backups | d('4') }}
+          -bb true
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: "{{ __sap_hana_backint_sidadm_user }}"
+      register: __sap_hana_backint_register_systemdb_clean
+      changed_when: true
+
+    - name: SAP HANA Backint - Clean - Fail if SYSTEMDB cleanup script failed
+      ansible.builtin.fail:
+        msg: |
+          FAIL: Cleanup script for SYSTEMDB database has failed.
+
+          For more information about script errors, please check following sources:
+          - 2399996 - How-To: Configuring automatic SAP HANA Cleanup with SAP HANACleaner
+          - https://github.com/chriselswede/hanacleaner
+
+          Command output:
+          {{ __sap_hana_backint_register_systemdb_clean.stdout }}
+      when: __sap_hana_backint_register_systemdb_clean.rc != 0
+
+
+- name: SAP HANA Backint - Clean - Start Tenant cleanup task
+  ansible.builtin.include_tasks:
+    file: clean_tenant.yml
+  loop: "{{ __sap_hana_backint_fact_tenants | d([]) }}"
+  loop_control:
+    loop_var: tenant_item
+  when: sap_hana_backint_target_database in ['all', 'tenant']
+
+
+- name: SAP HANA Backint - Clean - Summary of completed action
+  ansible.builtin.debug:
+    msg: |
+      The Ansible Role was completed with following parameters:
+      Action: {{ sap_hana_backint_action }}
+      Platform: {{ sap_hana_backint_platform }}
+      SID: {{ __sap_hana_backint_sid }}
+      Target database: {{ sap_hana_backint_target_database }}
+
+      Cleanup of SAP HANA Backups was completed using {{ __sap_hana_backint_opt_path }}/hanacleaner.py

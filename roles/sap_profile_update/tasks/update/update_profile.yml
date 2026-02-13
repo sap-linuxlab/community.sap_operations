@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# 1. Capture last changed time of profile file for comparison - before
+- name: SAP Profile Update - Get modification time of profile before updates
+  ansible.builtin.stat:
+    path: "{{ __sap_profile_update_profile_dict['path'] }}"
+  register: __sap_profile_update_register_profile_before
+  when:
+    - sap_profile_update_restart_sapstartsrv | d(false)
+    - __sap_profile_update_profile.type == 'instance'
+
+
+# 2. Loop through all Parameter items to manage them.
+- name: SAP Profile Update - Manage parameters in loop
+  ansible.builtin.include_tasks:
+    file: update/update_parameter.yml
+  loop: "{{ __sap_profile_update_profile.parameters }}"
+  loop_control:
+    loop_var: parameter_item
+    label: >-
+      SID: {{ __sap_profile_update_system.sid }} |
+      Type: {{ __sap_profile_update_profile.type }} |
+      Inst: {{ __sap_profile_update_profile.instance_number | d('N/A') }} |
+      Param: {{ parameter_item.name }} |
+      State: {{ parameter_item.state | d('present') }}
+
+
+# 3. Capture last changed time of profile file for comparison - after
+- name: SAP Profile Update - Get modification time of profile after updates
+  ansible.builtin.stat:
+    path: "{{ __sap_profile_update_profile_dict['path'] }}"
+  register: __sap_profile_update_register_profile_after
+  when:
+    - sap_profile_update_restart_sapstartsrv | d(false)
+    - __sap_profile_update_profile.type == 'instance'
+
+
+# 4. Restart sapstartsrv when profile was changed for instance profile, not default.
+- name: SAP Profile Update - Restart sapstartsrv if profile file was modified
+  ansible.builtin.command:
+    cmd: >-
+      /usr/sap/hostctrl/exe/sapcontrol
+      -nr {{ __sap_profile_update_profile.instance_number }}
+      -function RestartService
+  when:
+    - sap_profile_update_restart_sapstartsrv | d(false)
+    - __sap_profile_update_profile.type == 'instance'
+    - __sap_profile_update_register_profile_before.stat.mtime != __sap_profile_update_register_profile_after.stat.mtime
+  become: true
+  changed_when: true

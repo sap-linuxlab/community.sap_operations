@@ -1,0 +1,252 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# 1. Loop through all parameters under Profile and validate all required keys.
+- name: SAP Profile Update - Assert that all nested parameters are valid
+  ansible.builtin.assert:
+    that:
+      # Parameter 'name' is valid
+      - parameter_item.name is defined
+      - parameter_item.name is string
+      - parameter_item.name | trim | length > 0
+
+      # Parameter 'state' is valid (optional, but if defined, must be 'present' or 'absent')
+      - (parameter_item.state is not defined) or (parameter_item.state | lower in ['present', 'absent'])
+
+      # Parameter 'value' is valid (required only if state is present/default)
+      - >-
+        (parameter_item.state | d('present') | lower == 'absent')
+        or
+        (parameter_item.value is defined and parameter_item.value is string)
+
+    success_msg: |
+      PASS: Parameter definition for '{{ parameter_item.name | d('unknown') }}' is valid.
+      SID:    {{ __sap_profile_update_validate_system.sid }}
+      Type:   {{ __sap_profile_update_validate_profile.type }}
+      Inst:   {{ __sap_profile_update_validate_profile.instance_number | d('N/A') }}"
+
+    fail_msg: |
+      {% if parameter_item.name is not defined or parameter_item.name | trim | length == 0 %}
+        FAIL: A parameter item is missing the 'name' key or its empty.
+      {% elif parameter_item.state is defined and parameter_item.state | lower not in ['present', 'absent'] %}
+        FAIL: Parameter 'state' must be 'present' or 'absent'. Value found: {{ parameter_item.state }}
+      {% elif (parameter_item.state | d('present') | lower == 'present') and parameter_item.value is not defined %}
+        FAIL: Parameter 'value' is required when 'state' is 'present' (default), but it is missing.
+      {% elif (parameter_item.state | d('present') | lower == 'present') and parameter_item.value is not string %}
+        FAIL: Parameter 'value' must be a string. Type found: {{ parameter_item.value | type_debug }}
+      {% else %}
+        FAIL: An unspecified parameter validation failed for name: {{ parameter_item.name | d('UNKNOWN') }}
+      {% endif %}
+        Parameter:  {{ parameter_item.name | d('UNKNOWN') }}
+        SID:        {{ __sap_profile_update_validate_system.sid }}
+        Type:       {{ __sap_profile_update_validate_profile.type }}
+        Inst:       {{ __sap_profile_update_validate_profile.instance_number | d('N/A') }}
+
+    quiet: true
+  loop: "{{ __sap_profile_update_validate_profile.parameters }}"
+  loop_control:
+    loop_var: parameter_item
+    label: >-
+      SID: {{ __sap_profile_update_validate_system.sid }} |
+      Type: {{ __sap_profile_update_validate_profile.type }} |
+      Inst: {{ __sap_profile_update_validate_profile.instance_number | d('N/A') }} |
+      Parameter: {{ parameter_item.name | d('UNKNOWN') }}
+
+
+# 2. Validate instance profile path using sapcontrol and assert if 'path' is not defined.
+- name: Block for 'instance' type
+  when: __sap_profile_update_validate_profile.type == 'instance'
+  block:
+    - name: SAP Profile Update - Assert that sapcontrol executable exists
+      ansible.builtin.assert:
+        that:
+          - __sap_profile_update_register_sapcontrol_stat.stat.exists
+        fail_msg: |
+          FAIL: The executable '/usr/sap/hostctrl/exe/sapcontrol' does not exist.
+          Please check that the SAP HANA installation path is correct and that SAP HANA is installed properly.
+
+    - name: SAP Profile Update - Get Instance Profile path from sapcontrol
+      ansible.builtin.command:
+        cmd: >-
+          /usr/sap/hostctrl/exe/sapcontrol
+          -nr {{ __sap_profile_update_validate_profile.instance_number }}
+          -function ParameterValue SAPPROFILE
+      register: __sap_profile_update_register_check_sapprofile
+      changed_when: false
+      failed_when: false
+
+    - name: SAP Profile Update - Set fact for system defined instance profile path
+      ansible.builtin.set_fact:
+        __sap_profile_update_fact_check_instance_profile_path:
+          "{{ __sap_profile_update_register_check_sapprofile.stdout_lines | select('search', 'profile') | first | trim }}"
+      when: not __sap_profile_update_register_check_sapprofile.failed
+
+    - name: SAP Profile Update - Check presence of system defined instance profile path
+      ansible.builtin.stat:
+        path: "{{ __sap_profile_update_fact_check_instance_profile_path }}"
+      register: __sap_profile_update_register_system_path_stat
+      when:
+        - __sap_profile_update_validate_profile.path is not defined
+        - not __sap_profile_update_register_check_sapprofile.failed
+
+    - name: SAP Profile Update - Fail if system defined instance profile path does not exist
+      ansible.builtin.fail:
+        msg: |
+          FAIL: Detection of instance profile path has failed,
+          because of invalid output of `sapcontrol` command or profile missing.
+
+          Path: {{ __sap_profile_update_fact_check_instance_profile_path | d('N/A') }}
+
+          Command output:
+          {{ __sap_profile_update_register_check_sapprofile.stdout_lines }}
+      when:
+        - __sap_profile_update_validate_profile.path is not defined
+        - __sap_profile_update_register_check_sapprofile.failed
+          or not __sap_profile_update_register_system_path_stat.stat.exists
+
+
+# 3. Validate default profile path and assert if 'path' is not defined.
+- name: Block for 'default' type
+  when:
+    - __sap_profile_update_validate_profile.type == 'default'
+  block:
+    - name: SAP Profile Update - Set fact for default profile path
+      ansible.builtin.set_fact:
+        __sap_profile_update_fact_check_default_profile_path:
+          "/sapmnt/{{ __sap_profile_update_validate_system.sid }}/profile/DEFAULT.PFL"
+
+    - name: SAP Profile Update - Check presence of default profile path
+      ansible.builtin.stat:
+        path: "{{ __sap_profile_update_fact_check_default_profile_path }}"
+      register: __sap_profile_update_register_check_default_path
+
+    - name: SAP Profile Update - Assert that default profile path exists
+      ansible.builtin.assert:
+        that:
+          - __sap_profile_update_register_check_default_path.stat.exists
+        fail_msg: |
+          FAIL: The default profile does not exist in standard path.
+          Ensure that SAP is installed or custom path is provided with 'path' parameter.
+
+          Path: {{ __sap_profile_update_fact_check_default_profile_path }}
+          SID:  {{ __sap_profile_update_validate_system.sid }}
+          Type: {{ __sap_profile_update_validate_profile.type }}
+      when: __sap_profile_update_validate_profile.path is not defined
+
+
+# 4. Validate user defined profile path and compare it to system defined for instance type.
+- name: Block to validate user defined profile path
+  when: __sap_profile_update_validate_profile.path is defined
+  block:
+
+    - name: SAP Profile Update - Check presence of user defined profile path
+      ansible.builtin.stat:
+        path: "{{ __sap_profile_update_validate_profile.path }}"
+      register: __sap_profile_update_register_check_defined_path
+
+    - name: SAP Profile Update - Assert that user defined profile path exists
+      ansible.builtin.assert:
+        that:
+          - __sap_profile_update_register_check_defined_path.stat.exists
+        fail_msg: |
+          FAIL: The path defined in parameter 'path' does not exist.
+          Please correct this value or remove the parameter 'path'.
+
+          Path: {{ __sap_profile_update_validate_profile.path }}
+          SID:  {{ __sap_profile_update_validate_system.sid }}
+          Type: {{ __sap_profile_update_validate_profile.type }}
+          Inst: {{ __sap_profile_update_validate_profile.instance_number | d('N/A') }}
+
+    - name: SAP Profile Update - Inform that user defined profile path differs to system defined
+      ansible.builtin.debug:
+        msg: |
+          WARN: The path defined in parameter 'path' differs to system defined.
+          The role will continue with further validations and changes.
+
+          Defined:  {{ __sap_profile_update_validate_profile.path }}
+          System:   {{ __sap_profile_update_fact_check_instance_profile_path }}
+
+          SID:  {{ __sap_profile_update_validate_system.sid }}
+          Type: {{ __sap_profile_update_validate_profile.type }}
+          Inst: {{ __sap_profile_update_validate_profile.instance_number | d('N/A') }}
+      when:
+        - __sap_profile_update_fact_check_instance_profile_path is defined
+        - __sap_profile_update_validate_profile.type == 'instance'
+        - __sap_profile_update_register_system_path_stat.stat.exists is defined
+        - __sap_profile_update_register_system_path_stat.stat.exists
+
+    # Overwrite existing fact with final valid path
+    - name: SAP Profile Update - Set fact for user defined instance profile path
+      ansible.builtin.set_fact:
+        __sap_profile_update_fact_check_custom_profile_path:
+          "{{ __sap_profile_update_validate_profile.path }}"
+
+
+# 5. Get contents of profile and validate it for duplicated parameters.
+# This is done to ensure that lineinfile replacement does not fail.
+- name: SAP Profile Update - Set fact for profile path
+  ansible.builtin.set_fact:
+    __sap_profile_update_fact_check_profile_path: >-
+      {%- if __sap_profile_update_fact_check_custom_profile_path is defined -%}
+        {{ __sap_profile_update_fact_check_custom_profile_path }}
+      {%- elif __sap_profile_update_validate_profile.type == 'instance' -%}
+        {{ __sap_profile_update_fact_check_instance_profile_path }}
+      {%- else -%}
+        {{ __sap_profile_update_fact_check_default_profile_path }}
+      {%- endif -%}
+
+- name: SAP Profile Update - Read profile content
+  ansible.builtin.slurp:
+    src: "{{ __sap_profile_update_fact_check_profile_path }}"
+  register: __sap_profile_update_register_check_profile_content
+
+# Extract parameter names from profile content, without comments.
+- name: SAP Profile Update - Extract parameter names from profile content
+  ansible.builtin.set_fact:
+    __sap_profile_update_fact_parameter_names: >-
+      {{ __sap_profile_update_register_check_profile_content.content | b64decode
+        | regex_findall('^([a-zA-Z0-9./_]+)\s*=', multiline=True) }}
+
+- name: SAP Profile Update - Check for duplicated parameters in profile
+  ansible.builtin.assert:
+    that:
+      - __sap_profile_update_fact_parameter_names | unique | length == __sap_profile_update_fact_parameter_names | length
+    fail_msg: |
+      FAIL: The profile contains duplicated parameters.
+      Please review the profile and remove any duplicates.
+
+      Profile: {{ __sap_profile_update_fact_check_profile_path }}
+      SID:     {{ __sap_profile_update_validate_system.sid }}
+      Type:    {{ __sap_profile_update_validate_profile.type }}
+      Inst:    {{ __sap_profile_update_validate_profile.instance_number | d('N/A') }}
+
+      Duplicated parameters found:
+      {% set counts = {} %}
+      {% for item in __sap_profile_update_fact_parameter_names %}
+      {%   if counts.update({item: (counts[item] | d(0)) + 1}) %}{% endif %}
+      {% endfor %}
+      {% for key, value in counts.items() if value > 1 %}
+      - {{ key }}
+      {% endfor %}
+
+
+# 6. Build detailed dictionary that will be used to store gathered details,
+# to avoid gathering them again during update loops.
+# Contents can be queried with '__sap_profile_update_fact_profile_dict['B01']['default']['parameters']'
+- name: SAP Profile Update - Update facts dictionary with profile details
+  ansible.builtin.set_fact:
+    __sap_profile_update_fact_profile_dict:
+      "{{ __sap_profile_update_fact_profile_dict | d({}) | combine(profile_fragment, recursive=True) }}"
+  vars:
+    profile_fragment: >
+      {{
+        {
+          (__sap_profile_update_validate_system.sid): {
+            (__sap_profile_update_validate_profile.instance_number | d('default')): {
+              "path": __sap_profile_update_fact_check_profile_path,
+              "parameters": __sap_profile_update_fact_parameter_names | unique,
+              "slurp": __sap_profile_update_register_check_profile_content.content
+            }
+          }
+        }
+      }}

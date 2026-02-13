@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP HANA Backint - Backup - Start Tenant backup in the background
+  ansible.builtin.shell:
+    cmd: >-
+      nohup {{ __sap_hana_backint_hdb_path }}/hdbsql
+      -U {{ sap_hana_backint_tenant_backup_user }}
+      "BACKUP DATA FOR {{ tenant_item }} USING BACKINT ('COMPLETE_DATA_BACKUP');"
+      > /dev/null 2>&1 &
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  register: __sap_hana_backint_register_tenant_backup
+  changed_when: true
+
+- name: SAP HANA Backint - Backup - Fail if Tenant backup command failed
+  ansible.builtin.fail:
+    msg: |
+      FAIL: Start of backup command for Tenant {{ tenant_item }} database has failed.
+      Command output:
+      {{ __sap_hana_backint_register_tenant_backup.stdout }}
+  when: __sap_hana_backint_register_tenant_backup.rc != 0

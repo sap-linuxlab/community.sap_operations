@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+# Documentation: https://docs.azure.cn/en-us/backup/backup-azure-sap-hana-database
+# NOTE: Azure does not document full workflow with 'scriptforpermsonhana'.
+
+# We have to create backup users before running script.
+- name: SAP HANA Backint - Setup - SYSTEMDB - Configure hdbuserstore
+  ansible.builtin.include_tasks:
+    file: "hdbuserstore.yml"
+  vars:
+    __sap_hana_backint_hdbuserstore_user: "{{ sap_hana_backint_system_backup_user }}"
+    __sap_hana_backint_hdbuserstore_password: "{{ sap_hana_backint_system_backup_password }}"
+
+
+- name: SAP HANA Backint - Setup - Azure RSV - Download backint pre-registration script from Microsoft
+  ansible.builtin.get_url:
+    url: "{{ __sap_hana_backint_azure_script_url }}"
+    dest: "{{ __sap_hana_backint_register_tempfile.path }}/scriptforpermsonhana.sh"
+    mode: "0775"
+
+
+- name: Block to ensure that script errors are caught
+  block:
+    - name: SAP HANA Backint - Setup - Azure RSV - Execute pre-registration script
+      ansible.builtin.shell:
+        cmd: >-
+          {{ __sap_hana_backint_register_tempfile.path }}/scriptforpermsonhana.sh
+          --sid {{ __sap_hana_backint_sid }}
+          --backup-key {{ sap_hana_backint_system_backup_user }}
+      args:
+        executable: /bin/bash
+      # Script requires root user.
+      become: true
+      register: __sap_hana_backint_register_azure_script
+      changed_when: true
+
+  rescue:
+    - name: SAP HANA Backint - Setup - Azure RSV - Fail if pre-registration script failed
+      ansible.builtin.fail:
+        msg: |
+          FAIL: Execution of pre-registration script has failed.
+          Command output:
+          {{ __sap_hana_backint_register_azure_script.stdout }}
+
+
+- name: SAP HANA Backint - Setup - Azure RSV - Configure hanacleaner.py script
+  ansible.builtin.include_tasks:
+    file: "hanacleaner.yml"
+  when: sap_hana_backint_hanacleaner | d(true)
+
+- name: SAP HANA Backint - Setup - Azure RSV - Backint configuration details
+  ansible.builtin.debug:
+    msg: |
+      Pre-registration was completed.
+      The Backint interface is now managed by the Azure Workload Backup service (via 'waagent').
+      Manual edits to local Backint parameter files are not required as the service handles configuration automatically.
+      Next Steps in the Azure Cloud Console: Discovering the database instances and enabling the Backup Policy.

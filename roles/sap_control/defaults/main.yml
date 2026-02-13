@@ -1,85 +1,55 @@
+# SPDX-License-Identifier: Apache-2.0
 ---
-sap_sid: "initial"
-sap_control_function: "initial"
-sap_control_name_header: "initial"
 
-nowait: false
-sap_control_start: "StartWait 180 2"
-sap_control_stop: "StopWait 180 2"
+# The 3-letter SAP System ID (e.g., 'PRD', 'QAS').
+# This is required when executing a function that targets a specific SAP instance
+# (e.g., 'start_sap_nw') instead of all instances on the host.
+sap_control_sid: ''
 
-# get_all_sap_sid_dir_nw: "/sapmnt"
-# get_all_sap_sid_dir_hana: "/hana/shared"
+# The sapcontrol function to execute on target host.
+# These are predefined functions defined in variable '__sap_control_function_definitions'.
+#
+# The function names are constructed using the pattern: [ACTION]_[SCOPE]_[TARGET]
+# [ACTION]: The operation to perform.
+#   - Process-level: 'start', 'stop', 'restart'
+#   - System-level (asynchronous): 'startsystem', 'stopsystem', 'restartsystem', 'updatesystem'
+#
+# [SCOPE]: The instances the action applies to.
+#   - 'all': Applies to all detected instances of the target type.
+#   - 'sap': Applies to a single instance specified by 'sap_control_sid'.
+#
+# [TARGET]: The type of SAP system.
+#   - 'hana': SAP HANA instances.
+#   - 'nw': SAP NetWeaver instances.
+#   - 'sap': All SAP instances (both 'hana' and 'nw').
+#
+# Currently available options:
+#   start_all_hana, stop_all_hana, start_sap_hana, stop_sap_hana, restart_all_hana, restart_sap_hana,
+#   start_all_nw, stop_all_nw, start_sap_nw, stop_sap_nw, restart_all_nw, restart_sap_nw,
+#   start_all_sap, stop_all_sap, restart_all_sap,
+#   startsystem_all_nw, stopsystem_all_nw, startsystem_sap_nw, stopsystem_sap_nw,
+#   restartsystem_all_nw, restartsystem_sap_nw, updatesystem_all_nw, updatesystem_sap_nw
+#
+sap_control_function: ''
 
-# Functions
+# If set to true, the role will not wait for start/stop operations to complete.
+# This option should be used with caution, as the role will not verify the final status of the instance.
+# sap_control_command_nowait: false
 
-sap_control_functions_list:
-  - restart_all_sap
-  - stop_all_sap
-  - start_all_sap
-  - restart_all_nw
-  - restart_all_hana
-  - stop_all_nw
-  - start_all_nw
-  - stop_all_hana
-  - start_all_hana
-  - restart_sap_nw
-  - restart_sap_hana
-  - stop_sap_nw
-  - start_sap_nw
-  - stop_sap_hana
-  - start_sap_hana
+# If set to false, the 'cleanipc' command will not be executed after stopping an SAP instance.
+# sap_control_cleanipc: true
 
-# Functions flow
-restart_all_sap_list:
-  - sap_control_function_current: "nw_stop"
-  - sap_control_function_current: "hana_stop"
-  - sap_control_function_current: "hana_start"
-  - sap_control_function_current: "nw_start"
+# Overrides the number of retries for asynchronous tasks.
+# If not set, the role uses the default value defined in the function step (e.g., 60 for 'startsystem_all_nw').
+# Applies to functions that include 'system' in their name.
+# sap_control_async_retries: '60'
 
-stop_all_sap_list:
-  - sap_control_function_current: "nw_stop"
-  - sap_control_function_current: "hana_stop"
+# Overrides the delay (in seconds) between retries for asynchronous tasks.
+# If not set, the role uses the default value defined in the function step (e.g., 10 for 'startsystem_all_nw').
+# Applies to functions that include 'system' in their name.
+# sap_control_async_delay: '10'
 
-start_all_sap_list:
-  - sap_control_function_current: "hana_start"
-  - sap_control_function_current: "nw_start"
-
-restart_all_nw_list:
-  - sap_control_function_current: "nw_stop"
-  - sap_control_function_current: "nw_start"
-
-restart_all_hana_list:
-  - sap_control_function_current: "hana_stop"
-  - sap_control_function_current: "hana_start"
-
-stop_all_nw_list:
-  - sap_control_function_current: "nw_stop"
-
-start_all_nw_list:
-  - sap_control_function_current: "nw_start"
-
-stop_all_hana_list:
-  - sap_control_function_current: "hana_stop"
-
-start_all_hana_list:
-  - sap_control_function_current: "hana_start"
-
-restart_sap_nw_list:
-  - sap_control_function_current: "nw_stop"
-  - sap_control_function_current: "nw_start"
-
-restart_sap_hana_list:
-  - sap_control_function_current: "hana_stop"
-  - sap_control_function_current: "hana_start"
-
-stop_sap_nw_list:
-  - sap_control_function_current: "nw_stop"
-
-start_sap_nw_list:
-  - sap_control_function_current: "nw_start"
-
-stop_sap_hana_list:
-  - sap_control_function_current: "hana_stop"
-
-start_sap_hana_list:
-  - sap_control_function_current: "hana_start"
+# Enable this variable to use 'community.sap_libs.sap_system_facts' to detect SAP instances.
+# This can be useful if this role is part of a playbook that expects facts set by that module.
+# NOTE: This module will not detect instances with 'sapstartsrv' stopped.
+# sap_control_use_sap_system_facts: false

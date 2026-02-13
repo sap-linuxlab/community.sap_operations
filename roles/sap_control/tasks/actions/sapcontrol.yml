@@ -1,0 +1,88 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+
+- name: SAP Control - Show command to be executed for instance - {{ command_item['nr'] }}
+  ansible.builtin.debug:
+    msg: |
+      User: {{ command_item['user'] }}
+      Command: {{ command_item['command'] }}
+
+# Reason for noqa:
+# - command-instead-of-shell: Command is executed as shell to ensure correct environment with 'source ~/.profile &&'.
+# - no-changed-when: This is flexible task that can support information gathering functions without marking the playbook as changed.
+- name: SAP Control - Execute sapcontrol command for instance - {{ command_item['nr'] }}  # noqa command-instead-of-shell no-changed-when
+  ansible.builtin.shell:
+    cmd: "{{ command_item['command'] }}"
+  become: true
+  become_user: "{{ command_item['user'] }}"
+  register: __sap_control_register_command_output
+  ignore_errors: true
+
+
+- name: SAP Control - Start asynchronous monitoring for instance - {{ command_item['nr'] }}
+  ansible.builtin.include_tasks:
+    file: actions/async_monitor.yml
+  when:
+    - command_item['async'] is defined
+    - command_item['async'] | length > 0
+
+
+- name: SAP Control - Execute 'cleanipc' command for instance - {{ command_item['nr'] }}
+  ansible.builtin.shell:
+    cmd: >-
+      source ~/.profile &&
+      cleanipc {{ command_item['nr'] }} remove
+  become: true
+  become_user: "{{ command_item['user'] }}"
+  register: __sap_control_register_cleanipc
+  when:
+    - sap_control_cleanipc | d(true)
+    - command_item['name'] is match('stop')
+  changed_when: >-
+    (__sap_control_register_cleanipc.stdout_lines
+      | select('match', '^Number of IPC-Objects.*')
+      | first
+      | d('Number of IPC-Objects: 0')
+      | split(':'))[1]
+      | trim
+      | int > 0
+
+
+- name: SAP Control - Get final status for instance - {{ command_item['nr'] }}
+  ansible.builtin.shell:
+    cmd: >-
+      source ~/.profile &&
+      sapcontrol
+      -nr {{ command_item['nr'] }}
+      -function {{ __function }}
+  become: true
+  become_user: "{{ command_item['user'] }}"
+  register: __sap_control_register_final_status
+  changed_when: false
+  # We have to ignore errors because sapcontrol does not return correct return codes.
+  failed_when: false
+  ignore_errors: true
+  vars:
+    __function: >-
+      {{ 'GetSystemInstanceList'
+        if command_item['command'] is match('.*system$')
+          or (sap_control_function.split('_')[0] | lower) is match('.*system$')
+        else
+          'GetProcessList' }}
+
+
+- name: SAP Control - Show final status of instance - {{ command_item['nr'] }}
+  ansible.builtin.debug:
+    msg: |
+      Execution of sapcontrol command was finished.
+      User: {{ command_item['user'] }}
+      Command: {{ command_item['command'] }}
+
+      {% if sap_control_command_nowait | d(false)
+        and (command_item['async'] is not defined or command_item['async'] | length == 0) %}
+      This role was executed with 'sap_control_command_nowait' set to 'true',
+      which skipped waiting for command and reported status can be inaccurate.
+      {% endif %}
+
+      Status:
+      {{ __sap_control_register_final_status.stdout }}
