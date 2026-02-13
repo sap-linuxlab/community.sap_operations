@@ -39,9 +39,13 @@
 # 4. Restart sapstartsrv when profile was changed for instance profile, not default.
 - name: SAP Profile Update - Restart sapstartsrv if profile file was modified
   ansible.builtin.command:
-    cmd: "/usr/sap/hostctrl/exe/sapcontrol -nr {{ __sap_profile_update_profile.instance_number }} -function RestartService"
+    cmd: >-
+      /usr/sap/hostctrl/exe/sapcontrol
+      -nr {{ __sap_profile_update_profile.instance_number }}
+      -function RestartService
   when:
     - sap_profile_update_restart_sapstartsrv | d(false)
     - __sap_profile_update_profile.type == 'instance'
     - __sap_profile_update_register_profile_before.stat.mtime != __sap_profile_update_register_profile_after.stat.mtime
   become: true
+  changed_when: true

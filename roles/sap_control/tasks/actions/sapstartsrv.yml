@@ -20,6 +20,8 @@
     'FAIL' in __sap_control_register_sapstartsrv_check.stdout
     or 'NIECONN_REFUSED' in __sap_control_register_sapstartsrv_check.stdout
   block:
+    # Reason for noqa: Ignore errors will skip already stopped service so it should not mark task as changed.
+    # We will determine if we made changes based on the recheck after stop/start attempts.
     - name: SAP Control - Stop 'sapstartsrv' service for instance - {{ __command_nr }}  # noqa no-changed-when
       ansible.builtin.shell:
         cmd: >-
@@ -32,6 +34,8 @@
       register: __sap_control_register_sapstartsrv_stop
       ignore_errors: true
 
+    # Reason for noqa: Ignore errors will skip already started service so it should not mark task as changed.
+    # We will determine if we made changes based on the recheck after stop/start attempts.
     - name: SAP Control - Start 'sapstartsrv' service for instance - {{ __command_nr }}  # noqa no-changed-when
       ansible.builtin.shell:
         cmd: >-

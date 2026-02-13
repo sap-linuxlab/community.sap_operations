@@ -1,3 +1,0 @@
-minor_changes:
-    - sap_control - add the mechanisms to handle asynchronous sapcontrol functions
-    - sap_control - add UpdateSystem, RestartSystem, StartSystem, StopSystem functions

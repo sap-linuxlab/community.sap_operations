@@ -1,10 +1,19 @@
 ---
-name: Ansible Lint - Collection
+name: Ansible Lint - sap_hana_backint
 
 on:
-  schedule:
-    # This is 03:05 UTC, which is 5:05 AM in Prague/CEST.
-    - cron: '5 3 * * 1'
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'roles/sap_hana_backint/**'
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'roles/sap_hana_backint/**'
 
   workflow_dispatch:
 
@@ -20,5 +29,8 @@ jobs:
         # Avoid using @main, which can introduce breaking changes unexpectedly.
       - uses: ansible/ansible-lint@v25
         with:
+          # v25.7.0 no longer uses 'working_directory' and role path is set in 'args'.
+          # Role specific .ansible-lint can be added with argument '-c'.
+          args: roles/sap_hana_backint
           # Use the shared requirements file from the collection root for dependency context.
           requirements_file: ./requirements.yml

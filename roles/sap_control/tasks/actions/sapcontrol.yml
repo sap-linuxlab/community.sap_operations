@@ -7,6 +7,9 @@
       User: {{ command_item['user'] }}
       Command: {{ command_item['command'] }}
 
+# Reason for noqa:
+# - command-instead-of-shell: Command is executed as shell to ensure correct environment with 'source ~/.profile &&'.
+# - no-changed-when: This is flexible task that can support information gathering functions without marking the playbook as changed.
 - name: SAP Control - Execute sapcontrol command for instance - {{ command_item['nr'] }}  # noqa command-instead-of-shell no-changed-when
   ansible.builtin.shell:
     cmd: "{{ command_item['command'] }}"

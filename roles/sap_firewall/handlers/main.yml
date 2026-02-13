@@ -6,3 +6,4 @@
   ansible.builtin.command:
     cmd: firewall-cmd --reload
   when: sap_firewall_end_status == 'enabled' | d('enabled')
+  changed_when: true

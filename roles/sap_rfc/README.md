@@ -28,11 +28,11 @@ The Ansible Task variables define the RFC actions to be executed. Examples are g
 
 ### Dependencies on other Ansible Roles
 
-To execute successfully, this Ansible Role is dependant on the Ansible Collections:
+To execute successfully, this Ansible Role is dependent on the Ansible Collections:
 - `community.sap_launchpad` on first run
 - `community.sap_libs` for every run
 
-The first run will setup Python altinstall, subsequent runs on the same host will re-use the Python altinstall where PyRFC enabled. This is to protect the System default Python installation from additional or altered versions of Python Packages.
+The first run will setup Python `altinstall`, subsequent runs on the same host will reuse the Python `altinstall` where PyRFC enabled. This is to protect the System default Python installation from additional or altered versions of Python Packages.
 
 ### Operating System
 
@@ -47,10 +47,41 @@ Assumptions for executing this role include:
 
 ## Examples
 
-A sample [Ansible Playbook for using the sap_rfc Ansible Role](../../playbooks/sample-sap-rfc.yml) is provided, which provides:
+The following example executes remote function `STFC_CONNECTION`.
 
-- Ansible Vars for SAP User ID with download privileges for first-run
-- Ansible Vars for SAP System connection details and user authorization
+```yaml
+---
+- name: Ansible Play
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Execute Ansible Role sap_rfc
+      ansible.builtin.include_role:
+        name: community.sap_operations.sap_rfc
+      vars:
+        suser_id: 'My_S-User_ID'
+        suser_password: 'My_S-User_Password'
+        sap_nwrfc_sdk: nwrfc750P_10-70002752.zip
+        target_connection:
+          ashost: "My_SAP_System_Host"  # Example: s4hana.poc.cloud
+          sysid: "My_SID"  # Example: TDT
+          sysnr: "My_Instance_Number"  # Example: "01"
+          client: "My_Client_ID"  # Example: "400"
+          user: "My_Connection_User"  # Example: DDIC
+          passwd: "My_Connection_User_Password"
+          lang: EN
+        target_function: STFC_CONNECTION
+        target_parameters:
+          REQUTEXT: 'Hello SAP!'
+        pyrfc_first_run: yes
+      register: sap_rfc_output
+
+    - name: Show output of the variable 'sap_rfc_output'
+      ansible.builtin.debug:
+        msg: "{{ sap_rfc_output }}"
+```
+
 
 The Ansible Role is designed to provide for all different RFCs. Therefore, the RFC parameters _(IMPORTING, EXPORTING, CHANGING)_ can accept the following data types:
 
@@ -58,7 +89,7 @@ The Ansible Role is designed to provide for all different RFCs. Therefore, the R
 - ABAP Structure
 - ABAP Table
 
-These RFC parameter data elements are mapped to the equivilant Python data type (e.g. string, integer, dictionary, list). Examples of these are shown below.
+These RFC parameter data elements are mapped to the equivalent Python data type (e.g. string, integer, dictionary, list). Examples of these are shown below.
 
 ### Examples of Ansible Task variables for different RFC parameters
 
@@ -79,7 +110,7 @@ sap_rfc_target_parameters:
 - For this input type the PyRFC Python module requires a Python Dictionary.
 - Ansible Task must declare the parameter name and use a YAML dictionary (key:value)
 
-`Ansible Task code example for ABAP Struture:`
+`Ansible Task code example for ABAP Structure:`
 ```yaml
 sap_rfc_target_parameters:
   IMPORTSTRUCT:

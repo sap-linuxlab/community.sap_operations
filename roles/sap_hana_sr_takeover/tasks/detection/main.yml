@@ -2,7 +2,8 @@
 ---
 
 # This role does not support operating clustered SAP HANA due to complexity and importance.
-- name: SAP HANA SR Takeover - Detect if cluster services are enabled and active
+# Reason for noqa: Systemctl module does not allow for this detection in loop, only controlling services.
+- name: SAP HANA SR Takeover - Detect if cluster services are enabled and active  # noqa command-instead-of-module
   ansible.builtin.command:
     cmd: "systemctl {{ service_item.cmd }} {{ service_item.service }}"
   loop:

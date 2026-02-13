@@ -26,5 +26,6 @@
     stdin_add_newline: true
   become: true
   become_user: "{{ __sap_hana_backint_sidadm_user }}"
+  changed_when: true
 
 # No fail module is included because failed command will show usable output.

@@ -66,7 +66,7 @@
           Please check that the SAP HANA installation path is correct and that SAP HANA is installed properly.
 
     - name: SAP Profile Update - Get Instance Profile path from sapcontrol
-      ansible.builtin.shell:
+      ansible.builtin.command:
         cmd: >-
           /usr/sap/hostctrl/exe/sapcontrol
           -nr {{ __sap_profile_update_validate_profile.instance_number }}
