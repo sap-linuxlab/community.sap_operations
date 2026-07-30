@@ -15,19 +15,21 @@ This Ansible Collection executes various SAP Systems operational tasks, includin
 ## Requirements
 
 | Component | Control Node | Managed Node |
-| --- | --- | --- |
-| Operating System | Any OS | Red Hat Enterprise Linux for SAP Solutions 8.x, 9.x and 10.x<br>SUSE Linux Enterprise Server for SAP applications 15 SP5, 15 SP6, 15 SP7 and 16.0 |
+| :--- | :--- | :--- |
+| Operating System | Any OS | [See compatible OS versions](#compatible-operating-system-versions) |
 | Python | 3.11 or higher | 3.9 or higher |
 | Ansible-Core | 2.18 or higher | N/A |
-| Ansible | 12 or higher | N/A |
-
-> **Managed Node Registration**<br>
-> Operating system needs to have access to required package repositories either directly or via subscription registration.
 
 **Additional notes:**
 
-- **Version Compatibility:** For a detailed mapping of supported Python versions and Ansible-Core life cycles, refer to the official [Ansible-Core Support Matrix](https://docs.ansible.com/projects/ansible/latest/reference_appendices/release_and_maintenance.html#ansible-core-support-matrix).
+- **Version Compatibility:** For a detailed mapping of supported Python versions and Ansible-Core lifecycle, refer to the official [Ansible-Core Support Matrix](https://docs.ansible.com/projects/ansible/latest/reference_appendices/release_and_maintenance.html#ansible-core-support-matrix).
 - **Control Node Permissions:** Ensure the user executing the playbooks has the necessary SSH keys and sudo privileges configured for the target environment.
+- **Managed Node Registration:** Operating system needs to have access to required package repositories either directly or via subscription registration.
+
+### Compatible Operating System Versions
+
+- Red Hat Enterprise Linux for SAP Solutions: 8.x, 9.x, 10.x
+- SUSE Linux Enterprise Server for SAP applications: 15 SP5, 15 SP6, 15 SP7, 16
 
 ## Installation Instructions
 
@@ -79,18 +81,12 @@ See [Installing collections](https://docs.ansible.com/ansible/latest/collections
 > **NOTE: All included modules were deprecated in 2.0.0 release.**<br>
 
 ## Testing
-This Ansible Collection was tested across different Operating Systems, SAP products and scenarios. You can find examples of some of them below.
+This Ansible Collection has been tested across different operating systems, SAP products, and scenarios.
 
 Operating systems:
 
-- Red Hat Enterprise Linux for SAP Solutions 8.x, 9.x and 10.x
-- SUSE Linux Enterprise Server for SAP applications 15 SP7 and 16.0
-
-SAP Products:
-
-- SAP S/4HANA AnyPremise 2023
-- SAP BW/4HANA 2023
-- SAP HANA 2.0 SPS08
+- Red Hat Enterprise Linux for SAP Solutions: 8.x, 9.x, 10.x
+- SUSE Linux Enterprise Server for SAP applications: 15 SP5, 15 SP6, 15 SP7, 16
 
 ## Contributing
 For information on how to contribute, please see our [contribution guidelines](https://sap-linuxlab.github.io/initiative_contributions/).
