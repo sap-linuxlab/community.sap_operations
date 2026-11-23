@@ -7,11 +7,17 @@
     that:
       - sap_profile_update_definitions is defined
       - sap_profile_update_definitions | type_debug == 'list'
-    success_msg: |
-      PASS: The 'sap_profile_update_definitions' variable is a list.
     fail_msg: |
       FAIL: The 'sap_profile_update_definitions' variable must be a list,
       but it is of type '{{ sap_profile_update_definitions | type_debug }}'.
+    quiet: true
+
+- name: SAP Profile Update - Inform that 'sap_profile_update_definitions' is defined as an empty list
+  ansible.builtin.debug:
+    msg: |
+      INFO: The variable 'sap_profile_update_definitions' is defined as an empty list.
+      This means that no changes will be applied by this role.
+  when: sap_profile_update_definitions | length == 0
 
 
 - name: SAP Profile Update - Assert that the variable 'sap_profile_update_definitions' contains required keys

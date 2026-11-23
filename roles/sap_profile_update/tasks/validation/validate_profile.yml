@@ -53,88 +53,7 @@
       Parameter: {{ parameter_item.name | d('UNKNOWN') }}
 
 
-# 2. Validate instance profile path using sapcontrol and assert if 'path' is not defined.
-- name: Block for 'instance' type
-  when: __sap_profile_update_validate_profile.type == 'instance'
-  block:
-    - name: SAP Profile Update - Assert that sapcontrol executable exists
-      ansible.builtin.assert:
-        that:
-          - __sap_profile_update_register_sapcontrol_stat.stat.exists
-        fail_msg: |
-          FAIL: The executable '/usr/sap/hostctrl/exe/sapcontrol' does not exist.
-          Please check that the SAP HANA installation path is correct and that SAP HANA is installed properly.
-
-    - name: SAP Profile Update - Get Instance Profile path from sapcontrol
-      ansible.builtin.command:
-        cmd: >-
-          /usr/sap/hostctrl/exe/sapcontrol
-          -nr {{ __sap_profile_update_validate_profile.instance_number }}
-          -function ParameterValue SAPPROFILE
-      register: __sap_profile_update_register_check_sapprofile
-      changed_when: false
-      failed_when: false
-
-    - name: SAP Profile Update - Set fact for system defined instance profile path
-      ansible.builtin.set_fact:
-        __sap_profile_update_fact_check_instance_profile_path:
-          "{{ __sap_profile_update_register_check_sapprofile.stdout_lines | select('search', 'profile') | first | trim }}"
-      when: not __sap_profile_update_register_check_sapprofile.failed
-
-    - name: SAP Profile Update - Check presence of system defined instance profile path
-      ansible.builtin.stat:
-        path: "{{ __sap_profile_update_fact_check_instance_profile_path }}"
-      register: __sap_profile_update_register_system_path_stat
-      when:
-        - __sap_profile_update_validate_profile.path is not defined
-        - not __sap_profile_update_register_check_sapprofile.failed
-
-    - name: SAP Profile Update - Fail if system defined instance profile path does not exist
-      ansible.builtin.fail:
-        msg: |
-          FAIL: Detection of instance profile path has failed,
-          because of invalid output of `sapcontrol` command or profile missing.
-
-          Path: {{ __sap_profile_update_fact_check_instance_profile_path | d('N/A') }}
-
-          Command output:
-          {{ __sap_profile_update_register_check_sapprofile.stdout_lines }}
-      when:
-        - __sap_profile_update_validate_profile.path is not defined
-        - __sap_profile_update_register_check_sapprofile.failed
-          or not __sap_profile_update_register_system_path_stat.stat.exists
-
-
-# 3. Validate default profile path and assert if 'path' is not defined.
-- name: Block for 'default' type
-  when:
-    - __sap_profile_update_validate_profile.type == 'default'
-  block:
-    - name: SAP Profile Update - Set fact for default profile path
-      ansible.builtin.set_fact:
-        __sap_profile_update_fact_check_default_profile_path:
-          "/sapmnt/{{ __sap_profile_update_validate_system.sid }}/profile/DEFAULT.PFL"
-
-    - name: SAP Profile Update - Check presence of default profile path
-      ansible.builtin.stat:
-        path: "{{ __sap_profile_update_fact_check_default_profile_path }}"
-      register: __sap_profile_update_register_check_default_path
-
-    - name: SAP Profile Update - Assert that default profile path exists
-      ansible.builtin.assert:
-        that:
-          - __sap_profile_update_register_check_default_path.stat.exists
-        fail_msg: |
-          FAIL: The default profile does not exist in standard path.
-          Ensure that SAP is installed or custom path is provided with 'path' parameter.
-
-          Path: {{ __sap_profile_update_fact_check_default_profile_path }}
-          SID:  {{ __sap_profile_update_validate_system.sid }}
-          Type: {{ __sap_profile_update_validate_profile.type }}
-      when: __sap_profile_update_validate_profile.path is not defined
-
-
-# 4. Validate user defined profile path and compare it to system defined for instance type.
+# 2. Validate user defined profile path as it takes precedence.
 - name: Block to validate user defined profile path
   when: __sap_profile_update_validate_profile.path is defined
   block:
@@ -157,6 +76,84 @@
           Type: {{ __sap_profile_update_validate_profile.type }}
           Inst: {{ __sap_profile_update_validate_profile.instance_number | d('N/A') }}
 
+    - name: SAP Profile Update - Set fact for the user defined profile path
+      ansible.builtin.set_fact:
+        __sap_profile_update_fact_check_profile_path: "{{ __sap_profile_update_validate_profile.path }}"
+
+
+# 3. Validate instance profile path using sapcontrol and assert if 'path' is not defined.
+# Sapcontrol is used get the instance profile path, but also for sapstartsrv restart after update.
+- name: Block for 'instance' type
+  when: __sap_profile_update_validate_profile.type == 'instance'
+  block:
+    - name: SAP Profile Update - Assert that sapcontrol executable exists
+      ansible.builtin.assert:
+        that:
+          - __sap_profile_update_register_sapcontrol_stat.stat.exists
+        fail_msg: |
+          FAIL: The executable '/usr/sap/hostctrl/exe/sapcontrol' does not exist.
+          The selected type 'instance' requires an existing sapcontrol executable at '/usr/sap/hostctrl/exe/sapcontrol'.
+          It is used to retrieve the instance profile path for the SAP system under the parameter 'SAPPROFILE'.
+
+    - name: SAP Profile Update - Get Instance Profile path from sapcontrol
+      ansible.builtin.command:
+        cmd: >-
+          /usr/sap/hostctrl/exe/sapcontrol
+          -nr {{ __sap_profile_update_validate_profile.instance_number }}
+          -function ParameterValue SAPPROFILE
+      register: __sap_profile_update_register_check_sapprofile
+      changed_when: false
+      # Sapcontrol returns non-zero return codes so we validate either the output or return code manually.
+      failed_when: false
+
+    - name: SAP Profile Update - Fail if sapcontrol command failed or returned invalid output
+      ansible.builtin.fail:
+        msg: |
+          FAIL: The sapcontrol command failed or returned invalid output.
+          Please check that the SAP System installation path is correct and that SAP System is installed properly.
+
+          {% if 'NIECONN_REFUSED' in __sap_profile_update_register_check_sapprofile.stdout %}
+          The sapcontrol cannot connect to the SAP system under specified instance number '{{
+            __sap_profile_update_validate_profile.instance_number }}'.
+          {% endif %}
+
+          Command output:
+          {% for line in __sap_profile_update_register_check_sapprofile.stdout_lines | d([]) %}
+          {{ line }}
+          {% endfor %}
+      # We manually fail if:
+      # - Generic connection failure occurs (NIECONN_REFUSED)
+      # - No output returned in the stdout_lines
+      # - 'OK' not present in the stdout_lines (this checks actual line, not substring within a line)
+      when: "'NIECONN_REFUSED' in __sap_profile_update_register_check_sapprofile.stdout
+        or __sap_profile_update_register_check_sapprofile.stdout_lines | d([]) | length == 0
+        or 'OK' not in __sap_profile_update_register_check_sapprofile.stdout_lines"
+
+    # Fail module above ensures that stdout_lines is not empty, because the 'first' filter will fail if applied to an empty list.
+    - name: SAP Profile Update - Set fact for system defined instance profile path
+      ansible.builtin.set_fact:
+        __sap_profile_update_fact_check_instance_profile_path:
+          "{{ __sap_profile_update_register_check_sapprofile.stdout_lines | select('search', 'profile') | first | trim }}"
+
+    - name: SAP Profile Update - Check presence of system defined instance profile path
+      ansible.builtin.stat:
+        path: "{{ __sap_profile_update_fact_check_instance_profile_path }}"
+      register: __sap_profile_update_register_system_path_stat
+
+    - name: SAP Profile Update - Fail if system defined instance profile path does not exist
+      ansible.builtin.fail:
+        msg: |
+          FAIL: Detection of instance profile path has failed,
+          because of invalid output of `sapcontrol` command or profile missing.
+
+          Path: {{ __sap_profile_update_fact_check_instance_profile_path }}
+
+          Command output:
+          {% for line in __sap_profile_update_register_check_sapprofile.stdout_lines | d([]) %}
+          {{ line }}
+          {% endfor %}
+      when: not (__sap_profile_update_register_system_path_stat.stat.exists | d(false))
+
     - name: SAP Profile Update - Inform that user defined profile path differs to system defined
       ansible.builtin.debug:
         msg: |
@@ -170,31 +167,53 @@
           Type: {{ __sap_profile_update_validate_profile.type }}
           Inst: {{ __sap_profile_update_validate_profile.instance_number | d('N/A') }}
       when:
-        - __sap_profile_update_fact_check_instance_profile_path is defined
-        - __sap_profile_update_validate_profile.type == 'instance'
-        - __sap_profile_update_register_system_path_stat.stat.exists is defined
-        - __sap_profile_update_register_system_path_stat.stat.exists
+        - __sap_profile_update_validate_profile.path is defined
+        - __sap_profile_update_register_system_path_stat.stat.exists | d(false)
 
-    # Overwrite existing fact with final valid path
-    - name: SAP Profile Update - Set fact for user defined instance profile path
+    - name: SAP Profile Update - Set fact for the detected instance profile path
       ansible.builtin.set_fact:
-        __sap_profile_update_fact_check_custom_profile_path:
-          "{{ __sap_profile_update_validate_profile.path }}"
+        __sap_profile_update_fact_check_profile_path: "{{ __sap_profile_update_fact_check_instance_profile_path }}"
+      when: __sap_profile_update_validate_profile.path is not defined
 
+
+# 4. Validate default profile path and assert if 'path' is not defined.
+- name: Block for 'default' type
+  when:
+    - __sap_profile_update_validate_profile.type == 'default'
+    - __sap_profile_update_validate_profile.path is not defined
+  block:
+    - name: SAP Profile Update - Set fact for default profile path
+      ansible.builtin.set_fact:
+        __sap_profile_update_fact_check_default_profile_path:
+          "/sapmnt/{{ __sap_profile_update_validate_system.sid }}/profile/DEFAULT.PFL"
+
+    - name: SAP Profile Update - Check presence of default profile path
+      ansible.builtin.stat:
+        path: "{{ __sap_profile_update_fact_check_default_profile_path }}"
+      register: __sap_profile_update_register_check_default_path
+
+    - name: SAP Profile Update - Assert that default profile path exists
+      ansible.builtin.assert:
+        that:
+          - __sap_profile_update_register_check_default_path.stat.exists
+        fail_msg: |
+          FAIL: The default profile does not exist in standard path.
+          Ensure that SAP is installed or custom path is provided with 'path' parameter.
+
+          Path: {{ __sap_profile_update_fact_check_default_profile_path }}
+          SID:  {{ __sap_profile_update_validate_system.sid }}
+          Type: {{ __sap_profile_update_validate_profile.type }}
+
+    - name: SAP Profile Update - Set fact for the default profile path
+      ansible.builtin.set_fact:
+        __sap_profile_update_fact_check_profile_path: "{{ __sap_profile_update_fact_check_default_profile_path }}"
+
+
+# NOTE: Each block has dedicated stat for profile path so fail message is clear to specific scenario.
+# It can be all done here with a single stat and assert, but fail message would be very complex.
 
 # 5. Get contents of profile and validate it for duplicated parameters.
 # This is done to ensure that lineinfile replacement does not fail.
-- name: SAP Profile Update - Set fact for profile path
-  ansible.builtin.set_fact:
-    __sap_profile_update_fact_check_profile_path: >-
-      {%- if __sap_profile_update_fact_check_custom_profile_path is defined -%}
-        {{ __sap_profile_update_fact_check_custom_profile_path }}
-      {%- elif __sap_profile_update_validate_profile.type == 'instance' -%}
-        {{ __sap_profile_update_fact_check_instance_profile_path }}
-      {%- else -%}
-        {{ __sap_profile_update_fact_check_default_profile_path }}
-      {%- endif -%}
-
 - name: SAP Profile Update - Read profile content
   ansible.builtin.slurp:
     src: "{{ __sap_profile_update_fact_check_profile_path }}"

@@ -25,8 +25,8 @@
       - profile_item.parameters | type_debug == 'list'
       - profile_item.parameters | length > 0
 
-      # Parameter 'path' is a string (optional)
-      - (profile_item.path is not defined) or (profile_item.path is string)
+      # Parameter 'path' is a non-empty string if defined (optional)
+      - (profile_item.path is not defined) or (profile_item.path is string and profile_item.path | trim | length > 0)
 
     success_msg: |
       PASS: Profile definition of '{{ profile_item.type | d('UNKNOWN') }}' is valid.
